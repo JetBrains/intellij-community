@@ -24,12 +24,14 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Processor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.inspections.quickfix.PyUpdatePropertySignatureQuickFix;
 import com.jetbrains.python.inspections.quickfix.RenameParameterQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -143,13 +145,16 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       assert argument != null : "Parameter mapped to null argument";
       Callable callable = null;
       if (argument instanceof PyReferenceExpression) {
-        PsiElement resolved = ((PyReferenceExpression)argument).getReference(getResolveContext()).resolve();
-        if (resolved instanceof Callable) {
-          callable = (Callable)resolved;
-        }
-        else {
-          reportNonCallableArg(resolved, argument);
-          return;
+        final PsiPolyVariantReference reference = ((PyReferenceExpression)argument).getReference(getResolveContext());
+        if (reference != null) {
+          PsiElement resolved = reference.resolve();
+          if (resolved instanceof Callable) {
+            callable = (Callable)resolved;
+          }
+          else {
+            reportNonCallableArg(resolved, argument);
+            return;
+          }
         }
       }
       else if (argument instanceof PyLambdaExpression) callable = (PyLambdaExpression)argument;
@@ -244,7 +249,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
         // signature: at least two params, more optionals ok; first arg 'self'
         final PyParameterList param_list = callable.getParameterList();
         if (myTwoParamFunction != null && !PyUtil.isSignatureCompatibleTo(callable, myTwoParamFunction, myTypeEvalContext)) {
-          registerProblem(being_checked, PyBundle.message("INSP.setter.signature.advice"));
+          registerProblem(being_checked, PyBundle.message("INSP.setter.signature.advice"), new PyUpdatePropertySignatureQuickFix(true));
         }
         checkForSelf(param_list);
         // no explicit return type
@@ -259,13 +264,18 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       }
     }
 
-    private void checkOneParameter(Callable callable, PsiElement being_checked, boolean is_getter) {
-      final PyParameterList param_list = callable.getParameterList();
+    private void checkOneParameter(Callable callable, PsiElement beingChecked, boolean isGetter) {
+      final PyParameterList parameterList = callable.getParameterList();
       if (myOneParamFunction != null && !PyUtil.isSignatureCompatibleTo(callable, myOneParamFunction, myTypeEvalContext)) {
-        if (is_getter) registerProblem(being_checked, PyBundle.message("INSP.getter.signature.advice"));
-        else registerProblem(being_checked, PyBundle.message("INSP.deleter.signature.advice"));
+        if (isGetter) {
+          registerProblem(beingChecked, PyBundle.message("INSP.getter.signature.advice"),
+                          new PyUpdatePropertySignatureQuickFix(false));
+        }
+        else {
+          registerProblem(beingChecked, PyBundle.message("INSP.deleter.signature.advice"), new PyUpdatePropertySignatureQuickFix(false));
+        }
       }
-      checkForSelf(param_list);
+      checkForSelf(parameterList);
     }
 
     private void checkForSelf(PyParameterList param_list) {
@@ -302,11 +312,9 @@ public class PyPropertyDefinitionInspection extends PyInspection {
         if (allowed && callable instanceof PyFunction) {
           // one last chance: maybe there's no return but a 'raise' statement, see PY-4043, PY-5048
           PyStatementList statementList = ((PyFunction)callable).getStatementList();
-          if (statementList != null) {
-            for (PyStatement stmt : statementList.getStatements()) {
-              if (stmt instanceof PyRaiseStatement) {
-                return;
-              }
+          for (PyStatement stmt : statementList.getStatements()) {
+            if (stmt instanceof PyRaiseStatement) {
+              return;
             }
           }
         }
