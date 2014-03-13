@@ -515,8 +515,9 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
         for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
           final VirtualFile root = entry.getKey();
 
-          if (filterCollection.getStructureFilter() != null && filterCollection.getStructureFilter().getFiles(root).isEmpty()) {
-            // there is a structure filter, but it doesn't match this root
+          if (filterCollection.getStructureFilter() != null && filterCollection.getStructureFilter().getFiles(root).isEmpty()
+              || filterCollection.getUserFilter() != null && filterCollection.getUserFilter().getUserNames(root).isEmpty()) {
+            // there is a structure or user filter, but it doesn't match this root
             continue;
           }
 
