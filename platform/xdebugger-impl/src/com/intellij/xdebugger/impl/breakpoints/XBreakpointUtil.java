@@ -128,7 +128,12 @@ public class XBreakpointUtil {
    * - unfolds folded block on the line
    * - if folded, checks if line breakpoints could be toggled inside folded text
    */
-  public static XLineBreakpoint toggleLineBreakpoint(Project project, VirtualFile file, Editor editor, int lineStart, boolean temporary) {
+  public static XLineBreakpoint toggleLineBreakpoint(Project project,
+                                                     VirtualFile file,
+                                                     Editor editor,
+                                                     int lineStart,
+                                                     boolean temporary,
+                                                     boolean moveCarret) {
     // for folded text check each line and find out type with the biggest priority
     int linesEnd = lineStart;
     if (editor != null) {
@@ -168,9 +173,12 @@ public class XBreakpointUtil {
       res = XDebuggerUtil.getInstance().toggleLineBreakpoint(project, typeWinner, file, lineWinner, temporary);
     }
 
-    ExpandRegionAction.expandRegionAtCaret(project, editor);
     if (editor != null && lineStart != lineWinner) {
-      editor.getCaretModel().moveToOffset(editor.getDocument().getLineStartOffset(lineWinner));
+      int offset = editor.getDocument().getLineStartOffset(lineWinner);
+      ExpandRegionAction.expandRegionAtOffset(project, editor, offset);
+      if (moveCarret) {
+        editor.getCaretModel().moveToOffset(offset);
+      }
     }
 
     return res;
