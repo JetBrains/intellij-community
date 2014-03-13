@@ -18,26 +18,20 @@ package com.jetbrains.python.quickFixes;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
-import com.jetbrains.python.inspections.PyReturnFromInitInspection;
 import com.jetbrains.python.inspections.PyUnusedLocalInspection;
 
-@TestDataPath("$CONTENT_ROOT/../testData//quickFixes/PyRemoveStatementQuickFixTest/")
-public class PyRemoveStatementQuickFixTest extends PyQuickFixTestCase {
+@TestDataPath("$CONTENT_ROOT/../testData//quickFixes/PyRemoveParameterQuickFixTest/")
+public class PyRemoveParameterQuickFixTest extends PyQuickFixTestCase {
 
-  public void testOnly() {
-    doQuickFixTest(PyReturnFromInitInspection.class, PyBundle.message("QFIX.NAME.remove.statement"));
+  public void testParam() {
+    doQuickFixTest(PyUnusedLocalInspection.class, PyBundle.message("QFIX.NAME.remove.parameter"));
   }
 
-  public void testLastStatement() {
-    doQuickFixTest(PyReturnFromInitInspection.class, PyBundle.message("QFIX.NAME.remove.statement"));
+  public void testKwParam() {
+    doQuickFixTest(PyUnusedLocalInspection.class, PyBundle.message("QFIX.NAME.remove.parameter"));
   }
 
-  public void testFunction() {
-    doQuickFixTest(PyUnusedLocalInspection.class, PyBundle.message("QFIX.NAME.remove.statement"));
+  public void testDocstring() {
+    doQuickFixTest(PyUnusedLocalInspection.class, PyBundle.message("QFIX.NAME.remove.parameter"));
   }
-
-  public void testVariable() {
-    doQuickFixTest(PyUnusedLocalInspection.class, PyBundle.message("QFIX.NAME.remove.statement"));
-  }
-
 }
