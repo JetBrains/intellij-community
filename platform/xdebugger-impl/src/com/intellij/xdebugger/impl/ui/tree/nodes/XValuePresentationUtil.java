@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,9 +86,9 @@ public class XValuePresentationUtil {
   }
 
   @NotNull
-  public static String computeValueText(@NotNull XValue value, @NotNull XValuePresentation presentation) {
+  public static String computeValueText(@NotNull XValuePresentation presentation) {
     XValuePresentationTextExtractor extractor = new XValuePresentationTextExtractor();
-    presentation.renderValue(value, extractor);
+    presentation.renderValue(extractor);
     return extractor.getText();
   }
 
