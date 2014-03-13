@@ -17,10 +17,9 @@
 package com.intellij.vcs.log.newgraph.utils.impl;
 
 import com.intellij.util.BooleanFunction;
-import com.intellij.vcs.log.newgraph.utils.UpdatableIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 
-public class TreeIntToIntMap extends AbstractIntToIntMap implements UpdatableIntToIntMap {
+public class TreeIntToIntMap extends AbstractUpdatableIntToIntMap {
 
   public static TreeIntToIntMap newInstance(@NotNull final BooleanFunction<Integer> thisIsVisible, final int longSize) {
     if (longSize < 1)
@@ -74,8 +73,7 @@ public class TreeIntToIntMap extends AbstractIntToIntMap implements UpdatableInt
 
   @Override
   public int getLongIndex(int shortIndex) {
-    if (shortIndex < 0 || shortIndex >= shortSize())
-      throw new IndexOutOfBoundsException("ShortSize is: " + shortSize() + ", but shortIndex: " + shortIndex);
+    checkShortIndex(shortIndex);
 
     int node = 1;
     for (int level = 0; level < myCountLevels - 1; level++) {
@@ -93,9 +91,7 @@ public class TreeIntToIntMap extends AbstractIntToIntMap implements UpdatableInt
 
   @Override
   public void update(int startLongIndex, int endLongIndex) {
-    if (startLongIndex < 0 || endLongIndex < startLongIndex || endLongIndex >= longSize())
-      throw new IllegalArgumentException(
-        "ShortSize is: " + shortSize() + ", but updateRequest is: (" + startLongIndex +", " + endLongIndex + ")");
+    checkUpdateParameters(startLongIndex, endLongIndex);
 
     int startNode = startLongIndex + myTree.length;
     int endNode = endLongIndex + myTree.length;

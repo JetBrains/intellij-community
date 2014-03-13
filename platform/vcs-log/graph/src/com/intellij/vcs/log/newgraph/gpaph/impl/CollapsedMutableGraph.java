@@ -32,7 +32,7 @@ import com.intellij.vcs.log.newgraph.gpaph.fragments.GraphFragment;
 import com.intellij.vcs.log.newgraph.utils.DfsUtil;
 import com.intellij.vcs.log.newgraph.utils.Flags;
 import com.intellij.vcs.log.newgraph.utils.UpdatableIntToIntMap;
-import com.intellij.vcs.log.newgraph.utils.impl.TreeIntToIntMap;
+import com.intellij.vcs.log.newgraph.utils.impl.ListIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -52,7 +52,7 @@ public class CollapsedMutableGraph extends MutableGraphWithHiddenNodes<Collapsed
     final Flags visibleNodes = graphFlags.getVisibleNodes();
     final Flags visibleNodesInBranches = graphFlags.getVisibleNodesInBranches();
     setAllValues(visibleNodes, true);
-    UpdatableIntToIntMap intToIntMap = TreeIntToIntMap.newInstance(new BooleanFunction<Integer>() {
+    UpdatableIntToIntMap intToIntMap = ListIntToIntMap.newInstance(new BooleanFunction<Integer>() {
       @Override
       public boolean fun(Integer integer) {
         return visibleNodes.get(integer) && visibleNodesInBranches.get(integer);

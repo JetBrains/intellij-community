@@ -16,27 +16,13 @@
 
 package com.intellij.vcs.log.newgraph.utils.impl;
 
-import com.intellij.vcs.log.newgraph.utils.IntToIntMap;
+import com.intellij.util.BooleanFunction;
+import com.intellij.vcs.log.newgraph.utils.UpdatableIntToIntMap;
+import org.jetbrains.annotations.NotNull;
 
-public abstract class AbstractIntToIntMap implements IntToIntMap {
-
+public class ListIntToIntMapTest extends UpdatableIntToIntMapTest {
   @Override
-  public int getShortIndex(int longIndex) {
-    if (longIndex < 0 || longIndex >= longSize())
-      throw new IndexOutOfBoundsException("LongSize is: " + longSize() + ", but longIndex: " + longIndex);
-
-    if (shortSize() == 0 || getLongIndex(0) > longIndex)
-      return 0;
-    int a = 0;
-    int b = shortSize() - 1;
-    while (b > a + 1) {
-      int middle = (a + b) / 2;
-      if (getLongIndex(middle) <= longIndex) {
-        a = middle;
-      } else {
-        b = middle;
-      }
-    }
-    return getLongIndex(b) <= longIndex ? b : a;
+  protected UpdatableIntToIntMap createUpdatableIntToIntMap(@NotNull BooleanFunction<Integer> thisIsVisible, int longSize) {
+    return ListIntToIntMap.newInstance(thisIsVisible, longSize, 3);
   }
 }
