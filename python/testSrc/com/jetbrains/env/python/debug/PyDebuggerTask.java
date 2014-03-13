@@ -112,9 +112,11 @@ public class PyDebuggerTask extends PyBaseDebuggerTask implements RemoteSdkTesta
 
     setProcessCanTerminate(false);
 
-    ExecutionResult result = new WriteAction<ExecutionResult>() {
+    myTerminateSemaphore = new Semaphore(0);
+    
+    new WriteAction<ExecutionResult>() {
       @Override
-      protected void run(Result<ExecutionResult> result) throws Throwable {
+      protected void run(@NotNull Result<ExecutionResult> result) throws Throwable {
         final ExecutionResult res =
           pyState.execute(executor, PyDebugRunner.createCommandLinePatchers(myFixture.getProject(), pyState, profile, serverLocalPort));
 
@@ -158,7 +160,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask implements RemoteSdkTesta
 
 
     myPausedSemaphore = new Semaphore(0);
-    myTerminateSemaphore = new Semaphore(0);
+    
 
     mySession.addSessionListener(new XDebugSessionAdapter() {
       @Override
