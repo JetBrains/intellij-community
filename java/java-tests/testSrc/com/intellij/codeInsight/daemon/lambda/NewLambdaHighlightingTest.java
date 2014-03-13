@@ -162,6 +162,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testAdditionalConstraintDependsOnNonMentionedVars() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

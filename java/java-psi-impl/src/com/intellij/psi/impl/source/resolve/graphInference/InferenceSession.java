@@ -788,6 +788,25 @@ public class InferenceSession {
   }
 
   private boolean proceedWithAdditionalConstraints(Set<ConstraintFormula> additionalConstraints) {
+    final Set<InferenceVariable> mentionedVars = new HashSet<InferenceVariable>();
+    for (ConstraintFormula constraint : additionalConstraints) {
+      if (constraint instanceof InputOutputConstraintFormula) {
+        final Set<InferenceVariable> inputVariables = ((InputOutputConstraintFormula)constraint).getInputVariables(this);
+        if (inputVariables != null) {
+          mentionedVars.addAll(inputVariables);
+        }
+        final Set<InferenceVariable> outputVariables = ((InputOutputConstraintFormula)constraint).getOutputVariables(inputVariables, this);
+        if (outputVariables != null) {
+          mentionedVars.addAll(outputVariables);
+        }
+      }
+    }
+
+    final Set<InferenceVariable> readyVariables = new LinkedHashSet<InferenceVariable>(myInferenceVariables.values());
+    readyVariables.removeAll(mentionedVars);
+
+    final PsiSubstitutor siteSubstitutor = resolveBounds(readyVariables, mySiteSubstitutor);
+
     while (!additionalConstraints.isEmpty()) {
       //extract subset of constraints
       final Set<ConstraintFormula> subset = buildSubset(additionalConstraints);
@@ -804,7 +823,7 @@ public class InferenceSession {
       }
 
       //resolve input variables
-      PsiSubstitutor substitutor = resolveSubset(varsToResolve, mySiteSubstitutor);
+      PsiSubstitutor substitutor = resolveSubset(varsToResolve, siteSubstitutor);
 
       if (substitutor == null) {
         return false;
