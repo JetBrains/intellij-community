@@ -602,7 +602,7 @@ public abstract class DebuggerUtils {
     }
 
     for (JavaDebugAware provider : JavaDebugAware.EP_NAME.getExtensions()) {
-      if (breakpointAware ? provider.isBreakpointAware(file, fileType) : provider.isActionAware(file, fileType)) {
+      if (breakpointAware ? provider.isBreakpointAware(file) : provider.isActionAware(file)) {
         return true;
       }
     }
