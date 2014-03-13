@@ -16,7 +16,6 @@
 package com.intellij.remote;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
@@ -35,7 +34,7 @@ public abstract class VagrantSupport {
     return ServiceManager.getService(VagrantSupport.class);
   }
 
-  public abstract Pair<String, RemoteCredentials> getVagrantSettings(Project data);
+  public abstract Pair<String, RemoteCredentials> getVagrantSettings(Project project);
 
   public abstract RemoteCredentials getCredentials(@NotNull String folder);
 
