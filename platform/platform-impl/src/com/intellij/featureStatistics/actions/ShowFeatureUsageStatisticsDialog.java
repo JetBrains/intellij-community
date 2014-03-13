@@ -33,7 +33,6 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -190,8 +189,7 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
 
     splitter.setFirstComponent(topPanel);
 
-    final JEditorPane browser = new JEditorPane(UIUtil.HTML_MIME, "");
-    browser.setEditable(false);
+    final JEditorPane browser = TipUIUtil.createTipBrowser();
     splitter.setSecondComponent(ScrollPaneFactory.createScrollPane(browser));
 
     table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);

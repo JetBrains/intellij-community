@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util;
 
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -37,8 +38,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.URL;
 
@@ -71,12 +77,6 @@ public class TipUIUtil {
 
   public static void openTipInBrowser(@Nullable TipAndTrickBean tip, JEditorPane browser) {
     if (tip == null) return;
-    /* TODO: detect that file is not present
-    if (!file.exists()) {
-      browser.read(new StringReader("Tips for '" + feature.getDisplayName() + "' not found.  Make sure you installed IntelliJ IDEA correctly."), null);
-      return;
-    }
-    */
     try {
       PluginDescriptor pluginDescriptor = tip.getPluginDescriptor();
       ClassLoader tipLoader = pluginDescriptor == null ? TipUIUtil.class.getClassLoader() :
@@ -199,5 +199,34 @@ public class TipUIUtil {
       }
     }
     return null;
+  }
+
+  @NotNull
+  public static JEditorPane createTipBrowser() {
+    JEditorPane browser = new JEditorPane();
+    browser.setEditable(false);
+    HTMLEditorKit editorKit = new HTMLEditorKit();
+    browser.setEditorKit(editorKit);
+    browser.setBackground(UIUtil.getTextFieldBackground());
+    browser.addHyperlinkListener(
+      new HyperlinkListener() {
+        public void hyperlinkUpdate(HyperlinkEvent e) {
+          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            BrowserUtil.browse(e.getURL());
+          }
+        }
+      }
+    );
+    try {
+      // set default CSS for plugin tips
+      URL resource = ResourceUtil.getResource(TipUIUtil.class, "/tips/css/", UIUtil.isUnderDarcula() ? "tips_darcula.css" : "tips.css");
+      StyleSheet sheet = new StyleSheet();
+      sheet.loadRules(new InputStreamReader(resource.openStream()), resource);
+      editorKit.setStyleSheet(sheet);
+    }
+    catch (IOException ignored) {
+    }
+
+    return browser;
   }
 }
