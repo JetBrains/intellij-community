@@ -55,12 +55,12 @@ public class PythonUnitTestingTest extends PyEnvTestCase{
   }
 
   public void testFolder() {
-    runPythonTest(new PyUnitTestTask("/testRunner/env/unit", "") {
+    runPythonTest(new PyUnitTestTask("/testRunner/env/unit", "test_folder/") {
 
       @Override
       public void after() {
-        assertEquals(9, allTestsCount());
-        assertEquals(6, passedTestsCount());
+        assertEquals(5, allTestsCount());
+        assertEquals(3, passedTestsCount());
       }
     });
   }
