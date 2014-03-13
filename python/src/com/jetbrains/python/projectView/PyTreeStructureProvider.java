@@ -23,6 +23,7 @@ import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.JdkOrderEntry;
@@ -50,15 +51,25 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
   @NotNull
   @Override
   public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children, ViewSettings settings) {
+    final Project project = parent.getProject();
     final Sdk sdk = getPythonSdk(parent);
-    if (sdk != null) {
-      return hideSkeletons(children);
+    if (sdk != null && project != null) {
+      final Collection<AbstractTreeNode> newChildren = hideSkeletons(children);
+      final PySkeletonsNode skeletonsNode = PySkeletonsNode.create(project, sdk, settings);
+      if (skeletonsNode != null) {
+        newChildren.add(skeletonsNode);
+      }
+      final PyUserSkeletonsNode userSkeletonsNode = PyUserSkeletonsNode.create(project, settings);
+      if (userSkeletonsNode != null) {
+        newChildren.add(userSkeletonsNode);
+      }
+      return newChildren;
     }
     if (settings.isShowMembers()) {
       List<AbstractTreeNode> newChildren = new ArrayList<AbstractTreeNode>();
       for (AbstractTreeNode child : children) {
         if (child instanceof PsiFileNode && ((PsiFileNode)child).getValue() instanceof PyFile) {
-          newChildren.add(new PyFileNode(parent.getProject(), ((PsiFileNode)child).getValue(), settings));
+          newChildren.add(new PyFileNode(project, ((PsiFileNode)child).getValue(), settings));
         }
         else {
           newChildren.add(child);
