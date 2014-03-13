@@ -28,6 +28,7 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import org.jetbrains.annotations.NonNls;
@@ -167,20 +168,19 @@ public class XBreakpointUtil {
       }
     }
 
-
-    XLineBreakpoint res = null;
     if (typeWinner != null) {
-      res = XDebuggerUtil.getInstance().toggleLineBreakpoint(project, typeWinner, file, lineWinner, temporary);
-    }
+      XLineBreakpoint res = XDebuggerUtilImpl.toggleAndReturnLineBreakpoint(project, typeWinner, file, lineWinner, temporary);
 
-    if (editor != null && lineStart != lineWinner) {
-      int offset = editor.getDocument().getLineStartOffset(lineWinner);
-      ExpandRegionAction.expandRegionAtOffset(project, editor, offset);
-      if (moveCarret) {
-        editor.getCaretModel().moveToOffset(offset);
+      if (editor != null && lineStart != lineWinner) {
+        int offset = editor.getDocument().getLineStartOffset(lineWinner);
+        ExpandRegionAction.expandRegionAtOffset(project, editor, offset);
+        if (moveCarret) {
+          editor.getCaretModel().moveToOffset(offset);
+        }
       }
+      return res;
     }
 
-    return res;
+    return null;
   }
 }
