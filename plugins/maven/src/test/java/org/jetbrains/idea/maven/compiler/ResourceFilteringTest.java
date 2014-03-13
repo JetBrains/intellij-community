@@ -745,6 +745,47 @@ public abstract class ResourceFilteringTest extends MavenCompilingTestCase {
                                                    "value3=value2\n");
   }
 
+  public void testCustomFiltersViaPlugin() throws Exception {
+    createProjectSubFile("filters/filter.properties", "xxx=value");
+    createProjectSubFile("resources/file.properties", "value1=${xxx}");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>\n" +
+                  "    <plugin>\n" +
+                  "      <groupId>org.codehaus.mojo</groupId>\n" +
+                  "      <artifactId>properties-maven-plugin</artifactId>\n" +
+                  "      <executions>\n" +
+                  "        <execution>\n" +
+                  "          <id>common-properties</id>\n" +
+                  "          <phase>initialize</phase>\n" +
+                  "          <goals>\n" +
+                  "            <goal>read-project-properties</goal>\n" +
+                  "          </goals>\n" +
+                  "          <configuration>\n" +
+                  "            <files>\n" +
+                  "              <file>filters/filter.properties</file>\n" +
+                  "            </files>\n" +
+                  "          </configuration>\n" +
+                  "        </execution>\n" +
+                  "      </executions>\n" +
+                  "    </plugin>" +
+                  "  </plugins>\n" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+    compileModules("project");
+
+    assertResult("target/classes/file.properties", "value1=value");
+  }
+
   public void testCustomFilterWithPropertyInThePath() throws Exception {
     createProjectSubFile("filters/filter.properties", "xxx=value");
     createProjectSubFile("resources/file.properties", "value=${xxx}");
