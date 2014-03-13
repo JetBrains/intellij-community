@@ -73,7 +73,7 @@ public class PyRedundantParenthesesInspection extends PyInspection {
       if (node.getText().contains("\n")) return;
       PyYieldExpression yieldExpression = PsiTreeUtil.getParentOfType(expression, PyYieldExpression.class, false);
       if (yieldExpression != null) return;
-      if (node.getParent() instanceof PyReturnStatement && expression instanceof PyTupleExpression && myIgnoreTupleInReturn) {
+      if (expression instanceof PyTupleExpression && myIgnoreTupleInReturn) {
         return;
       }
       if (expression instanceof PyReferenceExpression || expression instanceof PyLiteralExpression) {
