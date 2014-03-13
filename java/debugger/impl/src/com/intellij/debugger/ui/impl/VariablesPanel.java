@@ -64,7 +64,9 @@ public class VariablesPanel extends DebuggerTreePanel implements DataProvider {
     registerDisposable(myXTree);
     myCards.add(myXTree.getTree(), X_TREE);
 
-    add(ScrollPaneFactory.createScrollPane(myCards), BorderLayout.CENTER);
+    JScrollPane pane = ScrollPaneFactory.createScrollPane(myCards);
+    pane.getVerticalScrollBar().setUnitIncrement(10);
+    add(pane, BorderLayout.CENTER);
     registerDisposable(DebuggerAction.installEditAction(frameTree, DebuggerActions.EDIT_NODE_SOURCE));
 
     overrideShortcut(frameTree, DebuggerActions.COPY_VALUE, CommonShortcuts.getCopy());
