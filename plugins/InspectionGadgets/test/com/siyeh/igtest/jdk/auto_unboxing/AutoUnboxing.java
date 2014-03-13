@@ -63,4 +63,8 @@ public class AutoUnboxing {
     boolean polyadic() {
         return true && Boolean.TRUE && true;
     }
+
+  void n() {
+    boolean b = Boolean.valueOf(true) == ;
+  }
 }

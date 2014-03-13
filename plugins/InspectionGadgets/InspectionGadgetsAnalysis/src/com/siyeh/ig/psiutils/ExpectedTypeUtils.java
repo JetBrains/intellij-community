@@ -155,6 +155,10 @@ public class ExpectedTypeUtils {
     @Override
     public void visitPolyadicExpression(@NotNull PsiPolyadicExpression polyadicExpression) {
       final PsiExpression[] operands = polyadicExpression.getOperands();
+      if (operands.length < 2) {
+        expectedType = null;
+        return;
+      }
       for (PsiExpression operand : operands) {
         if (operand == null || operand.getType() == null) {
           expectedType = null;
