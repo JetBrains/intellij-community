@@ -43,6 +43,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
@@ -372,6 +373,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   private static void addLibrariesFromModule(Module module, Collection<String> list) {
+    if (PlatformUtils.isPyCharm()) {
+      return;
+    }
     final OrderEntry[] entries = ModuleRootManager.getInstance(module).getOrderEntries();
     for (OrderEntry entry : entries) {
       if (entry instanceof LibraryOrderEntry) {
