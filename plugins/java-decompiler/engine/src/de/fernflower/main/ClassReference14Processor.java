@@ -95,15 +95,18 @@ public class ClassReference14Processor {
 		
 		ClassWrapper wrapper = node.wrapper;
 		
-		int major_version = wrapper.getClassStruct().major_version;
-		int minor_version = wrapper.getClassStruct().minor_version;
-		
-		if(major_version > 48 || (major_version == 48 && minor_version > 0)) {
+//		int major_version = wrapper.getClassStruct().major_version;
+//		int minor_version = wrapper.getClassStruct().minor_version;
+//		
+//		if(major_version > 48 || (major_version == 48 && minor_version > 0)) {
+//			// version 1.5 or above
+//			return;
+//		}
+
+		if(wrapper.getClassStruct().isVersionGE_1_5()) {
 			// version 1.5 or above
 			return;
 		}
-
-		
 		
 		// find the synthetic method Class class$(String) if present
 		HashMap<ClassWrapper, MethodWrapper> mapClassMeths = new HashMap<ClassWrapper, MethodWrapper>(); 

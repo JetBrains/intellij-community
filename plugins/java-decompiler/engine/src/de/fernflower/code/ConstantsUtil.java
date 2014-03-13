@@ -30,6 +30,7 @@ import de.fernflower.code.optinstructions.GOTO_W;
 import de.fernflower.code.optinstructions.IINC;
 import de.fernflower.code.optinstructions.ILOAD;
 import de.fernflower.code.optinstructions.INSTANCEOF;
+import de.fernflower.code.optinstructions.INVOKEDYNAMIC;
 import de.fernflower.code.optinstructions.INVOKEINTERFACE;
 import de.fernflower.code.optinstructions.INVOKESPECIAL;
 import de.fernflower.code.optinstructions.INVOKESTATIC;
@@ -58,17 +59,18 @@ public class ConstantsUtil {
 		return opcodeNames[opcode];
 	}
 
-	public static Instruction getInstructionInstance(int opcode, boolean wide, int group, int[] operands) {
+	public static Instruction getInstructionInstance(int opcode, boolean wide, int group, int bytecode_version, int[] operands) {
 
-		Instruction instr = getInstructionInstance(opcode);
+		Instruction instr = getInstructionInstance(opcode, bytecode_version);
 		instr.wide = wide;
 		instr.group = group;
+		instr.bytecode_version = bytecode_version;
 		instr.setOperands(operands);
 
 		return instr;
 	}
 	
-	public static Instruction getInstructionInstance(int opcode) {
+	private static Instruction getInstructionInstance(int opcode, int bytecode_version) {
 		try {
 			Instruction instr;
 			
@@ -78,7 +80,13 @@ public class ConstantsUtil {
 					opcode == CodeConstants.opc_ifnonnull) {
 				instr = new IfInstruction();
 			} else {
+
 				Class cl = opcodeClasses[opcode];
+				
+				if(opcode == CodeConstants.opc_invokedynamic && bytecode_version < CodeConstants.BYTECODE_JAVA_7) { 
+					cl = null; // instruction unused in Java 6 and before
+				} 
+					
 				if(cl == null) {
 					instr = new Instruction();
 				} else {
@@ -282,7 +290,8 @@ public class ConstantsUtil {
 		"invokespecial",		//    "invokespecial",
 		"invokestatic",		//    "invokestatic",
 		"invokeinterface",		//    "invokeinterface",
-		"xxxunusedxxx",		//    "xxxunusedxxx",
+		//"xxxunusedxxx",		//    "xxxunusedxxx", Java 6 and before
+		"invokedynamic",		//    "invokedynamic", Java 7 and later
 		"new",				//    "new",
 		"newarray",		//    "newarray",
 		"anewarray",		//    "anewarray",
@@ -487,7 +496,7 @@ public class ConstantsUtil {
 		INVOKESPECIAL.class,		//    "invokespecial",
 		INVOKESTATIC.class,		//    "invokestatic",
 		INVOKEINTERFACE.class,		//    "invokeinterface",
-		null		,		//    "xxxunusedxxx",
+		INVOKEDYNAMIC.class,		//    "xxxunusedxxx" Java 6 and before, "invokedynamic" Java 7 and later
 		NEW.class,				//    "new",
 		NEWARRAY.class,		//    "newarray",
 		ANEWARRAY.class,		//    "anewarray",

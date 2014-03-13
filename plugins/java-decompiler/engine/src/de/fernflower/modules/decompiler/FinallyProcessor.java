@@ -14,16 +14,13 @@
 
 package de.fernflower.modules.decompiler;
 
-import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 
-import test.util.DotExporter;
 import de.fernflower.code.CodeConstants;
 import de.fernflower.code.ConstantsUtil;
 import de.fernflower.code.Instruction;
@@ -73,6 +70,8 @@ public class FinallyProcessor {
 	
 	private boolean processStatementEx(StructMethod mt, RootStatement root, ControlFlowGraph graph) {
 		
+		int bytecode_version = mt.getClassStruct().getBytecodeVersion();
+		
 		LinkedList<Statement> stack = new LinkedList<Statement>();
 		stack.add(root);
 		
@@ -110,7 +109,7 @@ public class FinallyProcessor {
 						} else {
 							
 							int varindex = DecompilerContext.getCountercontainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER);
-							insertSemaphore(graph, getAllBasicBlocks(fin.getFirst()), head, handler, varindex, inf);
+							insertSemaphore(graph, getAllBasicBlocks(fin.getFirst()), head, handler, varindex, inf, bytecode_version);
 							
 							finallyBlockIDs.put(handler.id, varindex);
 						}
@@ -360,7 +359,7 @@ public class FinallyProcessor {
 		return new Object[] {firstcode, mapLast};
 	}
 	
-	private void insertSemaphore(ControlFlowGraph graph, HashSet<BasicBlock> setTry, BasicBlock head, BasicBlock handler, int var, Object[] information) {
+	private void insertSemaphore(ControlFlowGraph graph, HashSet<BasicBlock> setTry, BasicBlock head, BasicBlock handler, int var, Object[] information, int bytecode_version) {
 		
 		HashSet<BasicBlock> setCopy = new HashSet<BasicBlock>(setTry);
 		
@@ -389,8 +388,8 @@ public class FinallyProcessor {
 					// disable semaphore
 					SimpleInstructionSequence seq = new SimpleInstructionSequence();
 
-					seq.addInstruction(ConstantsUtil.getInstructionInstance(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, new int[]{0}) , -1);
-					seq.addInstruction(ConstantsUtil.getInstructionInstance(CodeConstants.opc_istore, false, CodeConstants.GROUP_GENERAL, new int[]{var}) , -1);
+					seq.addInstruction(ConstantsUtil.getInstructionInstance(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{0}) , -1);
+					seq.addInstruction(ConstantsUtil.getInstructionInstance(CodeConstants.opc_istore, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{var}) , -1);
 
 					// build a separate block
 					BasicBlock newblock = new BasicBlock(++graph.last_id);
@@ -419,8 +418,8 @@ public class FinallyProcessor {
 		
 		// enable semaphor at the statement entrance
 		SimpleInstructionSequence seq = new SimpleInstructionSequence();
-		seq.addInstruction(ConstantsUtil.getInstructionInstance(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, new int[]{1}) , -1);
-		seq.addInstruction(ConstantsUtil.getInstructionInstance(CodeConstants.opc_istore, false, CodeConstants.GROUP_GENERAL, new int[]{var}) , -1);
+		seq.addInstruction(ConstantsUtil.getInstructionInstance(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{1}) , -1);
+		seq.addInstruction(ConstantsUtil.getInstructionInstance(CodeConstants.opc_istore, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{var}) , -1);
 		
 		BasicBlock newhead = new BasicBlock(++graph.last_id);
 		newhead.setSeq(seq);
@@ -429,8 +428,8 @@ public class FinallyProcessor {
 		
 		// initialize semaphor with false
 		seq = new SimpleInstructionSequence();
-		seq.addInstruction(ConstantsUtil.getInstructionInstance(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, new int[]{0}) , -1);
-		seq.addInstruction(ConstantsUtil.getInstructionInstance(CodeConstants.opc_istore, false, CodeConstants.GROUP_GENERAL, new int[]{var}) , -1);
+		seq.addInstruction(ConstantsUtil.getInstructionInstance(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{0}) , -1);
+		seq.addInstruction(ConstantsUtil.getInstructionInstance(CodeConstants.opc_istore, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{var}) , -1);
 		
 		BasicBlock newheadinit = new BasicBlock(++graph.last_id);
 		newheadinit.setSeq(seq);
@@ -566,9 +565,9 @@ public class FinallyProcessor {
 			lstAreas.add(new Object[] {start, arr[0], arr[1]});
 		}
 
-		try {
-			DotExporter.toDotFile(graph, new File("c:\\Temp\\fern5.dot"), true);
-		} catch(Exception ex){ex.printStackTrace();} 
+//		try {
+//			DotExporter.toDotFile(graph, new File("c:\\Temp\\fern5.dot"), true);
+//		} catch(Exception ex){ex.printStackTrace();} 
 		
 		// delete areas
 		for(Object[] area: lstAreas) {
@@ -941,24 +940,24 @@ public class FinallyProcessor {
 		// remove all the blocks inbetween 
 		for(BasicBlock block: setBlocks) {
 
-			if(!block.getSuccExceptions().containsAll(setCommonExceptionHandlers)) {
-				is_outside_range = true;
-			}
-			
-			HashSet<ExceptionRangeCFG> setRemovedExceptionRanges = new HashSet<ExceptionRangeCFG>(); 
-			for(BasicBlock handler : block.getSuccExceptions()) {
-				setRemovedExceptionRanges.add(graph.getExceptionRange(handler, block));
-			}
-
-			if(setCommonRemovedExceptionRanges == null) {
-				setCommonRemovedExceptionRanges = setRemovedExceptionRanges; 
-			} else {
-				setCommonRemovedExceptionRanges.retainAll(setRemovedExceptionRanges);
-			}
-			
 			// artificial basic blocks (those resulted from splitting)
 			// can belong to more than one area
 			if(graph.getBlocks().containsKey(block.id)) {
+			
+				if(!block.getSuccExceptions().containsAll(setCommonExceptionHandlers)) {
+					is_outside_range = true;
+				}
+				
+				HashSet<ExceptionRangeCFG> setRemovedExceptionRanges = new HashSet<ExceptionRangeCFG>(); 
+				for(BasicBlock handler : block.getSuccExceptions()) {
+					setRemovedExceptionRanges.add(graph.getExceptionRange(handler, block));
+				}
+	
+				if(setCommonRemovedExceptionRanges == null) {
+					setCommonRemovedExceptionRanges = setRemovedExceptionRanges; 
+				} else {
+					setCommonRemovedExceptionRanges.retainAll(setRemovedExceptionRanges);
+				}
 			
 				// shift extern edges on splitted blocks
 				if(block.getSeq().isEmpty() && block.getSuccs().size() == 1) {

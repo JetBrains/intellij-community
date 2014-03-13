@@ -413,15 +413,18 @@ public class InstructionImpact {
 			case CodeConstants.opc_invokeinterface:
 				stack.pop();
 			case CodeConstants.opc_invokestatic:
-				ck = pool.getLinkConstant(instr.getOperand(0));
-				MethodDescriptor md = MethodDescriptor.parseDescriptor(ck.descriptor);
-				for(int i=0;i<md.params.length;i++) {
-					stack.pop(md.params[i].stack_size); 
-				}
-				if(md.ret.type != CodeConstants.TYPE_VOID) {
-					stack.push(md.ret);
-					if(md.ret.stack_size==2) {
-						stack.push(new VarType(CodeConstants.TYPE_GROUP2EMPTY));
+			case CodeConstants.opc_invokedynamic:
+				if(instr.opcode != CodeConstants.opc_invokedynamic || instr.bytecode_version >= CodeConstants.BYTECODE_JAVA_7) {
+					ck = pool.getLinkConstant(instr.getOperand(0));
+					MethodDescriptor md = MethodDescriptor.parseDescriptor(ck.descriptor);
+					for(int i=0;i<md.params.length;i++) {
+						stack.pop(md.params[i].stack_size); 
+					}
+					if(md.ret.type != CodeConstants.TYPE_VOID) {
+						stack.push(md.ret);
+						if(md.ret.stack_size==2) {
+							stack.push(new VarType(CodeConstants.TYPE_GROUP2EMPTY));
+						}
 					}
 				}
 				break;

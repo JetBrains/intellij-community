@@ -280,6 +280,8 @@ public class StructMethod implements CodeConstants {
 		
 		VBStyleCollection<Instruction, Integer> collinstr = new VBStyleCollection<Instruction, Integer>();
 		
+		int bytecode_version = classStruct.getBytecodeVersion();
+		
 		for(int i=0;i<length;) {
 			
 			int offset = i;
@@ -360,6 +362,14 @@ public class StructMethod implements CodeConstants {
 						group = GROUP_FIELDACCESS;
 					} else if(opcode>=opc_invokevirtual && opcode<=opc_invokestatic) {
 						group = GROUP_INVOCATION;
+					}
+					break;
+				case opc_invokedynamic:
+					if(classStruct.isVersionGE_1_7()) { // instruction unused in Java 6 and before
+						operands.add(new Integer(in.readUnsignedShort()));
+						in.skip(2);
+						group = GROUP_INVOCATION;
+						i+=4;
 					}
 					break;
 				case opc_iload:
@@ -466,7 +476,7 @@ public class StructMethod implements CodeConstants {
 				ops[j] = ((Integer)operands.get(j)).intValue();  
 			}
 			
-			Instruction instr = ConstantsUtil.getInstructionInstance(opcode, wide, group, ops);
+			Instruction instr = ConstantsUtil.getInstructionInstance(opcode, wide, group, bytecode_version, ops);
 			
 			collinstr.addWithKey(instr, new Integer(offset));
 			
@@ -542,6 +552,9 @@ public class StructMethod implements CodeConstants {
 		return classStruct;
 	}
 
+	public boolean containsCode() {
+		return containsCode;
+	}
 }
 
 

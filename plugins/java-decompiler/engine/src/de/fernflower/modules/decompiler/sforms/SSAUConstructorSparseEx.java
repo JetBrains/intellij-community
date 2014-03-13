@@ -110,9 +110,9 @@ public class SSAUConstructorSparseEx {
 		
 		HashSet<String> updated = new HashSet<String>();
 		do {
-//			System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
+			//System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
 			ssaStatements(dgraph, updated, false);
-//			System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
+			//System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
 		} while(!updated.isEmpty());
 
 
@@ -146,6 +146,7 @@ public class SSAUConstructorSparseEx {
 										|| (outNegVarVersions.containsKey(node.id) && !mapsEqual(varmaparr[1], outNegVarVersions.get(node.id)));
 			
 			if(this_updated) {
+				
 				outVarVersions.put(node.id, varmaparr[0]);
 				if(dgraph.mapNegIfBranch.containsKey(node.id)) {
 					outNegVarVersions.put(node.id, varmaparr[1]);
@@ -246,45 +247,45 @@ public class SSAUConstructorSparseEx {
 		
 		SFormsFastMapDirect varmap = varmaparr[0];
 		
-		// field access
-		if(expr.type == Exprent.EXPRENT_FIELD) {
-			
-			int index;
-			if(mapFieldVars.containsKey(expr.id)) {
-				index = mapFieldVars.get(expr.id);
-			} else {
-				index = fieldvarcounter--;
-				mapFieldVars.put(expr.id, index);
-
-				// ssu graph
-				ssuversions.createNode(new VarVersionPaar(index, 1));
-			}
-			
-			setCurrentVar(varmap, index, 1);
-			
-		} else if(expr.type == Exprent.EXPRENT_INVOCATION || 
-				(expr.type == Exprent.EXPRENT_ASSIGNMENT && ((AssignmentExprent)expr).getLeft().type == Exprent.EXPRENT_FIELD) || 
-				(expr.type == Exprent.EXPRENT_NEW && ((NewExprent)expr).getNewtype().type == CodeConstants.TYPE_OBJECT) ||
-				expr.type == Exprent.EXPRENT_FUNCTION) {
-			
-			boolean ismmpp = true;
-			
-			if(expr.type == Exprent.EXPRENT_FUNCTION) {
-				
-				ismmpp = false;
-				
-				FunctionExprent fexpr = (FunctionExprent)expr;
-				if(fexpr.getFunctype() >= FunctionExprent.FUNCTION_IMM && fexpr.getFunctype() <= FunctionExprent.FUNCTION_PPI) {
-					if(fexpr.getLstOperands().get(0).type == Exprent.EXPRENT_FIELD) {
-						ismmpp = true;
-					}
-				}
-			}
-			
-			if(ismmpp) {
-				varmap.removeAllFields();
-			}
-		}
+//		// field access
+//		if(expr.type == Exprent.EXPRENT_FIELD) {
+//			
+//			int index;
+//			if(mapFieldVars.containsKey(expr.id)) {
+//				index = mapFieldVars.get(expr.id);
+//			} else {
+//				index = fieldvarcounter--;
+//				mapFieldVars.put(expr.id, index);
+//
+//				// ssu graph
+//				ssuversions.createNode(new VarVersionPaar(index, 1));
+//			}
+//			
+//			setCurrentVar(varmap, index, 1);
+//			
+//		} else if(expr.type == Exprent.EXPRENT_INVOCATION || 
+//				(expr.type == Exprent.EXPRENT_ASSIGNMENT && ((AssignmentExprent)expr).getLeft().type == Exprent.EXPRENT_FIELD) || 
+//				(expr.type == Exprent.EXPRENT_NEW && ((NewExprent)expr).getNewtype().type == CodeConstants.TYPE_OBJECT) ||
+//				expr.type == Exprent.EXPRENT_FUNCTION) {
+//			
+//			boolean ismmpp = true;
+//			
+//			if(expr.type == Exprent.EXPRENT_FUNCTION) {
+//				
+//				ismmpp = false;
+//				
+//				FunctionExprent fexpr = (FunctionExprent)expr;
+//				if(fexpr.getFunctype() >= FunctionExprent.FUNCTION_IMM && fexpr.getFunctype() <= FunctionExprent.FUNCTION_PPI) {
+//					if(fexpr.getLstOperands().get(0).type == Exprent.EXPRENT_FIELD) {
+//						ismmpp = true;
+//					}
+//				}
+//			}
+//			
+//			if(ismmpp) {
+//				varmap.removeAllFields();
+//			}
+//		}
 		
 		
 		if(varassign != null) {

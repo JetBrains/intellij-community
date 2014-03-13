@@ -102,7 +102,7 @@ public class MethodProcessorThread implements Runnable {
 //			System.out.println();
 //		}
 		
-//		DotExporter.toDotFile(graph, new File("c:\\Temp\\fern1.dot"), true);
+		//DotExporter.toDotFile(graph, new File("c:\\Temp\\fern1.dot"), true);
 		
 		DeadCodeHelper.removeDeadBlocks(graph);
 		graph.inlineJsr(mt);
@@ -142,7 +142,7 @@ public class MethodProcessorThread implements Runnable {
 		DecompilerContext.getCountercontainer().setCounter(CounterContainer.VAR_COUNTER, mt.getLocalVariables());
 		
 		//DotExporter.toDotFile(graph, new File("c:\\Temp\\fern3.dot"), true);
-		System.out.println(graph.toString());
+		//System.out.println(graph.toString());
 		
 		if(ExceptionDeobfuscator.hasObfuscatedExceptions(graph)) {
 			DecompilerContext.getLogger().writeMessage("Heavily obfuscated exception ranges found!", IFernflowerLogger.WARNING);
@@ -157,7 +157,7 @@ public class MethodProcessorThread implements Runnable {
 				//DotExporter.toDotFile(graph, new File("c:\\Temp\\fern2.dot"), true);
 				//System.out.println(graph.toString());
 
-				System.out.println("~~~~~~~~~~~~~~~~~~~~~~ \r\n"+root.toJava());
+				//System.out.println("~~~~~~~~~~~~~~~~~~~~~~ \r\n"+root.toJava());
 				
 				root = DomHelper.parseGraph(graph);
 			}

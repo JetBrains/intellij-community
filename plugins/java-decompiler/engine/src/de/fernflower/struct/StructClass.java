@@ -22,6 +22,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import de.fernflower.code.CodeConstants;
 import de.fernflower.struct.attr.StructGeneralAttribute;
 import de.fernflower.struct.consts.ConstantPool;
 import de.fernflower.struct.consts.PrimitiveConstant;
@@ -318,4 +319,26 @@ public class StructClass {
 		return loader;
 	}
 
+	public boolean isVersionGE_1_5() {
+		return (major_version > 48 || (major_version == 48 && minor_version > 0)); // FIXME: check second condition
+	}
+
+	public boolean isVersionGE_1_7() {
+		return (major_version >= 51);
+	}
+	
+	public int getBytecodeVersion() {
+		switch(major_version) {
+		case 52:
+			return CodeConstants.BYTECODE_JAVA_8;
+		case 51:
+			return CodeConstants.BYTECODE_JAVA_7;
+		case 50:
+			return CodeConstants.BYTECODE_JAVA_6;
+		case 49:
+			return CodeConstants.BYTECODE_JAVA_5;
+		}
+		
+		return CodeConstants.BYTECODE_JAVA_LE_4;
+	}
 }

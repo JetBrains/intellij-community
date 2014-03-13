@@ -527,11 +527,14 @@ public class ExprProcessor implements CodeConstants {
 			case opc_invokespecial:
 			case opc_invokestatic:
 			case opc_invokeinterface:
-				InvocationExprent exprinv = new InvocationExprent(instr.opcode, pool.getLinkConstant(instr.getOperand(0)), stack);
-				if (exprinv.getDescriptor().ret.type == CodeConstants.TYPE_VOID) {
-					exprlist.add(exprinv);
-				} else {
-					pushEx(stack, exprlist, exprinv);
+			case opc_invokedynamic:
+				if(instr.opcode != opc_invokedynamic || instr.bytecode_version >= CodeConstants.BYTECODE_JAVA_7) {
+					InvocationExprent exprinv = new InvocationExprent(instr.opcode, pool.getLinkConstant(instr.getOperand(0)), stack);
+					if (exprinv.getDescriptor().ret.type == CodeConstants.TYPE_VOID) {
+						exprlist.add(exprinv);
+					} else {
+						pushEx(stack, exprlist, exprinv);
+					}
 				}
 				break;
 			case opc_new:

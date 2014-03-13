@@ -17,6 +17,16 @@ package de.fernflower.code;
 public interface CodeConstants {
 
 	// ----------------------------------------------------------------------
+	// BYTECODE VERSIONS
+	// ----------------------------------------------------------------------
+	
+	public final static int		BYTECODE_JAVA_LE_4 = 1;
+	public final static int		BYTECODE_JAVA_5 = 2;
+	public final static int		BYTECODE_JAVA_6 = 3;
+	public final static int		BYTECODE_JAVA_7 = 4;
+	public final static int		BYTECODE_JAVA_8 = 5;
+	
+	// ----------------------------------------------------------------------
 	// VARIABLE TYPES
 	// ----------------------------------------------------------------------
 
@@ -339,6 +349,7 @@ public interface CodeConstants {
 	public final static int		opc_invokespecial = 183;	
 	public final static int		opc_invokestatic = 184;		
 	public final static int		opc_invokeinterface = 185;	
+	public final static int		opc_invokedynamic = 186;		
 	public final static int		opc_xxxunusedxxx = 186;		
 	public final static int		opc_new = 187;				
 	public final static int		opc_newarray = 188;			

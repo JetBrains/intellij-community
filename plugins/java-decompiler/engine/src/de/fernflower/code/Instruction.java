@@ -29,6 +29,7 @@ public class Instruction implements CodeConstants {
 	
 	public boolean wide = false;
 	
+	public int bytecode_version = BYTECODE_JAVA_LE_4;
 	
 	// *****************************************************************************
 	// private fields
@@ -55,7 +56,7 @@ public class Instruction implements CodeConstants {
 	}
 	
 	public Instruction clone() {
-		return ConstantsUtil.getInstructionInstance(opcode, wide, group, operands==null?null:(int[])operands.clone());
+		return ConstantsUtil.getInstructionInstance(opcode, wide, group, bytecode_version, operands==null?null:(int[])operands.clone());
 	}
 	
 	public String toString() {

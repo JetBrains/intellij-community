@@ -586,6 +586,11 @@ public class ClassWriter {
 				}
 			}
 		}
+		
+		// 'default' modifier (Java 8)
+		if(isInterface && mt.containsCode()) {
+			bufstrwriter.write("default ");
+		}
 
 		GenericMethodDescriptor descriptor = null;
 		if(DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {

@@ -408,17 +408,19 @@ public class FlattenStatementsHelper {
 		
 		if(finallyShortRangeSource != null) {
 			
+			boolean isContinueEdge = (edgetype == StatEdge.TYPE_CONTINUE);
+			
 			List<String[]> lst = mapShortRangeFinallyPathIds.get(sourcenode.id);
 			if(lst == null) {
 				mapShortRangeFinallyPathIds.put(sourcenode.id, lst = new ArrayList<String[]>());
 			}
-			lst.add(new String[]{finallyShortRangeSource.id, destination.id.toString(), finallyShortRangeEntry.id.toString(), isFinallyMonitorExceptionPath?"1":null});
+			lst.add(new String[]{finallyShortRangeSource.id, destination.id.toString(), finallyShortRangeEntry.id.toString(), isFinallyMonitorExceptionPath?"1":null, isContinueEdge?"1":null});
 			
 			lst = mapLongRangeFinallyPathIds.get(sourcenode.id);
 			if(lst == null) {
 				mapLongRangeFinallyPathIds.put(sourcenode.id, lst = new ArrayList<String[]>());
 			}
-			lst.add(new String[]{finallyLongRangeSource.id, destination.id.toString(), finallyLongRangeEntry.id.toString()});
+			lst.add(new String[]{finallyLongRangeSource.id, destination.id.toString(), finallyLongRangeEntry.id.toString(), isContinueEdge?"1":null});
 		}
 		
 	}
@@ -454,7 +456,10 @@ public class FlattenStatementsHelper {
 				
 				List<String[]> lst = ent.getValue();
 				for(String[] arr : lst) {
-					DirectNode dest = graph.nodes.getWithKey(mapDestinationNodes.get(Integer.parseInt(arr[1]))[0]);
+					
+					boolean isContinueEdge = arr[i==0?4:3] != null;
+					
+					DirectNode dest = graph.nodes.getWithKey(mapDestinationNodes.get(Integer.parseInt(arr[1]))[isContinueEdge?1:0]);
 					DirectNode enter = graph.nodes.getWithKey(mapDestinationNodes.get(Integer.parseInt(arr[2]))[0]);
 					
 					newLst.add(new FinallyPathWrapper(arr[0], dest.id, enter.id));
@@ -504,6 +509,10 @@ public class FlattenStatementsHelper {
 		@Override
 		public int hashCode() {
 			return (source+":"+destination+":"+entry).hashCode();
+		}
+		
+		public String toString() {
+			return source + "->(" + entry + ")->" + destination; 
 		}
 	}
 	

@@ -43,6 +43,7 @@ public class InvocationExprent extends Exprent {
 	public static final int INVOKE_VIRTUAL = 2;
 	public static final int INVOKE_STATIC = 3;
 	public static final int INVOKE_INTERFACE = 4;
+	public static final int INVOKE_DYNAMIC = 5;
 	
 	public static final int TYP_GENERAL = 1;
 	public static final int TYP_INIT = 2;
@@ -93,6 +94,10 @@ public class InvocationExprent extends Exprent {
 			break;
 		case CodeConstants.opc_invokeinterface:
 			invocationTyp = INVOKE_INTERFACE;
+			break;
+		case CodeConstants.opc_invokedynamic:
+			invocationTyp = INVOKE_DYNAMIC;
+			classname = "java/lang/Class"; // dummy class name
 		}
 		
 		if("<init>".equals(name)) {
@@ -108,7 +113,7 @@ public class InvocationExprent extends Exprent {
 			lstParameters.add(0, stack.pop());
 		}
 		
-		if(opcode == CodeConstants.opc_invokestatic) {
+		if(opcode == CodeConstants.opc_invokestatic || opcode == CodeConstants.opc_invokedynamic) {
 			isStatic = true;
 		} else {
 			instance = stack.pop(); 
@@ -174,9 +179,11 @@ public class InvocationExprent extends Exprent {
 		boolean isInstanceThis = false;
 		
 		if(isStatic) {
-			ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASSNODE);
-			if(node == null || !classname.equals(node.classStruct.qualifiedName)) {
-				buf.append(DecompilerContext.getImpcollector().getShortName(ExprProcessor.buildJavaClassName(classname)));
+			if(invocationTyp != INVOKE_DYNAMIC) {
+				ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASSNODE);
+				if(node == null || !classname.equals(node.classStruct.qualifiedName)) {
+					buf.append(DecompilerContext.getImpcollector().getShortName(ExprProcessor.buildJavaClassName(classname)));
+				}
 			}
 		} else {
 
@@ -249,7 +256,12 @@ public class InvocationExprent extends Exprent {
 				buf.append(".");
 			}
 			
-			buf.append(name+"(");
+			buf.append(name);
+			if(invocationTyp == INVOKE_DYNAMIC) {
+				buf.append("<invokedynamic>");
+			}
+			buf.append("(");
+
 			break;
 		case TYP_CLINIT:
 			throw new RuntimeException("Explicite invocation of <clinit>");
