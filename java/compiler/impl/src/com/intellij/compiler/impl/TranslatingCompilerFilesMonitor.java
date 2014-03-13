@@ -1035,7 +1035,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     void execute(VirtualFile file);
   }
 
-  private static void processRecursively(final VirtualFile fromFile, final boolean dbOnly, final FileProcessor processor) {
+  private static void processRecursively(final VirtualFile fromFile, final boolean dbOnly, final boolean needReadAction, final FileProcessor processor) {
     if (!(fromFile.getFileSystem() instanceof LocalFileSystem)) {
       return;
     }
@@ -1064,22 +1064,27 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           return null; // skipping additional checks for the initial file and non-directory files
         }
         // optimization: for all files that are not under content of currently opened projects iterate over DB children
-        return isInContentOfOpenedProject(file)? null : ((NewVirtualFile)file).iterInDbChildren();
+        return isInContentOfOpenedProject(file, needReadAction)? null : ((NewVirtualFile)file).iterInDbChildren();
       }
     });
   }
 
-  private static boolean isInContentOfOpenedProject(@NotNull final VirtualFile file) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+  private static boolean isInContentOfOpenedProject(@NotNull final VirtualFile file, boolean needReadAction) {
+    // probably need a read action to ensure that the project was not disposed during the iteration over the project list
+    final Computable<Boolean> computation = new Computable<Boolean>() {
       public Boolean compute() {
         for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+          if (!project.isInitialized()) {
+            continue;
+          }
           if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
             return Boolean.TRUE;
           }
         }
         return Boolean.FALSE;
       }
-    });
+    };
+    return needReadAction? ApplicationManager.getApplication().runReadAction(computation) : computation.compute();
   }
   
   // made public for tests
@@ -1275,7 +1280,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                   projRef.get();
                   indicator.setText2(root.getPresentableUrl());
                   indicator.setFraction(++processed / (double)totalRootsCount);
-                  processRecursively(root, false, processor);
+                  processRecursively(root, false, true, processor);
                 }
               }
               
@@ -1505,7 +1510,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
       final Set<File> pathsToMark = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
-      processRecursively(eventFile, true, new FileProcessor() {
+      processRecursively(eventFile, true, false, new FileProcessor() {
         private final TIntArrayList myAssociatedProjectIds = new TIntArrayList();
         
         public void execute(final VirtualFile file) {
@@ -1596,7 +1601,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
     private void markDirtyIfSource(final VirtualFile file, final boolean fromMove) {
       final Set<File> pathsToMark = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-      processRecursively(file, false, new FileProcessor() {
+      processRecursively(file, false, false, new FileProcessor() {
         public void execute(final VirtualFile file) {
           pathsToMark.add(new File(file.getPath()));
           final SourceFileInfo srcInfo = file.isValid()? loadSourceInfo(file) : null;
@@ -1633,57 +1638,52 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
 
     private void processNewFile(final VirtualFile file, final boolean notifyServer) {
-      final Ref<Boolean> isInContent = Ref.create(false);
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        // need read action to ensure that the project was not disposed during the iteration over the project list
-        public void run() {
-          for (final Project project : myProjectManager.getOpenProjects()) {
-            if (!project.isInitialized()) {
-              continue; // the content of this project will be scanned during its post-startup activities
-            }
-            final int projectId = getProjectId(project);
-            final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-            if (fileIndex.isInContent(file)) {
-              isInContent.set(true);
-            }
-            if (isSuspended(projectId)) {
-              continue;
-            }
-            if (fileIndex.isInSourceContent(file)) {
-              final TranslatingCompiler[] translators = CompilerManager.getInstance(project).getCompilers(TranslatingCompiler.class);
-              processRecursively(file, false, new FileProcessor() {
-                public void execute(final VirtualFile file) {
-                  if (isCompilable(file)) {
-                    loadInfoAndAddSourceForRecompilation(projectId, file);
-                  }
-                }
-
-                boolean isCompilable(VirtualFile file) {
-                  for (TranslatingCompiler translator : translators) {
-                    if (translator.isCompilableFile(file, DummyCompileContext.getInstance())) {
-                      return true;
-                    }
-                  }
-                  return false;
-                }
-              });
-            }
-            else {
-              if (belongsToIntermediateSources(file, project)) {
-                processRecursively(file, false, new FileProcessor() {
-                  public void execute(final VirtualFile file) {
-                    loadInfoAndAddSourceForRecompilation(projectId, file);
-                  }
-                });
+      boolean isInContent = false;
+      for (final Project project : myProjectManager.getOpenProjects()) {
+        if (!project.isInitialized()) {
+          continue; // the content of this project will be scanned during its post-startup activities
+        }
+        final int projectId = getProjectId(project);
+        final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+        if (fileIndex.isInContent(file)) {
+          isInContent = true;
+        }
+        if (isSuspended(projectId)) {
+          continue;
+        }
+        if (fileIndex.isInSourceContent(file)) {
+          final TranslatingCompiler[] translators = CompilerManager.getInstance(project).getCompilers(TranslatingCompiler.class);
+          processRecursively(file, false, false, new FileProcessor() {
+            public void execute(final VirtualFile file) {
+              if (isCompilable(file)) {
+                loadInfoAndAddSourceForRecompilation(projectId, file);
               }
             }
+
+            boolean isCompilable(VirtualFile file) {
+              for (TranslatingCompiler translator : translators) {
+                if (translator.isCompilableFile(file, DummyCompileContext.getInstance())) {
+                  return true;
+                }
+              }
+              return false;
+            }
+          });
+        }
+        else {
+          if (belongsToIntermediateSources(file, project)) {
+            processRecursively(file, false, false, new FileProcessor() {
+              public void execute(final VirtualFile file) {
+                loadInfoAndAddSourceForRecompilation(projectId, file);
+              }
+            });
           }
         }
-      });
+      }
       if (notifyServer && !isIgnoredOrUnderIgnoredDirectory(file)) {
         final Set<File> pathsToMark = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-        boolean dbOnly = !isInContent.get();
-        processRecursively(file, dbOnly, new FileProcessor() {
+        boolean dbOnly = !isInContent;
+        processRecursively(file, dbOnly, false, new FileProcessor() {
           @Override
           public void execute(VirtualFile file) {
             pathsToMark.add(new File(file.getPath()));

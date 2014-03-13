@@ -68,7 +68,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     myDataPack = initialDataPack;
     myGraphCommitCellRender = new GraphCommitCellRender(myUI.getColorManager(), logDataHolder, myDataPack.getGraphFacade(), this);
 
-    setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUI));
+    setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUI, myLogDataHolder.isMultiRoot()));
     setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRender);
     setDefaultRenderer(String.class, new StringCellRenderer());
 
@@ -347,8 +347,10 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
     @NotNull private Color myColor = UIUtil.getTableBackground();
 
-    RootCellRenderer(@NotNull VcsLogUiImpl ui) {
+    RootCellRenderer(@NotNull VcsLogUiImpl ui, boolean multiRoot) {
       myUi = ui;
+      int rootWidth = multiRoot ? ROOT_INDICATOR_WIDTH : 0;
+      setPreferredSize(new Dimension(rootWidth, -1));
     }
 
     @Override
@@ -376,6 +378,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Component rendererComponent = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       setBackground(isSelected ? table.getSelectionBackground() : JBColor.WHITE);
+      setBorder(null);
       applyHighlighters(rendererComponent, row, isSelected);
       return rendererComponent;
     }

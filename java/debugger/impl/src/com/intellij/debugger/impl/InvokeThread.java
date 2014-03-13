@@ -39,6 +39,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
       myOwner = owner;
     }
 
+    @Override
     public void run() {
       synchronized (this) {
         while (myRequestFuture == null) {
@@ -174,7 +175,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
       }
 
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Request " + this.toString() + " exited");
+        LOG.debug("Request " + toString() + " exited");
       }
     }
 
