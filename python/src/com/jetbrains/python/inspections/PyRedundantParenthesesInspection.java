@@ -115,7 +115,7 @@ public class PyRedundantParenthesesInspection extends PyInspection {
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox("Ignore argument of % operator", "myIgnorePercOperator");
-    panel.addCheckbox("Ignore tuple in return statement", "myIgnoreTupleInReturn");
+    panel.addCheckbox("Ignore tuples", "myIgnoreTupleInReturn");
     return panel;
   }
 }
