@@ -49,11 +49,6 @@ public class ScratchpadManagerImpl extends ScratchpadManager implements Disposab
     });
   }
 
-  @Override
-  public boolean isScratchFile(@NotNull final VirtualFile file) {
-    return file.getFileSystem() instanceof ScratchpadFileSystem;
-  }
-
   @NotNull
   private static String calculatePrefix(@NotNull Project project) {
     return project.getLocationHash();
