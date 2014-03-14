@@ -247,12 +247,4 @@ public class GradleUtil {
   public static String createJvmArg(@NotNull String name, @NotNull String value) {
     return String.format(JVM_ARG_FORMAT, name, value);
   }
-
-  public static boolean isPluginPresent(@NotNull String id) {
-    PluginId pluginId = PluginId.getRegisteredIds().get(id);
-    if (pluginId == null) return false;
-    IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
-    if (pluginDescriptor == null) return false;
-    return !PluginManagerCore.shouldSkipPlugin(pluginDescriptor);
-  }
 }

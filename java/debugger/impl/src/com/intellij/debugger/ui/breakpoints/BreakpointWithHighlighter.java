@@ -309,7 +309,10 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     ApplicationManager.getApplication().assertReadAccessAllowed();
     XSourcePosition position = myXBreakpoint.getSourcePosition();
     if (position != null) {
-      return PsiManager.getInstance(myProject).findFile(position.getFile());
+      VirtualFile file = position.getFile();
+      if (file.isValid()) {
+        return PsiManager.getInstance(myProject).findFile(file);
+      }
     }
     return null;
   }

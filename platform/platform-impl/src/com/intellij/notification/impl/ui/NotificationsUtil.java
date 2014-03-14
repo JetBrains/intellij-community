@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,11 +37,15 @@ public class NotificationsUtil {
   }
 
   public static String buildHtml(@NotNull final Notification notification, @Nullable String style) {
+    return buildHtml(notification.getTitle(), notification.getContent(), style);
+  }
+
+  public static String buildHtml(@NotNull final String title, @NotNull final String content, @Nullable String style) {
     String result = "";
     if (style != null) {
       result += "<div style=\"" + style + "\">";
     }
-    result += "<b>" + notification.getTitle() + "</b><p>" + notification.getContent() + "</p>";
+    result += "<b>" + title + "</b><p>" + content + "</p>";
     if (style != null) {
       result += "</div>";
     }

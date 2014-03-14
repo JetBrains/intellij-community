@@ -42,7 +42,7 @@ public interface GrMultiSignature extends GrSignature {
     }
 
     @Override
-    public void accept(GrSignatureVisitor visitor) {
+    public void accept(@NotNull GrSignatureVisitor visitor) {
       visitor.visitMultiSignature(this);
     }
   };

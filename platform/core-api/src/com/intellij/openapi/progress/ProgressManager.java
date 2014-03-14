@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,29 +26,36 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class ProgressManager {
-  private static final ProgressManager ourInstance = ServiceManager.getService(ProgressManager.class);
-
   static {
     ProgressIndicatorProvider.ourInstance = new ProgressIndicatorProvider() {
       @Override
       public ProgressIndicator getProgressIndicator() {
-        return ProgressManager.ourInstance.getProgressIndicator();
+        ProgressManager manager = ProgressManager.getInstance();
+        return manager != null ? manager.getProgressIndicator() : null;
       }
 
       @Override
       protected void doCheckCanceled() throws ProcessCanceledException {
-        ProgressManager.ourInstance.doCheckCanceled();
+        ProgressManager manager = ProgressManager.getInstance();
+        if (manager != null) {
+          manager.doCheckCanceled();
+        }
       }
-
 
       @Override
       public NonCancelableSection startNonCancelableSection() {
-        return ProgressManager.ourInstance.startNonCancelableSection();
+        ProgressManager manager = ProgressManager.getInstance();
+        return manager != null ? manager.startNonCancelableSection() : NonCancelableSection.EMPTY;
       }
     };
   }
 
+  private static ProgressManager ourInstance;
+
   public static ProgressManager getInstance() {
+    if (ourInstance == null) {
+      ourInstance = ServiceManager.getService(ProgressManager.class);
+    }
     return ourInstance;
   }
 
@@ -190,7 +197,9 @@ public abstract class ProgressManager {
 
   /**
    * Runs a specified <code>task</code> in either background/foreground thread and shows a progress dialog.
-   * @param task          task to run (either {@link com.intellij.openapi.progress.Task.Modal} or {@link com.intellij.openapi.progress.Task.Backgroundable}).
+   *
+   * @param task task to run (either {@link com.intellij.openapi.progress.Task.Modal}
+   *             or {@link com.intellij.openapi.progress.Task.Backgroundable}).
    */
   public abstract void run(@NotNull Task task);
 

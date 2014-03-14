@@ -15,9 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -28,12 +31,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
  * @author Maxim.Medvedev
  */
 public class GrImmediateClosureParameterImpl implements GrClosureParameter {
-  @Nullable final PsiType myType;
-  @Nullable private final String myName;
-  final boolean myOptional;
-  @Nullable final GrExpression myDefaultInitializer;
+  private static final Logger LOG = Logger.getInstance(GrImmediateClosureParameterImpl.class);
 
-  public GrImmediateClosureParameterImpl(@Nullable PsiType type, @Nullable String name, boolean optional, GrExpression defaultInitializer) {
+  private final PsiType myType;
+  private final String myName;
+  private final boolean myOptional;
+  private final GrExpression myDefaultInitializer;
+
+  public GrImmediateClosureParameterImpl(@Nullable PsiType type, @Nullable String name, boolean optional, @Nullable GrExpression defaultInitializer) {
+    LOG.assertTrue(type == null || type.isValid());
+    LOG.assertTrue(defaultInitializer == null || defaultInitializer.isValid());
+
     myType = type;
     myName = name;
     myOptional = optional;
@@ -43,13 +51,6 @@ public class GrImmediateClosureParameterImpl implements GrClosureParameter {
   public GrImmediateClosureParameterImpl(@NotNull PsiParameter parameter, @NotNull PsiSubstitutor substitutor) {
     this(substitutor.substitute(getParameterType(parameter)), getParameterName(parameter), isParameterOptional(parameter), getDefaultInitializer(parameter));
   }
-
-  @NotNull
-  public static GrImmediateClosureParameterImpl createErasedParameter(@NotNull PsiParameter param) {
-    PsiType type = TypeConversionUtil.erasure(param.getType());
-    return new GrImmediateClosureParameterImpl(type, getParameterName(param), isParameterOptional(param), getDefaultInitializer(param));
-  }
-
 
   @Nullable
   private static PsiType getParameterType(@NotNull PsiParameter parameter) {
@@ -63,10 +64,6 @@ public class GrImmediateClosureParameterImpl implements GrClosureParameter {
 
   public static boolean isParameterOptional(PsiParameter parameter) {
     return parameter instanceof GrParameter && ((GrParameter)parameter).isOptional();
-  }
-
-  public static boolean isVararg(GrClosureParameter[] closureParams) {
-    return closureParams.length > 0 && closureParams[closureParams.length - 1].getType() instanceof PsiArrayType;
   }
 
   @Nullable
