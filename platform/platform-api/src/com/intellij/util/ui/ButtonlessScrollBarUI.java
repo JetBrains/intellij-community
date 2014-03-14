@@ -82,16 +82,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     myAdjustmentListener = new AdjustmentListener() {
       @Override
       public void adjustmentValueChanged(AdjustmentEvent e) {
-        if (e.getValueIsAdjusting()) return;
-        
         resetThumbAnimator();
-
-        if (isMacScrollbar()) {
-          stopMacScrollbarFadeout();
-          if (!myMouseOverScrollbar) {
-            myMacScrollbarFadeAnimator.resume();
-          }
-        }
+        resetMacScrollbarFadeout();
       }
     };
 
@@ -109,12 +101,9 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     myMouseListener = new MouseAdapter() {
       @Override
       public void mouseEntered(MouseEvent e) {
-        if (isMacScrollbar()) {
-          myMouseOverScrollbar = true;
-          myMouseOverScrollbarStarted = true;
-
-          stopMacScrollbarFadeout();
-        }
+        myMouseOverScrollbar = true;
+        myMouseOverScrollbarStarted = true;
+        resetMacScrollbarFadeout();
       }
       
       @Override
@@ -124,11 +113,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
           resetThumbAnimator();
         }
 
-        if (isMacScrollbar()) {
-          myMouseOverScrollbar = false;
-          if (scrollbar != null) scrollbar.repaint();
-          myMacScrollbarFadeAnimator.resume();
-        }
+        myMouseOverScrollbar = false;
+        resetMacScrollbarFadeout();
       }
     };
   }
@@ -180,12 +166,21 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
   }
 
-  private void stopMacScrollbarFadeout() {
+  private void resetMacScrollbarFadeout() {
+    if (!isMacScrollbar()) return;
+    
     myMacScrollbarFadeAnimator.suspend();
     myMacScrollbarFadeAnimator.reset();
     isMacScrollbarHidden = false;
     myMacScrollbarFadeLevel = 0;
-    if (scrollbar != null) scrollbar.repaint();
+
+    if (scrollbar != null) {
+      scrollbar.repaint();
+
+      if (!myMouseOverScrollbar && !scrollbar.getValueIsAdjusting()) {
+        myMacScrollbarFadeAnimator.resume();
+      }
+    }
   }
 
   public static BasicScrollBarUI createNormal() {
@@ -249,10 +244,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     scrollbar.addMouseListener(myMouseListener);
     scrollbar.addMouseMotionListener(myMouseMotionListener);
     
-    if (isMacScrollbar()) {
-      stopMacScrollbarFadeout();
-      myMacScrollbarFadeAnimator.resume();
-    }
+    resetMacScrollbarFadeout();
   }
 
   private Animator createAnimator() {
