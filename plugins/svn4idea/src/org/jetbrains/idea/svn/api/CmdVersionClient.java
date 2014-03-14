@@ -1,6 +1,7 @@
 package org.jetbrains.idea.svn.api;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
@@ -42,6 +43,8 @@ public class CmdVersionClient extends BaseSvnClient implements VersionClient {
     commandLine.setExePath(SvnApplicationSettings.getInstance().getCommandLinePath());
     commandLine.addParameter(SvnCommandName.version.getName());
     commandLine.addParameter("--quiet");
+
+    EncodingEnvironmentUtil.fixDefaultEncodingIfMac(commandLine, null);
 
     CapturingProcessHandler handler = new CapturingProcessHandler(commandLine.createProcess(), CharsetToolkit.getDefaultSystemCharset());
     return handler.runProcess(30 * 1000);
