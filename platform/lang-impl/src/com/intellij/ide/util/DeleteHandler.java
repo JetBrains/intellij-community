@@ -127,7 +127,7 @@ public class DeleteHandler {
       final Ref<Boolean> exit = Ref.create(false);
       final SafeDeleteDialog dialog = new SafeDeleteDialog(project, elements, new SafeDeleteDialog.Callback() {
         @Override
-        public void run(SafeDeleteDialog dialog) {
+        public void run(final SafeDeleteDialog dialog) {
           if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), true)) return;
           SafeDeleteProcessor.createInstance(project, new Runnable() {
             @Override
