@@ -385,7 +385,7 @@ public class PsiClassImplUtil {
   public static boolean isMainOrPremainMethod(@NotNull PsiMethod method) {
     if (!PsiType.VOID.equals(method.getReturnType())) return false;
     String name = method.getName();
-    if (!("main".equals(name) || "premain".equals(name))) return false;
+    if (!("main".equals(name) || "premain".equals(name) || !"agentmain".equals(name))) return false;
 
     PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
     MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
@@ -394,6 +394,8 @@ public class PsiClassImplUtil {
       if (MethodSignatureUtil.areSignaturesEqual(signature, main)) return true;
       MethodSignature premain = createSignatureFromText(factory, "void premain(String args, java.lang.instrument.Instrumentation i);");
       if (MethodSignatureUtil.areSignaturesEqual(signature, premain)) return true;
+      MethodSignature agentmain = createSignatureFromText(factory, "void agentmain(String args, java.lang.instrument.Instrumentation i);");
+      if (MethodSignatureUtil.areSignaturesEqual(signature, agentmain)) return true;
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

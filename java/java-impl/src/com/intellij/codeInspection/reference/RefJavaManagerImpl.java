@@ -43,6 +43,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   private static final Logger LOG = Logger.getInstance("#" + RefJavaManagerImpl.class.getName());
   private PsiMethod myAppMainPattern;
   private PsiMethod myAppPremainPattern;
+  private PsiMethod myAppAgentmainPattern;
   private PsiClass myApplet;
   private PsiClass myServlet;
   private RefPackage myDefaultPackage;
@@ -59,6 +60,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
     try {
       myAppMainPattern = factory.createMethodFromText("void main(String[] args);", null);
       myAppPremainPattern = factory.createMethodFromText("void premain(String[] args, java.lang.instrument.Instrumentation i);", null);
+      myAppAgentmainPattern = factory.createMethodFromText("void agentmain(String[] args, java.lang.instrument.Instrumentation i);", null);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -141,6 +143,11 @@ public class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
+  public PsiMethod getAppAgentmainPattern() {
+    return myAppAgentmainPattern;
+  }
+
+  @Override
   public PsiClass getApplet() {
     return myApplet;
   }
@@ -194,6 +201,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
     myApplet = null;
     myAppMainPattern = null;
     myAppPremainPattern = null;
+    myAppAgentmainPattern = null;
     myServlet = null;
     myDefaultPackage = null;
     myProjectIterator = null;
