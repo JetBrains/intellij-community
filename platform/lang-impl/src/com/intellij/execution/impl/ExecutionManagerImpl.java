@@ -516,7 +516,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
         if (runningConfigurationAndSettings == null) return false;
         RunConfiguration runningConfiguration = runningConfigurationAndSettings.getConfiguration();
         if (runningConfiguration == null || !(runningConfiguration instanceof CompatibilityAwareRunProfile)) return false;
-        return !((CompatibilityAwareRunProfile)runningConfiguration).isCompatibleWith(configurationToCheckCompatibility);
+        return ((CompatibilityAwareRunProfile)runningConfiguration).mustBeStoppedToRun(configurationToCheckCompatibility);
       }
     });
   }
