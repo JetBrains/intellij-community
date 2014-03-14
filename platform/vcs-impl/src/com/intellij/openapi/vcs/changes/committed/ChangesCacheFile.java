@@ -1076,11 +1076,16 @@ public class ChangesCacheFile {
                 return true;
               }
             } else if ((beforeRevision != null) && (c.getAfterRevision() != null)) {
-              boolean underBefore = file.isUnder(beforeRevision.getFile(), false);
-              if (underBefore && c.isIsReplaced() && (! file.equals(beforeRevision.getFile()))) {
+              boolean isParentReplaced = c.isIsReplaced() && (!file.equals(beforeRevision.getFile()));
+              boolean isMovedRenamed = c.isMoved() || c.isRenamed();
+              // call FilePath.isUnder() only if change is either "parent replaced" or moved/renamed - as many calls to FilePath.isUnder()
+              // could take a lot of time
+              boolean underBefore = (isParentReplaced || isMovedRenamed) && file.isUnder(beforeRevision.getFile(), false);
+
+              if (underBefore && isParentReplaced) {
                 debug("For " + file + "some of parents is replaced: " + beforeRevision.getFile());
                 return true;
-              } else if (underBefore && (c.isMoved() || c.isRenamed())) {
+              } else if (underBefore && isMovedRenamed) {
                 debug("For " + file + "some of parents was renamed/moved: " + beforeRevision.getFile());
                 return true;
               }
