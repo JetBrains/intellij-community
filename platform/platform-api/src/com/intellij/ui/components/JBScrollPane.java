@@ -223,9 +223,7 @@ public class JBScrollPane extends JScrollPane {
     viewport.setBounds(viewportBounds);
     Insets insets = container.getInsets();
     if (insets == null) insets = new Insets(0, 0, 0, 0);
-    layeredPane.setBounds(insets.left, insets.top, 
-                          container.getWidth() - insets.right - insets.left, 
-                          container.getHeight() - insets.top - insets.bottom);
+    layeredPane.setBounds(0, 0, container.getWidth() - insets.right, container.getHeight() - insets.bottom);
   }
 
   private static boolean shouldExtendViewportUnderScrollbar(@Nullable JScrollBar scrollbar) {
