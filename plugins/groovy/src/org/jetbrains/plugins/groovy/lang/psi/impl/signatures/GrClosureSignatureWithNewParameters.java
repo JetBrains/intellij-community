@@ -15,71 +15,54 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
-import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignatureVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 
 /**
-* Created by Max Medvedev on 26/02/14
-*/
-class GrClosableSignatureImpl implements GrClosureSignature {
-  private final GrClosableBlock myBlock;
+ * Created by Max Medvedev on 14/03/14
+ */
+public class GrClosureSignatureWithNewParameters implements GrClosureSignature {
+  private final GrClosureSignature myDelegate;
+  private final GrClosureParameter[] myParams;
 
-  public GrClosableSignatureImpl(GrClosableBlock block) {
-    myBlock = block;
+  public GrClosureSignatureWithNewParameters(@NotNull GrClosureSignature delegate, @NotNull GrClosureParameter[] newParams) {
+    myDelegate = delegate;
+    myParams = newParams;
   }
 
   @NotNull
   @Override
   public PsiSubstitutor getSubstitutor() {
-    return PsiSubstitutor.EMPTY;
+    return myDelegate.getSubstitutor();
   }
 
   @NotNull
   @Override
   public GrClosureParameter[] getParameters() {
-    GrParameter[] parameters = myBlock.getAllParameters();
-
-    return ContainerUtil.map(parameters, new Function<GrParameter, GrClosureParameter>() {
-      @Override
-      public GrClosureParameter fun(final GrParameter parameter) {
-        return createClosureParameter(parameter);
-      }
-    }, new GrClosureParameter[parameters.length]);
-  }
-
-  @NotNull
-  protected GrClosureParameter createClosureParameter(@NotNull GrParameter parameter) {
-    return new GrClosureParameterImpl(parameter);
+    return myParams;
   }
 
   @Override
   public int getParameterCount() {
-    return myBlock.getAllParameters().length;
+    return myParams.length;
   }
 
   @Override
   public boolean isVarargs() {
-    GrParameter last = ArrayUtil.getLastElement(myBlock.getAllParameters());
-    return last != null && last.getType() instanceof PsiArrayType;
+    return GrClosureSignatureUtil.isVarArgsImpl(myParams);
   }
 
   @Nullable
   @Override
   public PsiType getReturnType() {
-    return myBlock.getReturnType();
+    return myDelegate.getReturnType();
   }
 
   @Override
@@ -89,7 +72,7 @@ class GrClosableSignatureImpl implements GrClosureSignature {
 
   @Override
   public boolean isValid() {
-    return myBlock.isValid();
+    return myDelegate.isValid();
   }
 
   @Nullable

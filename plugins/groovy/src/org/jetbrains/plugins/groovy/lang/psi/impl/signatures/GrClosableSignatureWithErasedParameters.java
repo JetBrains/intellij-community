@@ -13,31 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.api.signatures;
+package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 
 /**
- * @author Maxim.Medvedev
+ * Created by Max Medvedev on 14/03/14
  */
-public interface GrClosureSignature extends GrSignature {
-  GrClosureSignature[] EMPTY_ARRAY = new GrClosureSignature[0];
-
-  @NotNull PsiSubstitutor getSubstitutor();
+public class GrClosableSignatureWithErasedParameters extends GrClosableSignatureImpl {
+  public GrClosableSignatureWithErasedParameters(GrClosableBlock block) {
+    super(block);
+  }
 
   @NotNull
-  GrClosureParameter[] getParameters();
-
-  int getParameterCount();
-
-  boolean isVarargs();
-
-  @Nullable
-  PsiType getReturnType();
-
-  boolean isCurried();
+  @Override
+  protected GrClosureParameter createClosureParameter(@NotNull GrParameter parameter) {
+    return super.createClosureParameter(parameter);
+  }
 }

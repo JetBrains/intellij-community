@@ -13,31 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.api.signatures;
+package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 
 /**
- * @author Maxim.Medvedev
+ * Created by Max Medvedev on 14/03/14
  */
-public interface GrClosureSignature extends GrSignature {
-  GrClosureSignature[] EMPTY_ARRAY = new GrClosureSignature[0];
+public class GrMethodSignatureWithErasedTypes extends GrMethodSignatureImpl {
+  public GrMethodSignatureWithErasedTypes(@NotNull PsiMethod method) {
+    super(method, PsiSubstitutor.EMPTY);
+  }
 
-  @NotNull PsiSubstitutor getSubstitutor();
+  @Override
+  public PsiType getReturnType() {
+    return TypeConversionUtil.erasure(super.getReturnType());
+  }
 
   @NotNull
-  GrClosureParameter[] getParameters();
-
-  int getParameterCount();
-
-  boolean isVarargs();
-
-  @Nullable
-  PsiType getReturnType();
-
-  boolean isCurried();
+  @Override
+  protected GrClosureParameter createClosureParameter(@NotNull PsiParameter parameter) {
+    return new GrClosureParameterWithErasedType(parameter);
+  }
 }
