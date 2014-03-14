@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,8 @@ class GrCompletionWithLibraryTest extends GroovyCompletionTestBase {
   public void testCategoryMethod() {doBasicTest()}
   public void testCategoryProperty() {doCompletionTest(null, null, '\n', CompletionType.BASIC)}
   public void testMultipleCategories() {doVariantableTest(null, "", CompletionType.BASIC, CompletionResult.contain, 'getMd5', 'getMd52')}
+  public void testMultipleCategories2() {doVariantableTest(null, "", CompletionType.BASIC, CompletionResult.contain, 'getMd5', 'getMd52')}
+  public void testMultipleCategories3() {doVariantableTest(null, "", CompletionType.BASIC, CompletionResult.contain, 'getMd5', 'getMd52')}
   public void testCategoryForArray() {doCompletionTest(null, null, '\n', CompletionType.BASIC)}
 
   public void testArrayLikeAccessForList() throws Throwable {doBasicTest(); }
