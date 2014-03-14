@@ -37,6 +37,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actionSystem.EditorAction;
+import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.editor.actions.SplitLineAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -161,6 +166,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
     actions.add(backspaceHandlingAction);
     actions.add(interruptAction);
+
+    actions.add(createSplitLineAction());
 
     AnAction showVarsAction = new ShowVarsAction();
     toolbarActions.add(showVarsAction);
@@ -575,6 +582,40 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     };
     stopAction.copyFrom(generalStopAction);
     return stopAction;
+  }
+
+  protected AnAction createSplitLineAction() {
+
+    class ConsoleSplitLineAction extends EditorAction {
+
+      private static final String CONSOLE_SPLIT_LINE_ACTION_ID = "Console.SplitLine";
+
+      public ConsoleSplitLineAction() {
+        super(new EditorWriteActionHandler() {
+
+          private final SplitLineAction mySplitLineAction = new SplitLineAction();
+
+          @Override
+          public boolean isEnabled(Editor editor, DataContext dataContext) {
+            return mySplitLineAction.getHandler().isEnabled(editor, dataContext);
+          }
+
+          @Override
+          public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+            ((EditorWriteActionHandler)mySplitLineAction.getHandler()).executeWriteAction(editor, caret, dataContext);
+            editor.getCaretModel().getCurrentCaret().moveCaretRelatively(0, 1, false, true);
+          }
+        });
+      }
+
+      public void setup() {
+        EmptyAction.setupAction(this, CONSOLE_SPLIT_LINE_ACTION_ID, null);
+      }
+    }
+
+    ConsoleSplitLineAction action = new ConsoleSplitLineAction();
+    action.setup();
+    return action;
   }
 
   private void closeCommunication() {
