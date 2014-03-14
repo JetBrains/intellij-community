@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.application;
 
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -82,8 +83,14 @@ public class ApplicationConfigurationProducer extends JavaRunConfigurationProduc
 
   @Override
   public boolean isConfigurationFromContext(ApplicationConfiguration appConfiguration, ConfigurationContext context) {
-    final PsiClass aClass = ApplicationConfigurationType.getMainClass(context.getPsiLocation());
+    final PsiElement location = context.getPsiLocation();
+    final PsiClass aClass = ApplicationConfigurationType.getMainClass(location);
     if (aClass != null && Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(aClass), appConfiguration.MAIN_CLASS_NAME)) {
+      final PsiMethod method = PsiTreeUtil.getParentOfType(location, PsiMethod.class, false);
+      if (method != null && TestFrameworks.getInstance().isTestMethod(method)) {
+        return false;
+      }
+
       final Module configurationModule = appConfiguration.getConfigurationModule().getModule();
       if (Comparing.equal(context.getModule(), configurationModule)) return true;
 
