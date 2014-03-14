@@ -28,10 +28,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.Alarm;
@@ -201,7 +198,7 @@ public class QuickDocOnMouseOverManager {
     
     int mouseOffset = editor.logicalPositionToOffset(editor.visualToLogicalPosition(visualPosition));
     PsiElement elementUnderMouse = psiFile.findElementAt(mouseOffset);
-    if (elementUnderMouse == null || elementUnderMouse instanceof PsiWhiteSpace) {
+    if (elementUnderMouse == null || elementUnderMouse instanceof PsiWhiteSpace || elementUnderMouse instanceof PsiPlainText) {
       closeQuickDocIfPossible();
       return;
     }
