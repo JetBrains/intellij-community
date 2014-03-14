@@ -586,8 +586,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
             //from 15.12.2.5 Choosing the Most Specific Method
             //In addition, a functional interface type S is more specific than a functional interface type T for an expression exp 
             // if T is not a subtype of S and one of the following conditions apply.
-            if (LambdaUtil.isFunctionalType(type1) && !type1.isAssignableFrom(type2) &&
-                LambdaUtil.isFunctionalType(type2) && !type2.isAssignableFrom(type1)) {
+            if (LambdaUtil.isFunctionalType(type1) && !TypeConversionUtil.erasure(type1).isAssignableFrom(type2) &&
+                LambdaUtil.isFunctionalType(type2) && !TypeConversionUtil.erasure(type2).isAssignableFrom(type1)) {
               types1AtSite[Math.min(i, types1.length - 1)] = PsiType.NULL;
               types2AtSite[Math.min(i, types2.length - 1)] = PsiType.NULL;
               toCompareFunctional = true;
