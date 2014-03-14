@@ -799,6 +799,7 @@ public class ChangesCacheFile {
     private final Project myProject;
     private final DiffProvider myDiffProvider;
     private boolean myAnyChanges;
+    private long myIndexStreamCachedLength;
 
     RefreshIncomingChangesOperation(ChangesCacheFile changesCacheFile, Project project, final DiffProvider diffProvider) {
       myChangesCacheFile = changesCacheFile;
@@ -848,6 +849,7 @@ public class ChangesCacheFile {
       Map<Pair<IncomingChangeListData, Change>, VirtualFile> revisionDependentFiles = ContainerUtil.newHashMap();
       Map<Pair<IncomingChangeListData, Change>, ProcessingResult> results = ContainerUtil.newHashMap();
 
+      myIndexStreamCachedLength = myChangesCacheFile.myIndexStream.length();
       // try to process changelists in a light way, remember which files need revisions
       for(IncomingChangeListData data: list) {
         debug("Checking incoming changelist " + data.changeList.getNumber());
@@ -1061,7 +1063,7 @@ public class ChangesCacheFile {
     private boolean wasSubsequentlyDeleted(final FilePath file, long indexOffset) {
       try {
         indexOffset += INDEX_ENTRY_SIZE;
-        while(indexOffset < myChangesCacheFile.myIndexStream.length()) {
+        while(indexOffset < myIndexStreamCachedLength) {
           IndexEntry e = getIndexEntryAtOffset(indexOffset);
 
           final CommittedChangeList changeList = getChangeListAtOffset(e.offset);
