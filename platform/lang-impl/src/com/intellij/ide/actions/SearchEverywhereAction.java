@@ -58,10 +58,7 @@ import com.intellij.openapi.options.ex.IdeConfigurablesGroup;
 import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.DumbServiceImpl;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -775,6 +772,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     } else if (value instanceof VirtualFile) {
       type = HistoryType.FILE;
       fqn = ((VirtualFile)value).getUrl();
+    } else if (value instanceof ChooseRunConfigurationPopup.ItemWrapper) {
+      type = HistoryType.RUN_CONFIGURATION;
+      fqn = ((ChooseRunConfigurationPopup.ItemWrapper)value).getText();
     }
     final PropertiesComponent storage = PropertiesComponent.getInstance(project);
     final String[] values = storage.getValues(SE_HISTORY_KEY);
@@ -1440,6 +1440,24 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     }
 
+    @Nullable
+    private ChooseRunConfigurationPopup.ItemWrapper getRunConfigurationByName(String name) {
+      final ChooseRunConfigurationPopup.ItemWrapper[] wrappers =
+        ChooseRunConfigurationPopup.createSettingsList(project, new ExecutorProvider() {
+          @Override
+          public Executor getExecutor() {
+            return ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
+          }
+        }, false);
+
+      for (ChooseRunConfigurationPopup.ItemWrapper wrapper : wrappers) {
+        if (wrapper.getText().equals(name)) {
+          return wrapper;
+        }
+      }
+      return null;
+    }
+
     private void buildRunConfigurations(String pattern) {
       final List<Object> runConfigurations = new ArrayList<Object>();
       MinusculeMatcher matcher = new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
@@ -1474,51 +1492,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
 
     }
-
-
-    //private void buildRunConfigurations(String pattern) {
-    //  MinusculeMatcher matcher = new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
-    //  RunnerAndConfigurationSettings selected = RunManager.getInstance(project).getSelectedConfiguration();
-    //  final List<Object> runConfigurations = new ArrayList<Object>();
-    //  final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
-    //  if (selected != null) {
-    //    ExecutionTarget activeTarget = ExecutionTargetManager.getActiveTarget(project);
-    //    for (ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, selected)) {
-    //      if (matcher.matches(eachTarget.getDisplayName())) {
-    //        runConfigurations.add(
-    //          new RunConfigurationsComboBoxAction.SelectTargetAction(project, eachTarget, eachTarget.equals(activeTarget)));
-    //      }
-    //    }
-    //  }
-    //
-    //  final ConfigurationType[] types = runManager.getConfigurationFactories();
-    //  for (ConfigurationType type : types) {
-    //    Map<String, List<RunnerAndConfigurationSettings>> structure = runManager.getStructure(type);
-    //    for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : structure.entrySet()) {
-    //      for (RunnerAndConfigurationSettings settings : entry.getValue()) {
-    //        if (matcher.matches(settings.getName())) {
-    //          runConfigurations.add(new RunConfigurationsComboBoxAction.SelectConfigAction(settings, project));
-    //        }
-    //      }
-    //    }
-    //  }
-    //
-    //  if (runConfigurations.size() > 0) {
-    //    UIUtil.invokeLaterIfNeeded(new Runnable() {
-    //      @Override
-    //      public void run() {
-    //        if (!myProgressIndicator.isCanceled()) {
-    //          myTitleIndexes.runConfigurations = myListModel.size();
-    //          for (Object runConfiguration : runConfigurations) {
-    //            myListModel.addElement(runConfiguration);
-    //          }
-    //          myMoreFilesIndex = runConfigurations.size() >= MAX_RUN_CONFIGURATION ? myListModel.size() - 1 : -1;
-    //        }
-    //      }
-    //    });
-    //  }
-    //
-    //}
 
     private void buildClasses(String pattern, boolean includeLibraries) {
       if (pattern.indexOf('.') != -1) {
@@ -1617,7 +1590,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     private void buildTopHit(String pattern) {
       final List<Object> elements = new ArrayList<Object>();
-      HistoryItem history = myHistoryItem;
+      final HistoryItem history = myHistoryItem;
       if (history != null) {
         final HistoryType type = parseHistoryType(history.type);
         if (type != null) {
@@ -1642,6 +1615,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               }
               break;
             case RUN_CONFIGURATION:
+              if (!DumbService.isDumb(project)) {
+                ApplicationManager.getApplication().runReadAction(new Runnable() {
+                  public void run() {
+                    final ChooseRunConfigurationPopup.ItemWrapper runConfiguration = getRunConfigurationByName(history.fqn);
+                    if (runConfiguration != null) {
+                      elements.add(runConfiguration);
+                    }
+                  }
+                });
+              }
               break;
           }
         }
