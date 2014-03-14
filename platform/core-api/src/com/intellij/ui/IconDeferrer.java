@@ -31,5 +31,4 @@ public abstract class IconDeferrer {
   }
 
   public abstract <T> Icon defer(Icon base, T param, @NotNull Function<T, Icon> f);
-  public abstract <T> Icon deferAutoUpdatable(Icon base, T param, @NotNull Function<T, Icon> f);
 }

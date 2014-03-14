@@ -364,7 +364,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         final Icon icon = getIcon();
         int x = 7;
         if (icon != null) {
-          icon.paintIcon(this, g, x, (size.height - icon.getIconHeight()) / 2);
+          icon.paintIcon(null, g, x, (size.height - icon.getIconHeight()) / 2);
           x += icon.getIconWidth() + 3;
         }
         if (!StringUtil.isEmpty(getText())) {
@@ -408,7 +408,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         final Icon icon = getIcon();
         int x = 7;
         if (icon != null) {
-          icon.paintIcon(this, g, x, (size.height - icon.getIconHeight()) / 2);
+          icon.paintIcon(null, g, x, (size.height - icon.getIconHeight()) / 2);
           x += icon.getIconWidth() + 3;
         }
         if (!StringUtil.isEmpty(getText())) {

@@ -73,15 +73,6 @@ public class IconDeferrerImpl extends IconDeferrer {
 
   @Override
   public <T> Icon defer(final Icon base, final T param, @NotNull final Function<T, Icon> f) {
-    return deferImpl(base, param, f, false);
-  }
-
-  @Override
-  public <T> Icon deferAutoUpdatable(Icon base, T param, @NotNull Function<T, Icon> f) {
-    return deferImpl(base, param, f, true);
-  }
-
-  private <T> Icon deferImpl(Icon base, T param, @NotNull Function<T, Icon> f, boolean autoupdatable) {
     if (myEvaluationIsInProgress.get().booleanValue()) {
       return f.fun(param);
     }
@@ -90,7 +81,7 @@ public class IconDeferrerImpl extends IconDeferrer {
       Icon result = myIconsCache.get(param);
       if (result == null) {
         final long started = myLastClearTimestamp;
-        result = new DeferredIconImpl<T>(base, param, f, new DeferredIconImpl.IconListener<T>() {
+        result = new DeferredIconImpl<T>(base, param, f).setDoneListener(new DeferredIconImpl.IconListener<T>() {
           @Override
           public void evalDone(T key, @NotNull Icon r) {
             synchronized (LOCK) {
@@ -100,7 +91,7 @@ public class IconDeferrerImpl extends IconDeferrer {
               }
             }
           }
-        }, autoupdatable);
+        });
         myIconsCache.put(param, result);
       }
 

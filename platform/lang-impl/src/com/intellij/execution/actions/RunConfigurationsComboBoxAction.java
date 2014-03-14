@@ -127,7 +127,6 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
                                            final RunnerAndConfigurationSettings settings,
                                            final Project project) {
     try {
-      presentation.setIcon(EmptyIcon.ICON_16);//Hack for same DeferredIcon with new "recalculated" delegate icon inside (events won't pass)
       presentation.setIcon(RunManagerEx.getInstanceEx(project).getConfigurationIcon(settings));
     }
     catch (IndexNotReadyException ignored) {
