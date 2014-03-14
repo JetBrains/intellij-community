@@ -5045,7 +5045,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     else {
       myScrollPane.setLayout(new ScrollPaneLayout());
     }
-    ((JBScrollPane)myScrollPane).setupCorners();
     myScrollingModel.scrollHorizontally(currentHorOffset);
   }
 
@@ -6709,7 +6708,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Override
-    public void setupCorners() {
+    protected void setupCorners() {
       super.setupCorners();
 
       setBorder(new TablessBorder());

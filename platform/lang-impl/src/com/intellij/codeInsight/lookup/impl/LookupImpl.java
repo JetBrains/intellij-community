@@ -1480,11 +1480,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       if (myElementHint != null && getCurrentItem() != null) {
         final Rectangle bounds = getCurrentItemBounds();
         myElementHint.setSize(myElementHint.getPreferredSize());
+
         JScrollBar sb = myScrollPane.getVerticalScrollBar();
-        myElementHint.setLocation(new Point(bounds.x + bounds.width - myElementHint.getWidth() + (sb.isVisible() ? sb.getWidth() : 0), bounds.y));
+        int x = bounds.x + bounds.width - myElementHint.getWidth() + (sb.isVisible() ? sb.getWidth() : 0);
+        x = Math.min(x, getWidth() - myElementHint.getWidth());
+        myElementHint.setLocation(new Point(x, bounds.y));
       }
     }
-
   }
 
   private class LookupHint extends JLabel {
