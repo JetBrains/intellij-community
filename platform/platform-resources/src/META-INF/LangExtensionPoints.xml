@@ -164,6 +164,11 @@
       <with attribute="implementationClass" implements="com.intellij.lang.PsiStructureViewFactory"/>
     </extensionPoint>
 
+    <extensionPoint name="lang.psiElementExternalizer"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.lang.PsiElementExternalizer"/>
+    </extensionPoint>
+
     <extensionPoint name="lang.structureViewExtension"
                     interface="com.intellij.ide.structureView.StructureViewExtension"/>
 
