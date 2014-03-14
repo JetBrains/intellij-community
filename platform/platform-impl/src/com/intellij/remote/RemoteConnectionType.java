@@ -1,6 +1,8 @@
 package com.intellij.remote;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * This class denotes the type of the source to obtain remote credentials. 
@@ -31,7 +33,11 @@ public enum RemoteConnectionType {
 
   private static final Logger LOG = Logger.getInstance(RemoteConnectionType.class);
 
-  public static RemoteConnectionType findByName(String name) {
+  @NotNull
+  public static RemoteConnectionType findByName(@Nullable String name) {
+    if (name == null) {
+      return NONE;
+    }
     try {
       return valueOf(name);
     }
