@@ -151,5 +151,6 @@
     <tipAndTrick file="SecondBasicClassNameCompletion.html" feature-id="editing.completion.second.basic"/>
     <tipAndTrick file="SecondSmartCompletionToar.html" feature-id="editing.completion.second.smarttype.toar"/>
     <tipAndTrick file="ChangeSorting.html" feature-id="editing.completion.changeSorting"/>
+    <tipAndTrick file="PostfixCompletion.html"/>
   </extensions>
 </idea-plugin>
