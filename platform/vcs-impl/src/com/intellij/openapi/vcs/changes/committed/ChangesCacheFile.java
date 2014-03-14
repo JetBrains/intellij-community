@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -1070,23 +1071,11 @@ public class ChangesCacheFile {
           for(Change c: changeList.getChanges()) {
             final ContentRevision beforeRevision = c.getBeforeRevision();
             if ((beforeRevision != null) && (c.getAfterRevision() == null)) {
-              if (file.getIOFile().getAbsolutePath().equals(beforeRevision.getFile().getIOFile().getAbsolutePath()) ||
-                  file.isUnder(beforeRevision.getFile(), false)) {
-                debug("Found subsequent deletion for file " + file);
+              if (isFileDeleted(file, beforeRevision.getFile())) {
                 return true;
               }
             } else if ((beforeRevision != null) && (c.getAfterRevision() != null)) {
-              boolean isParentReplaced = c.isIsReplaced() && (!file.equals(beforeRevision.getFile()));
-              boolean isMovedRenamed = c.isMoved() || c.isRenamed();
-              // call FilePath.isUnder() only if change is either "parent replaced" or moved/renamed - as many calls to FilePath.isUnder()
-              // could take a lot of time
-              boolean underBefore = (isParentReplaced || isMovedRenamed) && file.isUnder(beforeRevision.getFile(), false);
-
-              if (underBefore && isParentReplaced) {
-                debug("For " + file + "some of parents is replaced: " + beforeRevision.getFile());
-                return true;
-              } else if (underBefore && isMovedRenamed) {
-                debug("For " + file + "some of parents was renamed/moved: " + beforeRevision.getFile());
+              if (isParentReplacedOrFileMoved(file, c, beforeRevision.getFile())) {
                 return true;
               }
             }
@@ -1096,6 +1085,33 @@ public class ChangesCacheFile {
       }
       catch (IOException e) {
         LOG.error(e);
+      }
+      return false;
+    }
+
+    private static boolean isParentReplacedOrFileMoved(@NotNull FilePath file, @NotNull Change change, @NotNull FilePath beforeFile) {
+      boolean isParentReplaced = change.isIsReplaced() && (!file.equals(beforeFile));
+      boolean isMovedRenamed = change.isMoved() || change.isRenamed();
+      // call FilePath.isUnder() only if change is either "parent replaced" or moved/renamed - as many calls to FilePath.isUnder()
+      // could take a lot of time
+      boolean underBefore = (isParentReplaced || isMovedRenamed) && file.isUnder(beforeFile, false);
+
+      if (underBefore && isParentReplaced) {
+        debug("For " + file + "some of parents is replaced: " + beforeFile);
+        return true;
+      }
+      else if (underBefore && isMovedRenamed) {
+        debug("For " + file + "some of parents was renamed/moved: " + beforeFile);
+        return true;
+      }
+      return false;
+    }
+
+    private static boolean isFileDeleted(@NotNull FilePath file, @NotNull FilePath beforeFile) {
+      if (file.getIOFile().getAbsolutePath().equals(beforeFile.getIOFile().getAbsolutePath()) ||
+          file.isUnder(beforeFile, false)) {
+        debug("Found subsequent deletion for file " + file);
+        return true;
       }
       return false;
     }
