@@ -35,6 +35,8 @@ import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.*;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguagePsiElementExternalizer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
@@ -775,7 +777,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     } else if (value instanceof ChooseRunConfigurationPopup.ItemWrapper) {
       type = HistoryType.RUN_CONFIGURATION;
       fqn = ((ChooseRunConfigurationPopup.ItemWrapper)value).getText();
+    } else if (value instanceof PsiElement) {
+      final PsiElement psiElement = (PsiElement)value;
+      final Language language = psiElement.getLanguage();
+      final String name = LanguagePsiElementExternalizer.INSTANCE.forLanguage(language).getQualifiedName(psiElement);
+      if (name != null) {
+        type = HistoryType.PSI;
+        fqn = language.getID() + "://" + name;
+      }
     }
+
     final PropertiesComponent storage = PropertiesComponent.getInstance(project);
     final String[] values = storage.getValues(SE_HISTORY_KEY);
     List<HistoryItem> history = new ArrayList<HistoryItem>();
@@ -1595,15 +1606,40 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         final HistoryType type = parseHistoryType(history.type);
         if (type != null) {
           switch (type){
-            case CLASS:
+            case PSI:
+              if (!DumbService.isDumb(project)) {
+                ApplicationManager.getApplication().runReadAction(new Runnable() {
+                  public void run() {
+
+                    final int i = history.fqn.indexOf("://");
+                    if (i != -1) {
+                      final String langId = history.fqn.substring(0, i);
+                      final Language language = Language.findLanguageByID(langId);
+                      final String psiFqn = history.fqn.substring(i + 3);
+                      if (language != null) {
+                        final PsiElement psi =
+                          LanguagePsiElementExternalizer.INSTANCE.forLanguage(language).findByQualifiedName(project, psiFqn);
+                        if (psi != null) {
+                          elements.add(psi);
+                          final PsiFile psiFile = psi.getContainingFile();
+                          if (psiFile != null) {
+                            final VirtualFile file = psiFile.getVirtualFile();
+                            if (file != null) {
+                              myAlreadyAddedFiles.add(file);
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                });
+              }
               break;
             case FILE:
               final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(history.fqn);
               if (file != null) {
                 elements.add(file);
               }
-              break;
-            case SYMBOL:
               break;
             case SETTING:
               break;
@@ -2090,7 +2126,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     return result;
   }
 
-  private enum HistoryType {CLASS, FILE, SYMBOL, SETTING, ACTION, RUN_CONFIGURATION}
+  private enum HistoryType {PSI, FILE, SETTING, ACTION, RUN_CONFIGURATION}
 
   @Nullable
   private static HistoryType parseHistoryType(@Nullable String name) {
