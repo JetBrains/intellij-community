@@ -1,8 +1,10 @@
-package com.intellij.execution.configurations;
+package com.intellij.execution.configuration;
 
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
 import org.jetbrains.annotations.NotNull;
 
-public interface CompatibilityAwareRunProfile {
+public interface CompatibilityAwareRunProfile extends RunProfile {
   /**
    * Checks whether the run configuration is compatible with the configuration passed as a parameter
    * and may still run if the configuration passed as a parameter starts as well.

@@ -18,6 +18,7 @@ package com.intellij.execution.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.execution.*;
+import com.intellij.execution.configuration.CompatibilityAwareRunProfile;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -41,12 +42,12 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Predicate;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -481,7 +482,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
       if (names.length() > 0) {
         names.append(", ");
       }
-      names.append(name.equals(null) || name.isEmpty() ? ExecutionBundle.message("run.configuration.no.name")
+      names.append(StringUtil.isEmpty(name) ? ExecutionBundle.message("run.configuration.no.name")
                                                        : String.format("'%s'", name));
     }
 
