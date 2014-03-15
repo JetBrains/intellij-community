@@ -65,6 +65,7 @@ public abstract class GitAbstractRebaseResumeAction extends GitRebaseActionBase 
       }
     }
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.REBASE);
+    h.setStdoutSuppressed(false);
     h.addParameters(getOptionName());
     return h;
   }
