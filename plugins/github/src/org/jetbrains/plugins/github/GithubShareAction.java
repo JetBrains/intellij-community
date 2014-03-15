@@ -265,6 +265,7 @@ public class GithubShareAction extends DumbAwareAction {
                                                   @NotNull VirtualFile root,
                                                   @NotNull ProgressIndicator indicator) {
     final GitLineHandler h = new GitLineHandler(project, root, GitCommand.INIT);
+    h.setStdoutSuppressed(false);
     GitHandlerUtil.runInCurrentThread(h, indicator, true, GitBundle.getString("initializing.title"));
     if (!h.errors().isEmpty()) {
       GitUIUtil.showOperationErrors(project, h.errors(), "git init");
@@ -333,6 +334,7 @@ public class GithubShareAction extends DumbAwareAction {
       LOG.info("Performing commit");
       indicator.setText("Performing commit...");
       GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
+      handler.setStdoutSuppressed(false);
       handler.addParameters("-m", dialog.getCommitMessage());
       handler.endOptions();
       handler.run();

@@ -62,6 +62,7 @@ public class GitImpl implements Git {
       h.addLineListener(listener);
     }
     h.setSilent(false);
+    h.setStdoutSuppressed(false);
     return run(h);
   }
 
@@ -132,6 +133,7 @@ public class GitImpl implements Git {
   public GitCommandResult clone(@NotNull Project project, @NotNull File parentDirectory, @NotNull String url,
                                 @NotNull String clonedDirectoryName, @NotNull GitLineHandlerListener... listeners) {
     GitLineHandlerPasswordRequestAware handler = new GitLineHandlerPasswordRequestAware(project, parentDirectory, GitCommand.CLONE);
+    handler.setStdoutSuppressed(false);
     handler.setUrl(url);
     handler.addParameters("--progress");
     handler.addParameters(url);
@@ -231,6 +233,7 @@ public class GitImpl implements Git {
                                           @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT);
     h.setSilent(false);
+    h.setStdoutSuppressed(false);
     if (force) {
       h.addParameters("--force");
     }
@@ -255,6 +258,7 @@ public class GitImpl implements Git {
                                                    @Nullable GitLineHandlerListener listener) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT.readLockingCommand());
     h.setSilent(false);
+    h.setStdoutSuppressed(false);
     h.addParameters("-b");
     h.addParameters(branchName);
     if (listener != null) {
@@ -290,6 +294,7 @@ public class GitImpl implements Git {
                                               @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
     h.setSilent(false);
+    h.setStdoutSuppressed(false);
     h.addParameters(force ? "-D" : "-d");
     h.addParameters(branchName);
     for (GitLineHandlerListener listener : listeners) {
@@ -318,6 +323,7 @@ public class GitImpl implements Git {
   @NotNull
   public GitCommandResult branchCreate(@NotNull GitRepository repository, @NotNull String branchName) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
+    h.setStdoutSuppressed(false);
     h.addParameters(branchName);
     return run(h);
   }
@@ -362,6 +368,7 @@ public class GitImpl implements Git {
                                                                                         GitCommand.PUSH);
     h.setUrl(url);
     h.setSilent(false);
+    h.setStdoutSuppressed(false);
     addListeners(h, listeners);
     h.addProgressParameter();
     h.addParameters(remote);
@@ -409,6 +416,7 @@ public class GitImpl implements Git {
     handler.addParameters(hash);
     addListeners(handler, listeners);
     handler.setSilent(false);
+    handler.setStdoutSuppressed(false);
     return run(handler);
   }
 

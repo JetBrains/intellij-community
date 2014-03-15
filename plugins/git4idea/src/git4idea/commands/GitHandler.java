@@ -126,6 +126,7 @@ public abstract class GitHandler {
     if (command.name().length() > 0) {
       myCommandLine.addParameter(command.name());
     }
+    myStdoutSuppressed = true;
   }
 
   /**
@@ -590,8 +591,10 @@ public abstract class GitHandler {
   public void setSilent(final boolean silent) {
     checkNotStarted();
     mySilent = silent;
-    setStderrSuppressed(silent);
-    setStdoutSuppressed(silent);
+    if (silent) {
+      setStderrSuppressed(true);
+      setStdoutSuppressed(true);
+    }
   }
 
   /**
