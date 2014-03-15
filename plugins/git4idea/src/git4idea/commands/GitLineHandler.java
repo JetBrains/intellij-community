@@ -124,9 +124,14 @@ public class GitLineHandler extends GitTextHandler {
     String trimmed = LineHandlerHelper.trimLineSeparator(line);
     // if line ends with return, then it is a progress line, ignore it
     if (myVcs != null && !"\r".equals(line.substring(trimmed.length()))) {
-      if (outputType == ProcessOutputTypes.STDOUT && !isStdoutSuppressed() && !mySilent && !StringUtil.isEmptyOrSpaces(line)) {
-        myVcs.showMessages(trimmed);
-        LOG.info(line.trim());
+      if (outputType == ProcessOutputTypes.STDOUT) {
+        if (!isStdoutSuppressed() && !mySilent && !StringUtil.isEmptyOrSpaces(line)) {
+          myVcs.showMessages(trimmed);
+          LOG.info(line.trim());
+        }
+        else {
+          OUTPUT_LOG.debug(line.trim());
+        }
       }
       else if (outputType == ProcessOutputTypes.STDERR && !isStderrSuppressed() && !mySilent && !StringUtil.isEmptyOrSpaces(line)) {
         myVcs.showErrorMessages(trimmed);
