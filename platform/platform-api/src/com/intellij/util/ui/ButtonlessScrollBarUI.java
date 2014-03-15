@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -408,7 +408,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                          RenderingHints.VALUE_ANTIALIAS_ON);
 
-    g2d.setColor(adjustColor(JBColor.BLACK));
+    g2d.setColor(adjustColor(new JBColor(Gray._0, Gray._128)));
     g2d.fillRoundRect(x, y, width, height, thumbSize, thumbSize);
     
     g2d.setRenderingHints(oldHints);
