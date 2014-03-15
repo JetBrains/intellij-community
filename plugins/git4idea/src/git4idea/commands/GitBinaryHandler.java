@@ -17,7 +17,6 @@ package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,7 +35,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * The handler that allows consuming binary data as byte array
  */
 public class GitBinaryHandler extends GitHandler {
-  private static final Logger LOG = Logger.getInstance(GitBinaryHandler.class.getName());
   private static final int BUFFER_SIZE = 8 * 1024;
 
   @NotNull private final ByteArrayOutputStream myStdout = new ByteArrayOutputStream();
