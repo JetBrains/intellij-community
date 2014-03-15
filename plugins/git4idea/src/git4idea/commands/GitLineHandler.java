@@ -44,32 +44,14 @@ public class GitLineHandler extends GitTextHandler {
    */
   private final EventDispatcher<GitLineHandlerListener> myLineListeners = EventDispatcher.create(GitLineHandlerListener.class);
 
-  /**
-   * A constructor
-   *
-   * @param project   a project
-   * @param directory a process directory
-   * @param command   a command to execute
-   */
-  @SuppressWarnings({"WeakerAccess"})
   public GitLineHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
     super(project, directory, command);
   }
 
-  /**
-   * A constructor
-   *
-   * @param project a project
-   * @param vcsRoot a process directory
-   * @param command a command to execute
-   */
   public GitLineHandler(@NotNull final Project project, @NotNull final VirtualFile vcsRoot, @NotNull final GitCommand command) {
     super(project, vcsRoot, command);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   protected void processTerminated(final int exitCode) {
     // force newline
     if (myStdoutLine.length() != 0) {
@@ -81,19 +63,11 @@ public class GitLineHandler extends GitTextHandler {
   }
 
 
-  /**
-   * Add listener
-   *
-   * @param listener a listener to add
-   */
   public void addLineListener(GitLineHandlerListener listener) {
     super.addListener(listener);
     myLineListeners.addListener(listener);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   protected void onTextAvailable(final String text, final Key outputType) {
     Iterator<String> lines = LineHandlerHelper.splitText(text).iterator();
     if (ProcessOutputTypes.STDOUT == outputType) {
