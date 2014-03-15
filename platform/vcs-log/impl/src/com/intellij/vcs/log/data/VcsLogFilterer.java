@@ -49,7 +49,7 @@ public class VcsLogFilterer {
 
   private AbstractVcsLogTableModel applyDetailsFilter(DataPack dataPack, List<VcsLogDetailsFilter> detailsFilters) {
     if (!detailsFilters.isEmpty()) {
-      List<Hash> filteredCommits = filterByDetails(dataPack, detailsFilters);
+      List<Hash> filteredCommits = filterInMemory(dataPack, detailsFilters);
       if (filteredCommits.isEmpty()) {
         return new EmptyTableModel(dataPack, myLogDataHolder, myUI, LoadMoreStage.INITIAL);
       }
@@ -154,35 +154,28 @@ public class VcsLogFilterer {
   }
 
   @NotNull
-  private List<Hash> filterByDetails(@NotNull DataPack dataPack, @NotNull List<VcsLogDetailsFilter> detailsFilters) {
+  private List<Hash> filterInMemory(@NotNull DataPack dataPack, @NotNull List<VcsLogDetailsFilter> detailsFilters) {
     List<Hash> result = ContainerUtil.newArrayList();
-    int topCommits = myLogDataHolder.getSettings().getRecentCommitsCount();
-    List<Integer> visibleCommits = VcsLogUtil.getVisibleCommits(dataPack.getGraphFacade());
-    for (int i = 0; i < topCommits && i < visibleCommits.size(); i++) {
-      int commitIndex = visibleCommits.get(i);
-      final VcsFullCommitDetails details = getDetailsFromCache(commitIndex);
-      if (details == null) {
-        // Details for recent commits should be available in the cache.
-        // However if they are not there for some reason, we stop filtering.
-        // If we continue, if this commit without details matches filters,
-        // if details of an older commit are found in the cache, and if this older commit matches the filter,
-        // then we will return the list which incorrectly misses some matching commit in the middle.
-        // => Instead we rather will return a smaller list: this is not a problem,
-        // because the VCS will be requested for filtered details if there are not enough of them.
-        LOG.debug("No details found for a recent commit " + myLogDataHolder.getHash(commitIndex));
+    for (int visibleCommit : VcsLogUtil.getVisibleCommits(dataPack.getGraphFacade())) {
+      VcsFullCommitDetails data = getDetailsFromCache(visibleCommit);
+      if (data == null) {
+        // no more continuous details in the cache
         break;
       }
-      boolean allFiltersMatch = !ContainerUtil.exists(detailsFilters, new Condition<VcsLogDetailsFilter>() {
-        @Override
-        public boolean value(VcsLogDetailsFilter filter) {
-          return !filter.matches(details);
-        }
-      });
-      if (allFiltersMatch) {
-        result.add(details.getHash());
+      if (matchesAllFilters(data, detailsFilters)) {
+        result.add(data.getHash());
       }
     }
     return result;
+  }
+
+  private static boolean matchesAllFilters(@NotNull final VcsFullCommitDetails commit, @NotNull List<VcsLogDetailsFilter> detailsFilters) {
+    return !ContainerUtil.exists(detailsFilters, new Condition<VcsLogDetailsFilter>() {
+      @Override
+      public boolean value(VcsLogDetailsFilter filter) {
+        return !filter.matches(commit);
+      }
+    });
   }
 
   @Nullable
