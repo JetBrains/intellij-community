@@ -157,7 +157,7 @@ public class VcsLogFilterer {
   private List<Hash> filterInMemory(@NotNull DataPack dataPack, @NotNull List<VcsLogDetailsFilter> detailsFilters) {
     List<Hash> result = ContainerUtil.newArrayList();
     for (int visibleCommit : VcsLogUtil.getVisibleCommits(dataPack.getGraphFacade())) {
-      VcsFullCommitDetails data = getDetailsFromCache(visibleCommit);
+      VcsCommitMetadata data = getDetailsFromCache(visibleCommit);
       if (data == null) {
         // no more continuous details in the cache
         break;
@@ -169,7 +169,7 @@ public class VcsLogFilterer {
     return result;
   }
 
-  private static boolean matchesAllFilters(@NotNull final VcsFullCommitDetails commit, @NotNull List<VcsLogDetailsFilter> detailsFilters) {
+  private static boolean matchesAllFilters(@NotNull final VcsCommitMetadata commit, @NotNull List<VcsLogDetailsFilter> detailsFilters) {
     return !ContainerUtil.exists(detailsFilters, new Condition<VcsLogDetailsFilter>() {
       @Override
       public boolean value(VcsLogDetailsFilter filter) {
@@ -179,12 +179,17 @@ public class VcsLogFilterer {
   }
 
   @Nullable
-  private VcsFullCommitDetails getDetailsFromCache(final int commitIndex) {
-    final Ref<VcsFullCommitDetails> ref = Ref.create();
+  private VcsCommitMetadata getDetailsFromCache(final int commitIndex) {
+    final Hash hash = myLogDataHolder.getHash(commitIndex);
+    VcsCommitMetadata details = myLogDataHolder.getTopCommitDetails(hash);
+    if (details != null) {
+      return details;
+    }
+    final Ref<VcsCommitMetadata> ref = Ref.create();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        ref.set(myLogDataHolder.getCommitDetailsGetter().getCommitDataIfAvailable(myLogDataHolder.getHash(commitIndex)));
+        ref.set(myLogDataHolder.getCommitDetailsGetter().getCommitDataIfAvailable(hash));
       }
     });
     return ref.get();

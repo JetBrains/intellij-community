@@ -1,5 +1,6 @@
 package git4idea.log;
 
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
@@ -9,6 +10,7 @@ import com.intellij.vcs.log.impl.VcsRefImpl;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
+import java.util.Collection;
 import java.util.List;
 
 import static junit.framework.Assert.assertEquals;
@@ -70,7 +72,7 @@ public class RefParserTest {
     runTest("787ec72f340d740433ba068d4d58a6e58f6226bf", "");
   }
   
-  private class TestLogObjectsFactory implements VcsLogObjectsFactory {
+  private static class TestLogObjectsFactory implements VcsLogObjectsFactory {
     @NotNull
     @Override
     public Hash createHash(@NotNull String stringHash) {
@@ -98,11 +100,20 @@ public class RefParserTest {
 
     @NotNull
     @Override
+    public VcsFullCommitDetails createCommitMetadata(@NotNull Hash hash, @NotNull List<Hash> parents, long time, VirtualFile root,
+                                                     @NotNull String subject, @NotNull String authorName, @NotNull String authorEmail,
+                                                     @NotNull String message, @NotNull String committerName, @NotNull String committerEmail,
+                                                     long authorTime) {
+      throw new UnsupportedOperationException();
+    }
+
+    @NotNull
+    @Override
     public VcsFullCommitDetails createFullDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long time, VirtualFile root,
                                                   @NotNull String subject, @NotNull String authorName, @NotNull String authorEmail,
                                                   @NotNull String message, @NotNull String committerName, @NotNull String committerEmail,
-                                                  long authorTime, @NotNull List<Change> changes,
-                                                  @NotNull ContentRevisionFactory contentRevisionFactory) {
+                                                  long authorTime,
+                                                  @NotNull ThrowableComputable<Collection<Change>, ? extends Exception> changesGetter) {
       throw new UnsupportedOperationException();
     }
 

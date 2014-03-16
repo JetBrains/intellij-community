@@ -113,8 +113,14 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
       }
       return details;
     }
-    return (T)myDataHolder.getTopCommitDetails(hash);
+    return getFromAdditionalCache(hash);
   }
+
+  /**
+   * Lookup somewhere else but the standard cache.
+   */
+  @Nullable
+  protected abstract T getFromAdditionalCache(@NotNull Hash hash);
 
   private void runLoadAroundCommitData(int row, @NotNull AbstractVcsLogTableModel<?> tableModel) {
     long taskNumber = myCurrentTaskIndex++;
