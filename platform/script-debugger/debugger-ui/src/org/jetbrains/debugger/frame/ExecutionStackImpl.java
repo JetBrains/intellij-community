@@ -14,7 +14,7 @@ public class ExecutionStackImpl extends XExecutionStack {
   private final CallFrameView topFrame;
   private final DebuggerViewSupport debugProcess;
 
-  public ExecutionStackImpl(@NotNull DebuggerViewSupport debugProcess, @NotNull SuspendContext suspendContext, @Nullable Script script) {
+  public ExecutionStackImpl(@NotNull SuspendContext suspendContext, @NotNull DebuggerViewSupport debugProcess, @Nullable Script script) {
     super("");
 
     this.debugProcess = debugProcess;
@@ -29,8 +29,7 @@ public class ExecutionStackImpl extends XExecutionStack {
 
   @Override
   public void computeStackFrames(final int firstFrameIndex, final XStackFrameContainer container) {
-    SuspendContext suspendContext = debugProcess.getVm().getSuspendContextManager().getContext();
-    assert suspendContext != null;
+    SuspendContext suspendContext = debugProcess.getVm().getSuspendContextManager().getContextOrFail();
     suspendContext.getCallFrames().doWhenDone(new ContextDependentAsyncResultConsumer<CallFrame[]>(suspendContext) {
       @Override
       protected void consume(CallFrame[] frames, @NotNull Vm vm) {
