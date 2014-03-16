@@ -133,7 +133,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
       }
     }
 
-    browseUsingPath(uri.toString(), settings.getBrowserPath(), null, null);
+    browseUsingPath(uri.toString(), settings.getBrowserPath(), null, null, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
   private void openOrBrowse(@NotNull String url, boolean browse) {
@@ -384,7 +384,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
                                  @Nullable String browserPath,
                                  @Nullable WebBrowser browser,
                                  @Nullable Project project,
-                                 @NotNull String... additionalParameters) {
+                                 @NotNull String[] additionalParameters) {
     return doLaunch(url, browserPath == null && browser != null ? PathUtil.toSystemDependentName(browser.getPath()) : browserPath, browser, project, additionalParameters);
   }
 
@@ -394,9 +394,8 @@ public class BrowserLauncherAppless extends BrowserLauncher {
                            @Nullable Project project,
                            @NotNull String[] additionalParameters) {
     if (StringUtil.isEmptyOrSpaces(browserPath)) {
-      final String error = browser == null ? IdeBundle.message("error.please.specify.path.to.web.browser", CommonBundle.settingsActionPath()) : browser
-        .getBrowserNotFoundMessage();
-      doShowError(error, browser, project, IdeBundle.message("title.browser.not.found"));
+      doShowError(browser == null ? IdeBundle.message("error.please.specify.path.to.web.browser", CommonBundle.settingsActionPath()) : browser
+        .getBrowserNotFoundMessage(), browser, project, IdeBundle.message("title.browser.not.found"));
       return false;
     }
 
