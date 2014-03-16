@@ -18,7 +18,7 @@ public abstract class SuspendContextManagerBase<T extends SuspendContextBase, CA
     }
   }
 
-  public final void contextDismissed(T context, DebugEventListener listener) {
+  public final void contextDismissed(T context, @NotNull DebugEventListener listener) {
     if (!this.context.compareAndSet(context, null)) {
       throw new IllegalStateException("Expected " + context + ", but another suspend context exists");
     }
