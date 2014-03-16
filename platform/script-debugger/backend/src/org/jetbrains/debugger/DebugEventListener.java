@@ -12,17 +12,14 @@ import java.util.EventListener;
  */
 public interface DebugEventListener extends EventListener {
   /**
-   * Reports the browser JavaScript virtual machine has suspended (on hitting
+   * Reports the virtual machine has suspended (on hitting
    * breakpoints or a step end). The {@code context} can be used to access the
    * current backtrace.
-   *
-   * @param context associated with the current suspended state
-   *
    */
-  void suspended(SuspendContext context);
+  void suspended(@NotNull SuspendContext context);
 
   /**
-   * Reports the browser JavaScript virtual machine has resumed. This can happen
+   * Reports the virtual machine has resumed. This can happen
    * asynchronously, due to a user action in the browser (without explicitly
    * resuming the VM through
    */
