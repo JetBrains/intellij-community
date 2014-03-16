@@ -10,11 +10,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-final class ChromeExecutionStack extends XExecutionStack {
+final class ExecutionStackImpl extends XExecutionStack {
   private final CallFrameView topFrame;
   private final DebuggerViewSupport debugProcess;
 
-  public ChromeExecutionStack(@NotNull DebuggerViewSupport debugProcess, @NotNull SuspendContext suspendContext, @Nullable Script script) {
+  public ExecutionStackImpl(@NotNull DebuggerViewSupport debugProcess, @NotNull SuspendContext suspendContext, @Nullable Script script) {
     super("");
 
     this.debugProcess = debugProcess;
