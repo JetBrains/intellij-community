@@ -36,4 +36,8 @@ public abstract class DebugEventAdapter implements DebugEventListener {
   @Override
   public void sourceMapFound(@NotNull Script script, @Nullable Url sourceMapUrl, @NotNull String sourceMapData) {
   }
+
+  @Override
+  public void navigated(String newUrl) {
+  }
 }
