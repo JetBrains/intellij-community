@@ -66,8 +66,8 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsFullCommitDetails> readFirstBlock(@NotNull VirtualFile root,
-                                                             boolean ordered, int commitCount) throws VcsException {
+  public List<? extends VcsCommitMetadata> readFirstBlock(@NotNull VirtualFile root,
+                                                               boolean ordered, int commitCount) throws VcsException {
     if (!isRepositoryReady(root)) {
       return Collections.emptyList();
     }

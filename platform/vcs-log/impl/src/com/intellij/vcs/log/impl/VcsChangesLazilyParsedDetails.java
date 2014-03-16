@@ -31,9 +31,9 @@ import java.util.List;
 
 /**
  * Allows to postpone changes parsing, which might take long for a large amount of commits,
- * because {@link Change} holds {@link FilePathImpl} which makes costly refreshes and type detections
+ * because {@link Change} holds {@link FilePathImpl} which makes costly refreshes and type detections.
  */
-public class VcsChangesLazilyParsedDetails extends VcsCommitDetailsExceptChanges implements VcsFullCommitDetails {
+public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl implements VcsFullCommitDetails {
 
   private static final Logger LOG = Logger.getInstance(VcsChangesLazilyParsedDetails.class);
 

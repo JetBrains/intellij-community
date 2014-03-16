@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogUserFilter;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
@@ -117,7 +117,7 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
     }
 
     @Override
-    public boolean matches(@NotNull final VcsFullCommitDetails commit) {
+    public boolean matches(@NotNull final VcsCommitMetadata commit) {
       return ContainerUtil.exists(getUserNames(commit.getRoot()), new Condition<String>() {
         @Override
         public boolean value(String user) {

@@ -59,7 +59,7 @@ public class HgLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsFullCommitDetails> readFirstBlock(@NotNull VirtualFile root,
+  public List<? extends VcsCommitMetadata> readFirstBlock(@NotNull VirtualFile root,
                                                              boolean ordered, int commitCount) throws VcsException {
     return HgHistoryUtil.history(myProject, root, commitCount, ordered ? Collections.<String>emptyList() : Arrays.asList("-r", "0:tip"));
   }

@@ -15,7 +15,7 @@
  */
 package com.intellij.vcs.log.ui.filter;
 
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogTextFilter;
 import com.intellij.vcs.log.VcsLogDetailsFilter;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +29,7 @@ public class VcsLogTextFilterImpl implements VcsLogDetailsFilter, VcsLogTextFilt
   }
 
   @Override
-  public boolean matches(@NotNull VcsFullCommitDetails details) {
+  public boolean matches(@NotNull VcsCommitMetadata details) {
     return details.getFullMessage().toLowerCase().contains(myText.toLowerCase());
   }
 
