@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-final class ExecutionStackImpl extends XExecutionStack {
+public class ExecutionStackImpl extends XExecutionStack {
   private final CallFrameView topFrame;
   private final DebuggerViewSupport debugProcess;
 
