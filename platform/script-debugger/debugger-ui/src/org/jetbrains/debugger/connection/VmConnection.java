@@ -9,7 +9,6 @@ import com.intellij.util.io.socketConnection.ConnectionStatus;
 import com.intellij.util.io.socketConnection.SocketConnectionListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.debugger.DebugEventAdapter;
 import org.jetbrains.debugger.DebugEventListener;
 import org.jetbrains.debugger.Vm;
 
@@ -38,7 +37,7 @@ public abstract class VmConnection<T extends Vm> implements Disposable, BrowserC
     return state.get();
   }
 
-  public void addDebugListener(@NotNull DebugEventAdapter listener, @NotNull Disposable parentDisposable) {
+  public void addDebugListener(@NotNull DebugEventListener listener, @NotNull Disposable parentDisposable) {
     dispatcher.addListener(listener, parentDisposable);
   }
 
