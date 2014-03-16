@@ -12,6 +12,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -58,12 +59,12 @@ public class StartBrowserPanel {
                 // IDEA-118202
                 project = ProjectManager.getInstance().getDefaultProject();
               }
-              setupUrlField(myUrlField, project);
+              setupUrlField(myUrlField, project, false, null);
             }
           });
         }
         else {
-          setupUrlField(myUrlField, project);
+          setupUrlField(myUrlField, project, false, null);
         }
       }
     });
@@ -119,7 +120,7 @@ public class StartBrowserPanel {
   }
 
   @Nullable
-  private static Url virtualFileToUrl(VirtualFile file, Project project) {
+  private static Url virtualFileToUrl(@NotNull VirtualFile file, @NotNull Project project) {
     PsiFile psiFile;
     AccessToken token = ReadAction.start();
     try {
@@ -141,10 +142,16 @@ public class StartBrowserPanel {
     return browserSettings;
   }
 
-  public static void setupUrlField(@NotNull TextFieldWithBrowseButton field, @NotNull final Project project) {
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
+  public static void setupUrlField(@NotNull TextFieldWithBrowseButton field,
+                                   @NotNull final Project project,
+                                   boolean chooseFolders,
+                                   @Nullable final Condition<VirtualFile> additionalFileCondition) {
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, chooseFolders, false, false, false, false) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
+        if (additionalFileCondition != null && additionalFileCondition.value(file)) {
+          return true;
+        }
         return HtmlUtil.isHtmlFile(file) || virtualFileToUrl(file, project) != null;
       }
     };
@@ -157,6 +164,10 @@ public class StartBrowserPanel {
       @NotNull
       @Override
       protected String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
+        if (chosenFile.isDirectory()) {
+          return chosenFile.getPath();
+        }
+
         Url url = virtualFileToUrl(chosenFile, project);
         return url == null ? chosenFile.getUrl() : url.toDecodedForm();
       }
