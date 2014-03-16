@@ -25,7 +25,6 @@ public interface DebugEventListener extends EventListener {
    * Reports the browser JavaScript virtual machine has resumed. This can happen
    * asynchronously, due to a user action in the browser (without explicitly
    * resuming the VM through
-   * {@link SuspendContext#continueVm(StepAction, int, SuspendContext.ContinueCallback)}).
    */
   void resumed();
 
