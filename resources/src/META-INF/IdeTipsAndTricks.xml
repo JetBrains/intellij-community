@@ -152,7 +152,7 @@
     <tipAndTrick file="SecondSmartCompletionToar.html" feature-id="editing.completion.second.smarttype.toar"/>
     <tipAndTrick file="ChangeSorting.html" feature-id="editing.completion.changeSorting"/>
 
-    <tipAndTrick file="PostfixCompletion.html"/>
+    <tipAndTrick file="PostfixCompletion.html" feature-id="editing.completion.postfix"/>
     <tipAndTrick file="LiveTemplatesRestore.html"/>
     <tipAndTrick file="Multicursor.html"/>
     <tipAndTrick file="Multicursor1.html"/>
