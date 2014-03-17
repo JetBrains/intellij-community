@@ -12,7 +12,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -59,12 +58,12 @@ public class StartBrowserPanel {
                 // IDEA-118202
                 project = ProjectManager.getInstance().getDefaultProject();
               }
-              setupUrlField(myUrlField, project, false, null);
+              setupUrlField(myUrlField, project);
             }
           });
         }
         else {
-          setupUrlField(myUrlField, project, false, null);
+          setupUrlField(myUrlField, project);
         }
       }
     });
@@ -142,22 +141,15 @@ public class StartBrowserPanel {
     return browserSettings;
   }
 
-  public static void setupUrlField(@NotNull TextFieldWithBrowseButton field,
-                                   @NotNull final Project project,
-                                   boolean chooseFolders,
-                                   @Nullable final Condition<VirtualFile> additionalFileCondition) {
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, chooseFolders, false, false, false, false) {
+  public static void setupUrlField(@NotNull TextFieldWithBrowseButton field, @NotNull final Project project) {
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
-        if (additionalFileCondition != null && additionalFileCondition.value(file)) {
-          return true;
-        }
         return HtmlUtil.isHtmlFile(file) || virtualFileToUrl(file, project) != null;
       }
     };
     descriptor.setTitle(XmlBundle.message("javascript.debugger.settings.choose.file.title"));
     descriptor.setDescription(XmlBundle.message("javascript.debugger.settings.choose.file.subtitle"));
-    //descriptor.setShowFileSystemRoots(false);
     descriptor.setRoots(ProjectRootManager.getInstance(project).getContentRoots());
 
     field.addBrowseFolderListener(new TextBrowseFolderListener(descriptor, project) {

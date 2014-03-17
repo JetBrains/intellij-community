@@ -28,6 +28,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.channel.socket.oio.OioSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
+import io.netty.handler.codec.http.HttpRequestEncoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -38,7 +39,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 
 public final class NettyUtil {
-  public static final int DEFAULT_CONNECT_ATTEMPT_COUNT = 8;
+  public static final int DEFAULT_CONNECT_ATTEMPT_COUNT = 20;
   public static final int MIN_START_TIME = 100;
 
   public static void log(Throwable throwable, Logger log) {
@@ -68,7 +69,7 @@ public final class NettyUtil {
         catch (IOException e) {
           if (++attemptCount < maxAttemptCount) {
             //noinspection BusyWait
-            Thread.sleep(attemptCount * 100);
+            Thread.sleep(attemptCount * MIN_START_TIME);
           }
           else {
             asyncResult.reject("cannot connect");
@@ -131,6 +132,6 @@ public final class NettyUtil {
   }
 
   public static void initHttpHandlers(ChannelPipeline pipeline) {
-    pipeline.addLast(new HttpRequestDecoder(), new HttpObjectAggregator(1048576 * 10), new HttpResponseEncoder());
+    pipeline.addLast(new HttpRequestDecoder(), new HttpObjectAggregator(1048576 * 10), new HttpResponseEncoder(), new HttpRequestEncoder());
   }
 }
