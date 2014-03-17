@@ -33,6 +33,7 @@
     <orderEntry type="module" module-name="javaee-api" />
     <orderEntry type="module" module-name="web-openapi" />
     <orderEntry type="library" name="JaCoCo" level="project" />
+    <orderEntry type="module" module-name="coverage_rt" />
   </component>
 </module>
 
