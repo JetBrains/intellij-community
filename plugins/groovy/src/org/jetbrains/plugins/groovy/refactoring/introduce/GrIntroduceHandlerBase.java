@@ -738,7 +738,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
   @Nullable
   private static PsiElement findContainingStatement(@Nullable PsiElement candidate) {
-    while (candidate != null && !PsiUtil.isExpressionStatement(candidate)) {
+    while (candidate != null && (candidate.getParent() instanceof GrLabeledStatement || !(PsiUtil.isExpressionStatement(candidate)))) {
       candidate = candidate.getParent();
       if (candidate instanceof GrCaseLabel) candidate = candidate.getParent();
     }
