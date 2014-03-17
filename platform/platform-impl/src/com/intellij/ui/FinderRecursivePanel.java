@@ -26,6 +26,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
@@ -436,6 +437,9 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
         assert panel != null : Arrays.toString(pathToSelect);
       }
     }
+
+    IdeFocusManager.getInstance(myProject).requestFocus(panel.myList, true);
+
     myUpdateSelectedPathModeActive.set(false);
   }
 
