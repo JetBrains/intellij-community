@@ -22,24 +22,24 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
-import com.intellij.util.containers.ConcurrentBitSet;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
-import com.intellij.util.containers.StripedLockIntObjectConcurrentHashMap;
+import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.messages.MessageBusConnection;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.BitSet;
 import java.util.List;
 
 /**
  * @author peter
  */
 class IgnoredFileCache {
-  private final ConcurrentBitSet myCheckedIds = new ConcurrentBitSet();
-  private final ConcurrentIntObjectMap<Object> myIgnoredIds = new StripedLockIntObjectConcurrentHashMap<Object>();
+  private final BitSet myCheckedIds = new BitSet();
+  private final TIntHashSet myIgnoredIds = new TIntHashSet();
   private final IgnoredPatternSet myIgnoredPatterns;
-  private volatile int myVfsEventNesting = 0;
+  private int myVfsEventNesting = 0;
 
-  IgnoredFileCache(@NotNull IgnoredPatternSet ignoredPatterns) {
+  IgnoredFileCache(IgnoredPatternSet ignoredPatterns) {
     myIgnoredPatterns = ignoredPatterns;
     MessageBusConnection connect = ApplicationManager.getApplication().getMessageBus().connect();
     connect.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
@@ -56,7 +56,17 @@ class IgnoredFileCache {
         myVfsEventNesting--;
       }
 
-      private void clearCacheForChangedFiles(@NotNull List<? extends VFileEvent> events) {
+      private void clearCacheForChangedFiles(List<? extends VFileEvent> events) {
+        final IntArrayList ids = collectChangedIds(events);
+        synchronized (myCheckedIds) {
+          for (int i : ids.toArray()) {
+            myCheckedIds.clear(i);
+          }
+        }
+      }
+
+      private IntArrayList collectChangedIds(List<? extends VFileEvent> events) {
+        final IntArrayList ids = new IntArrayList();
         for (final VFileEvent event : events) {
           VirtualFile file = event.getFile();
           if (!(file instanceof NewVirtualFile)) {
@@ -65,23 +75,24 @@ class IgnoredFileCache {
 
           if (event instanceof VFilePropertyChangeEvent) {
             int id = ((NewVirtualFile)file).getId();
-            if (id < 0) {
-              continue;
+            if (id >= 0) {
+              ids.add(id);
             }
-            myCheckedIds.clear(id);
-            myIgnoredIds.remove(id);
           }
         }
+        return ids;
       }
     });
   }
 
   void clearCache() {
-    myCheckedIds.clear();
-    myIgnoredIds.clear();
+    synchronized (myCheckedIds) {
+      myCheckedIds.clear();
+      myIgnoredIds.clear();
+    }
   }
 
-  boolean isFileIgnored(@NotNull VirtualFile file) {
+  boolean isFileIgnored(VirtualFile file) {
     if (myVfsEventNesting != 0 || !(file instanceof NewVirtualFile)) {
       return isFileIgnoredNoCache(file);
     }
@@ -91,22 +102,25 @@ class IgnoredFileCache {
       return isFileIgnoredNoCache(file);
     }
 
-    if (myCheckedIds.get(id)) {
-      return myIgnoredIds.containsKey(id);
+    synchronized (myCheckedIds) {
+      if (myCheckedIds.get(id)) {
+        return myIgnoredIds.contains(id);
+      }
     }
 
     boolean result = isFileIgnoredNoCache(file);
-    if (result) {
-      myIgnoredIds.put(id, Boolean.TRUE);
+    synchronized (myCheckedIds) {
+      myCheckedIds.set(id);
+      if (result) {
+        myIgnoredIds.add(id);
+      } else {
+        myIgnoredIds.remove(id);
+      }
     }
-    else {
-      myIgnoredIds.remove(id);
-    }
-    myCheckedIds.set(id);
     return result;
   }
 
-  private boolean isFileIgnoredNoCache(@NotNull VirtualFile file) {
+  private boolean isFileIgnoredNoCache(VirtualFile file) {
     return myIgnoredPatterns.isIgnored(file.getName());
   }
 }
