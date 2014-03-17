@@ -127,12 +127,13 @@ class FindInProjectTask {
 
       myProgress.setIndeterminate(true);
       myProgress.setText("Scanning non-indexed files...");
-      final Collection<PsiFile> otherFiles = collectFilesInScope(filesForFastWordSearch);
+      boolean skipIndexed = canRelyOnIndices();
+      final Collection<PsiFile> otherFiles = collectFilesInScope(filesForFastWordSearch, skipIndexed);
       myProgress.setIndeterminate(false);
 
       long start = System.currentTimeMillis();
       searchInFiles(consumer, processPresentation, otherFiles);
-      if (otherFiles.size() > 1000) {
+      if (skipIndexed && otherFiles.size() > 1000) {
         logStats(otherFiles, start);
       }
     }
@@ -167,7 +168,7 @@ class FindInProjectTask {
 
     String message = "Search in " + otherFiles.size() + " files with unknown types took " + time + "ms.\n" +
                      "Mapping their extensions to an existing file type (e.g. Plain Text) might speed up the search.\n" +
-                     "Most frequent unknown extensions: ";
+                     "Most frequent non-indexed file extensions: ";
     for (int i = 0; i < Math.min(10, extensions.size()); i++) {
       String extension = extensions.get(i);
       message += extension + "(" + stats.count(extension) + ") ";
@@ -219,11 +220,9 @@ class FindInProjectTask {
   }
 
   @NotNull
-  private Collection<PsiFile> collectFilesInScope(@NotNull final Set<PsiFile> alreadySearched) {
+  private Collection<PsiFile> collectFilesInScope(@NotNull final Set<PsiFile> alreadySearched, final boolean skipIndexed) {
     SearchScope customScope = myFindModel.getCustomScope();
     final GlobalSearchScope globalCustomScope = toGlobal(customScope);
-
-    final boolean skipIndexed = canRelyOnIndices();
 
     class EnumContentIterator implements ContentIterator {
       final Set<PsiFile> myFiles = new LinkedHashSet<PsiFile>();
