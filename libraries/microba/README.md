@@ -12,4 +12,8 @@ Build
 Microba currently uses Maven for its build.
 
    mvn install
+   
+FAQ
+-----------
+[Wiki - FAQ](https://github.com/tdbear/microba/wiki/FAQ)
 		
