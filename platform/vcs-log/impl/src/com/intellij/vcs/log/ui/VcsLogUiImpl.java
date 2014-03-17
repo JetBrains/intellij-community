@@ -137,7 +137,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
       @Override
       public void run() {
         final GraphAnswer answer = myDataPack.getGraphFacade().performAction(LinearBranchesExpansionAction.EXPAND);
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override
           public void run() {
             handleAnswer(answer);
@@ -153,7 +153,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
       @Override
       public void run() {
         final GraphAnswer answer = myDataPack.getGraphFacade().performAction(LinearBranchesExpansionAction.COLLAPSE);
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override
           public void run() {
             handleAnswer(answer);
@@ -297,7 +297,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
       public void run() {
         final TIntHashSet previouslySelected = getSelectedCommits();
         final AbstractVcsLogTableModel newModel = myFilterer.applyFiltersAndUpdateUi(dataPack, getFilters());
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override
           public void run() {
             myDataPack = dataPack;
