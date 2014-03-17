@@ -97,12 +97,12 @@ public abstract class ImportLayoutPanel extends JPanel {
 
     this.add(
       ToolbarDecorator.createDecorator(myImportLayoutTable = createTableForPackageEntries(myImportLayoutList, this))
-        .addExtraAction(new AnActionButton(ApplicationBundle.message("button.add.package"), IconUtil.getAddPackageIcon()) {
+        .addExtraAction(new DumbAwareActionButton(ApplicationBundle.message("button.add.package"), IconUtil.getAddPackageIcon()) {
           @Override
           public void actionPerformed(AnActionEvent e) {
             addPackageToImportLayouts();
           }
-        }).addExtraAction(new AnActionButton(ApplicationBundle.message("button.add.blank"), IconUtil.getAddBlankLineIcon()) {
+        }).addExtraAction(new DumbAwareActionButton(ApplicationBundle.message("button.add.blank"), IconUtil.getAddBlankLineIcon()) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           addBlankLine();
