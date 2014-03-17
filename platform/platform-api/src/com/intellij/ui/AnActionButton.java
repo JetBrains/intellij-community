@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,6 +198,11 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
       if (enabled && visible) {
         super.updateButton(e);
       }
+    }
+
+    @Override
+    public boolean isDumbAware() {
+      return myAction.isDumbAware();
     }
   }
 }
