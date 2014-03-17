@@ -314,7 +314,7 @@ public abstract class JBListTable extends JPanel {
       myEditor = editor;
       myIndex = index;
       currentHeight = myTable.getRowHeight(myRow);
-      myScrollPane = (JScrollPane)myTable.getParent().getParent();
+      myScrollPane = UIUtil.getParentOfType(JScrollPane.class, myTable);
     }
 
     @Override
