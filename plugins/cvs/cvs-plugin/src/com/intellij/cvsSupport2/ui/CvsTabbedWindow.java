@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,8 @@ import javax.swing.*;
 /**
  * author: lesya
  */
-public class CvsTabbedWindow {
+public class CvsTabbedWindow implements Disposable {
+
   private final Project myProject;
   private Editor myOutput = null;
   private ErrorTreeView myErrorsView;
@@ -56,28 +57,20 @@ public class CvsTabbedWindow {
 
   public CvsTabbedWindow(Project project) {
     myProject = project;
-    Disposer.register(project, new Disposable() {
-      public void dispose() {
-        if (myOutput != null) {
-          EditorFactory.getInstance().releaseEditor(myOutput);
-          myOutput = null;
-        }
-        if (myErrorsView != null) {
-          myErrorsView.dispose();
-          myErrorsView = null;
-        }
+    Disposer.register(project, this);
+  }
 
-        LOG.assertTrue(!myIsDisposed);
-        try {
-          if (!myIsInitialized) return;
-          ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-          toolWindowManager.unregisterToolWindow(ToolWindowId.CVS);
-        }
-        finally {
-          myIsDisposed = true;
-        }
-      }
-    });
+  public void dispose() {
+    if (myOutput != null) {
+      EditorFactory.getInstance().releaseEditor(myOutput);
+      myOutput = null;
+    }
+    if (myErrorsView != null) {
+      myErrorsView.dispose();
+      myErrorsView = null;
+    }
+
+    LOG.assertTrue(!myIsDisposed);
   }
 
   private void initialize() {
@@ -107,8 +100,12 @@ public class CvsTabbedWindow {
 
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
     ToolWindow toolWindow =
-      toolWindowManager.registerToolWindow(ToolWindowId.CVS, myContentManager.getComponent(), ToolWindowAnchor.BOTTOM);
-    toolWindow.setIcon(AllIcons.Providers.Cvs);
+      toolWindowManager.registerToolWindow(ToolWindowId.CVS, false, ToolWindowAnchor.BOTTOM, this, true);
+    final ContentManager contentManager = toolWindow.getContentManager();
+    final Content content = contentManager.getFactory().createContent(myContentManager.getComponent(), "", false);
+    contentManager.addContent(content);
+    contentManager.setSelectedContent(content, true);
+    toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowCvs);
     toolWindow.installWatcher(myContentManager);
   }
 

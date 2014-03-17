@@ -187,7 +187,7 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
 
   private void optimizeImportsOnTheFly(@NotNull final Editor editor) {
     if (myHasRedundantImports || myHasMissortedImports) {
-      IntentionAction optimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix();
+      IntentionAction optimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true);
       if (optimizeImportsFix.isAvailable(myProject, editor, myFile) && myFile.isWritable()) {
         optimizeImportsFix.invoke(myProject, editor, myFile);
       }
@@ -793,7 +793,7 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
       HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.UNUSED_IMPORT).range(importStatement).descriptionAndTooltip(description)
         .create();
 
-    QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createOptimizeImportsFix(), unusedImportKey);
+    QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createOptimizeImportsFix(false), unusedImportKey);
     QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createEnableOptimizeImportsOnTheFlyFix(), unusedImportKey);
     myHasRedundantImports = true;
     return info;

@@ -1,17 +1,17 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.intellij.psi.scope.processor;
@@ -51,13 +51,15 @@ public class MethodResolveProcessor implements PsiScopeProcessor, ElementClassHi
     return myMethods.toArray(new PsiMethod[myMethods.size()]);
   }
 
-  public boolean execute(@NotNull PsiElement element, ResolveState state) {
+  @Override
+  public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
     if (element instanceof PsiMethod) {
       ContainerUtil.addIfNotNull(myMethods, (PsiMethod)element);
     }
     return true;
   }
 
+  @Override
   public <T> T getHint(@NotNull Key<T> hintKey) {
     if (hintKey == ElementClassHint.KEY) {
       return (T)this;
@@ -68,9 +70,11 @@ public class MethodResolveProcessor implements PsiScopeProcessor, ElementClassHi
     return null;
   }
 
-  public void handleEvent(Event event, Object associated) {
+  @Override
+  public void handleEvent(@NotNull Event event, Object associated) {
   }
 
+  @Override
   public boolean shouldProcess(DeclarationKind kind) {
     return kind == DeclarationKind.METHOD;
   }
@@ -90,7 +94,7 @@ public class MethodResolveProcessor implements PsiScopeProcessor, ElementClassHi
 
   @Nullable
   @Override
-  public String getName(ResolveState state) {
+  public String getName(@NotNull ResolveState state) {
     return myNameHint;
   }
 }

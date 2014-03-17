@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class GroovyImportHelper {
       }
     }
     for (String pkg : getImplicitlyImportedPackages(file)) {
-      if (qname.equals(pkg + "." + expectedName) || pkg.length() == 0 && qname.equals(expectedName)) {
+      if (qname.equals(pkg + "." + expectedName) || pkg.isEmpty() && qname.equals(expectedName)) {
         return true;
       }
     }
@@ -91,7 +91,7 @@ public class GroovyImportHelper {
 
     final DelegatingScopeProcessor packageSkipper = new DelegatingScopeProcessor(processor) {
       @Override
-      public boolean execute(@NotNull PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         if (element instanceof PsiPackage) return true;
         return super.execute(element, state);
       }

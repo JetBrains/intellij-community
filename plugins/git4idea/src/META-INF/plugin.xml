@@ -65,6 +65,7 @@
       <action id="Git.Rebase.Continue" class="git4idea.actions.GitRebaseContinue" text="Continue Rebasing"/>
       <action id="Git.Rebase.Skip" class="git4idea.actions.GitRebaseSkip" text="Skip Commit in Rebasing"/>
       <separator/>
+      <action id="Git.Edit.Global.Message" class="git4idea.actions.GitEditGlobalMessageAction" text="Edit Global Message"/>
     </group>
 
     <group id="Git.Menu" class="git4idea.actions.GitMenu" popup="true" text="_Git">

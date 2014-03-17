@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public class GebPageMemberContributor extends NonCodeMembersContributor {
                                      PsiClass aClass,
                                      PsiScopeProcessor processor,
                                      PsiElement place,
-                                     ResolveState state) {
+                                     @NotNull ResolveState state) {
     ClassHint classHint = processor.getHint(ClassHint.KEY);
     if (classHint != null && !classHint.shouldProcess(ClassHint.ResolveKind.PROPERTY)) return;
 

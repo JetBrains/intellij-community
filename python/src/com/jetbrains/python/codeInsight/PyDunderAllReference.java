@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public class PyDunderAllReference extends PsiReferenceBase<PyStringLiteralExpres
   public PyDunderAllReference(@NotNull PyStringLiteralExpression element) {
     super(element);
     final List<TextRange> ranges = element.getStringValueTextRanges();
-    if (ranges.size() > 0) {
+    if (!ranges.isEmpty()) {
       setRangeInElement(ranges.get(0));
     }
   }
@@ -70,7 +70,7 @@ public class PyDunderAllReference extends PsiReferenceBase<PyStringLiteralExpres
     }
     containingFile.processDeclarations(new PsiScopeProcessor() {
       @Override
-      public boolean execute(@NotNull PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         if (element instanceof PsiNamedElement && !(element instanceof LightNamedElement)) {
           final String name = ((PsiNamedElement)element).getName();
           if (name != null && PyUtil.getInitialUnderscores(name) == 0 && !seenNames.contains(name)) {
@@ -94,7 +94,7 @@ public class PyDunderAllReference extends PsiReferenceBase<PyStringLiteralExpres
       }
 
       @Override
-      public void handleEvent(Event event, @Nullable Object associated) {
+      public void handleEvent(@NotNull Event event, @Nullable Object associated) {
       }
     }, ResolveState.initial(), null, containingFile);
     return ArrayUtil.toObjectArray(result);

@@ -164,7 +164,7 @@ public class GdkMethodUtil {
                                                @NotNull final PsiClass categoryClass) {
     final DelegatingScopeProcessor delegate = new DelegatingScopeProcessor(processor) {
       @Override
-      public boolean execute(@NotNull PsiElement element, ResolveState delegateState) {
+      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState delegateState) {
         if (element instanceof PsiMethod && isCategoryMethod((PsiMethod)element, null, null, null)) {
           PsiMethod method = (PsiMethod)element;
           return processor.execute(GrGdkMethodImpl.createGdkMethod(method, false, generateOriginInfo(method)), delegateState);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,27 +59,6 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBAND;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBAND_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBOR;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBOR_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBSR_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBXOR;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBXOR_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDIV;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDIV_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mMINUS;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mMINUS_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mMOD;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mMOD_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mPLUS;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mPLUS_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSL_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSR_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR_STAR;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR_STAR_ASSIGN;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeType;
 
@@ -226,7 +205,7 @@ public class GenerationUtil {
     }
     else {
       addParentheses =
-        context != null && (context.shouldInsertCurlyBrackets() || context.myStatements.size() > 0) && parent instanceof GrControlStatement;
+        context != null && (context.shouldInsertCurlyBrackets() || !context.myStatements.isEmpty()) && parent instanceof GrControlStatement;
     }
 
     if (addParentheses) {
@@ -541,7 +520,7 @@ public class GenerationUtil {
     final CheckProcessElement checker = new CheckProcessElement(member);
     ResolveUtil.processAllDeclarationsSeparately(declared, checker, new BaseScopeProcessor() {
       @Override
-      public boolean execute(@NotNull PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         return false;
       }
     }, ResolveState.initial(), qualifier);
@@ -561,7 +540,7 @@ public class GenerationUtil {
     }
 
     @Override
-    public boolean execute(@NotNull PsiElement element, ResolveState state) {
+    public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
       if (myManager.areElementsEquivalent(element, myMember)) {
         myResult = true;
         return false;
@@ -575,7 +554,7 @@ public class GenerationUtil {
     }
 
     @Override
-    public void handleEvent(Event event, Object associated) {
+    public void handleEvent(@NotNull Event event, Object associated) {
     }
 
     public boolean isFound() {

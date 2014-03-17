@@ -485,6 +485,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myEditorComponent = new EditorComponentImpl(this);
     myScrollPane = new MyScrollPane();
+    myVerticalScrollBar = (MyScrollBar)myScrollPane.getVerticalScrollBar();
     myPanel = new JPanel();
 
     myPanel.putClientProperty(OrphanGuardian.CLIENT_PROPERTY_KEY, new OrphanGuardian() {
@@ -499,7 +500,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     });
 
     myHeaderPanel = new MyHeaderPanel();
-    myVerticalScrollBar = new MyScrollBar(Adjustable.VERTICAL);
     myGutterComponent = new EditorGutterComponentImpl(this);
     initComponent();
     myScrollingModel = new ScrollingModelImpl(this);
@@ -809,7 +809,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myGutterComponent.setOpaque(true);
 
-    myScrollPane.setVerticalScrollBar(myVerticalScrollBar);
     myScrollPane.setViewportView(myEditorComponent);
     //myScrollPane.setBorder(null);
     myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
@@ -5045,7 +5044,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     else {
       myScrollPane.setLayout(new ScrollPaneLayout());
     }
-    ((JBScrollPane)myScrollPane).setupCorners();
     myScrollingModel.scrollHorizontally(currentHorOffset);
   }
 
@@ -6709,7 +6707,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Override
-    public void setupCorners() {
+    protected void setupCorners() {
       super.setupCorners();
 
       setBorder(new TablessBorder());

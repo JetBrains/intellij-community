@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.DumbAwareActionButton;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
@@ -136,7 +137,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
 
   private JComponent createListPanel() {
     final AnActionButton duplicateButton =
-      new AnActionButton(CvsBundle.message("action.name.copy"), PlatformIcons.COPY_ICON) {
+      new DumbAwareActionButton(CvsBundle.message("action.name.copy"), PlatformIcons.COPY_ICON) {
 
         @Override
         public void updateButton(AnActionEvent e) {

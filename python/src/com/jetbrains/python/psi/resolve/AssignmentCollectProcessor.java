@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,8 @@ public class AssignmentCollectProcessor implements PsiScopeProcessor {
     mySeenNames = new HashSet<String>();
   }
 
-  public boolean execute(@NotNull final PsiElement element, final ResolveState state) {
+  @Override
+  public boolean execute(@NotNull final PsiElement element, @NotNull final ResolveState state) {
     if (element instanceof PyAssignmentStatement) {
       final PyAssignmentStatement assignment = (PyAssignmentStatement)element;
       for (PyExpression ex : assignment.getTargets()) {
@@ -81,11 +82,13 @@ public class AssignmentCollectProcessor implements PsiScopeProcessor {
     return myResult;
   }
 
+  @Override
   public <T> T getHint(@NotNull final Key<T> hintKey) {
     return null;
   }
 
-  public void handleEvent(final Event event, final Object associated) {
+  @Override
+  public void handleEvent(@NotNull final Event event, final Object associated) {
     // empty
   }
 

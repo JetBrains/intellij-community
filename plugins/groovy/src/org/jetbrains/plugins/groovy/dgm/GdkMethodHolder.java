@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,8 +39,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
  * @author Max Medvedev
  */
 public class GdkMethodHolder {
-  private static Key<CachedValue<GdkMethodHolder>> CACHED_NON_STATIC = Key.create("Cached instance gdk method holder");
-  private static Key<CachedValue<GdkMethodHolder>> CACHED_STATIC = Key.create("Cached static gdk method holder");
+  private static final Key<CachedValue<GdkMethodHolder>> CACHED_NON_STATIC = Key.create("Cached instance gdk method holder");
+  private static final Key<CachedValue<GdkMethodHolder>> CACHED_STATIC = Key.create("Cached static gdk method holder");
 
 
   private final ConcurrentFactoryMap<String, MultiMap<String, PsiMethod>> myOriginalMethodsByNameAndType;
@@ -90,7 +90,7 @@ public class GdkMethodHolder {
     return TypesUtil.boxPrimitiveType(TypeConversionUtil.erasure(parameterType), myPsiManager, myScope);
   }
 
-  public boolean processMethods(PsiScopeProcessor processor, ResolveState state, PsiType qualifierType, Project project) {
+  public boolean processMethods(PsiScopeProcessor processor, @NotNull ResolveState state, PsiType qualifierType, Project project) {
     if (qualifierType == null) return true;
 
     NameHint nameHint = processor.getHint(NameHint.KEY);

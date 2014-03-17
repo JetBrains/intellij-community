@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,6 +89,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   private static final Logger LOG =
     Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureUsageProcessor");
 
+  @Override
   public UsageInfo[] findUsages(ChangeInfo info) {
     if (info instanceof JavaChangeInfo) {
       return new GrChageSignatureUsageSearcher((JavaChangeInfo)info).findUsages();
@@ -96,6 +97,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     return UsageInfo.EMPTY_ARRAY;
   }
 
+  @Override
   public MultiMap<PsiElement, String> findConflicts(ChangeInfo info, Ref<UsageInfo[]> refUsages) {
     if (info instanceof JavaChangeInfo) {
       return new GrChangeSignatureConflictSearcher((JavaChangeInfo)info).findConflicts(refUsages);
@@ -105,6 +107,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     }
   }
 
+  @Override
   public boolean processPrimaryMethod(ChangeInfo changeInfo) {
     if (!(changeInfo instanceof GrChangeInfoImpl)) return false;
 
@@ -117,6 +120,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     return processPrimaryMethodInner(grInfo, method, null);
   }
 
+  @Override
   public boolean shouldPreviewUsages(ChangeInfo changeInfo, UsageInfo[] usages) {
     if (!StringUtil.isJavaIdentifier(changeInfo.getNewName())) return true;
 
@@ -397,6 +401,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     return null;
   }
 
+  @Override
   public boolean processUsage(ChangeInfo changeInfo, UsageInfo usageInfo, boolean beforeMethodChange, UsageInfo[] usages) {
     if (!(changeInfo instanceof JavaChangeInfo)) return false;
 
@@ -532,7 +537,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
           GrClosureSignatureUtil.ArgInfo<PsiElement> argInfo = map[index];
           List<PsiElement> arguments = argInfo.args;
           if (argInfo.isMultiArg) { //arguments for Map and varArg
-            if ((i != 0 || !(arguments.size() > 0 && arguments.iterator().next() instanceof GrNamedArgument)) &&
+            if ((i != 0 || !(!arguments.isEmpty() && arguments.iterator().next() instanceof GrNamedArgument)) &&
                 (i != parameters.length - 1 || !parameter.isVarargType())) {
               final PsiType type = parameter.createType(changeInfo.getMethod().getParameterList(), argumentList.getManager());
               final GrExpression arg = GroovyRefactoringUtil.generateArgFromMultiArg(substitutor, arguments, type, element.getProject());
@@ -605,7 +610,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       }
 
       GrCall call = GroovyRefactoringUtil.getCallExpressionByMethodReference(element);
-      if (argumentList.getText().trim().length() == 0 && (call == null || !PsiImplUtil.hasClosureArguments(call))) {
+      if (argumentList.getText().trim().isEmpty() && (call == null || !PsiImplUtil.hasClosureArguments(call))) {
         argumentList = argumentList.replaceWithArgumentList(factory.createArgumentList());
       }
       CodeStyleManager.getInstance(argumentList.getProject()).reformat(argumentList);
@@ -627,6 +632,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(list.getProject()).getResolveHelper();
       final PsiType type = info.getTypeWrapper().getType(changeInfo.getMethod(), list.getManager());
       final VariablesProcessor processor = new VariablesProcessor(false) {
+        @Override
         protected boolean check(PsiVariable var, ResolveState state) {
           if (var instanceof PsiField && !resolveHelper.isAccessible((PsiField)var, list, null)) return false;
           if (var instanceof GrVariable &&
@@ -640,7 +646,8 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
           return type.isAssignableFrom(varType);
         }
 
-        public boolean execute(@NotNull PsiElement pe, ResolveState state) {
+        @Override
+        public boolean execute(@NotNull PsiElement pe, @NotNull ResolveState state) {
           super.execute(pe, state);
           return size() < 2;
         }
@@ -696,6 +703,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     else if (context instanceof GrTryCatchStatement) {
       final GrCatchClause[] catchClauses = ((GrTryCatchStatement)context).getCatchClauses();
       List<PsiClassType> referencedTypes = ContainerUtil.map(catchClauses, new Function<GrCatchClause, PsiClassType>() {
+        @Override
         @Nullable
         public PsiClassType fun(GrCatchClause grCatchClause) {
           final GrParameter grParameter = grCatchClause.getParameter();
@@ -738,6 +746,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
     final GrCatchClause[] clauses = tryCatch.getCatchClauses();
     List<String> restricted = ContainerUtil.map(clauses, new Function<GrCatchClause, String>() {
+      @Override
       @Nullable
       public String fun(GrCatchClause grCatchClause) {
         final GrParameter grParameter = grCatchClause.getParameter();
@@ -764,6 +773,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
                                                         final GroovyPsiElement context,
                                                         final PsiClassType[] handledExceptions) {
     return ContainerUtil.findAll(exceptions, new Condition<PsiClassType>() {
+      @Override
       public boolean value(PsiClassType o) {
         if (!InheritanceUtil.isInheritor(o, CommonClassNames.JAVA_LANG_EXCEPTION)) return false;
         for (PsiClassType type : handledExceptions) {
@@ -776,6 +786,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
   private static PsiClassType[] getExceptions(ThrownExceptionInfo[] infos, final PsiElement context, final PsiManager manager) {
     return ContainerUtil.map(infos, new Function<ThrownExceptionInfo, PsiClassType>() {
+      @Override
       @Nullable
       public PsiClassType fun(ThrownExceptionInfo thrownExceptionInfo) {
         return (PsiClassType)thrownExceptionInfo.createType(context, manager);

@@ -250,6 +250,7 @@ public class GithubRebaseAction extends DumbAwareAction {
     final GitRebaser rebaser = new GitRebaser(project, ServiceManager.getService(Git.class), indicator);
 
     final GitLineHandler handler = new GitLineHandler(project, root, GitCommand.REBASE);
+    handler.setStdoutSuppressed(false);
     handler.addParameters("upstream/master");
 
     final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
