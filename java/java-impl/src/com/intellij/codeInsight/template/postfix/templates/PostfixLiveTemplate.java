@@ -24,6 +24,7 @@ import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLookupElement;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.codeInsight.template.postfix.util.Aliases;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -114,6 +115,8 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   @Override
   public void expand(@NotNull final String key, @NotNull final CustomTemplateCallback callback) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.postfix");
 
     final PostfixTemplate template = getTemplateByKey(key);
     final Editor editor = callback.getEditor();
