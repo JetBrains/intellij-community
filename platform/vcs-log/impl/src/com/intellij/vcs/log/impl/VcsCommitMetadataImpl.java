@@ -17,35 +17,30 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsUser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * Holds all information about commit, except {@link #getChanges() the changes}
- * To allow to reuse common getters in implementations of different getChanges() laziness level.
- */
-abstract class VcsCommitDetailsExceptChanges extends VcsShortCommitDetailsImpl implements VcsFullCommitDetails {
+public class VcsCommitMetadataImpl extends VcsShortCommitDetailsImpl implements VcsCommitMetadata {
 
   @NotNull private final String myFullMessage;
   @NotNull private final VcsUser myCommitter;
   private final long myAuthorTime;
 
-  public VcsCommitDetailsExceptChanges(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp, @NotNull VirtualFile root,
-                                       @NotNull String subject, @NotNull VcsUser author, @NotNull String message,
-                                       @NotNull VcsUser committer, long authorTime) {
+  public VcsCommitMetadataImpl(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp, @NotNull VirtualFile root,
+                               @NotNull String subject, @NotNull VcsUser author, @NotNull String message,
+                               @NotNull VcsUser committer, long authorTime) {
     super(hash, parents, timeStamp, root, subject, author);
     myCommitter = committer;
     myAuthorTime = authorTime;
     myFullMessage = message;
-
   }
 
   @Override
   @NotNull
-  public final String getFullMessage() {
+  public String getFullMessage() {
     return myFullMessage;
   }
 

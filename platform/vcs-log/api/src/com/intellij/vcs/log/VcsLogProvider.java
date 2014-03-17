@@ -22,7 +22,7 @@ public interface VcsLogProvider {
    * Reads the given number of the most recent commits from the log.
    */
   @NotNull
-  List<? extends VcsFullCommitDetails> readFirstBlock(@NotNull VirtualFile root, boolean ordered, int commitCount) throws VcsException;
+  List<? extends VcsCommitMetadata> readFirstBlock(@NotNull VirtualFile root, boolean ordered, int commitCount) throws VcsException;
 
   /**
    * <p>Reads the whole history, but only hashes & parents.</p>

@@ -15,7 +15,7 @@
  */
 package com.intellij.vcs.log.data;
 
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogDateFilter;
 import com.intellij.vcs.log.VcsLogDetailsFilter;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +34,7 @@ public class VcsLogDateFilterImpl implements VcsLogDateFilter, VcsLogDetailsFilt
   }
 
   @Override
-  public boolean matches(@NotNull VcsFullCommitDetails details) {
+  public boolean matches(@NotNull VcsCommitMetadata details) {
     Date date = new Date(details.getTime());  // Git itself also filters by commit time, not author time
     boolean matches = true;
     if (myAfter != null) {

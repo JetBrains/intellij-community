@@ -17,6 +17,7 @@ package org.zmlx.hg4idea.util;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
@@ -35,7 +36,6 @@ import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.log.HgContentRevisionFactory;
 import org.zmlx.hg4idea.provider.HgCommittedChangeList;
 
 import java.io.File;
@@ -177,7 +177,7 @@ public class HgHistoryUtil {
 
   @NotNull
   private static VcsFullCommitDetails createCommit(@NotNull Project project, @NotNull VirtualFile root,
-                                                   @NotNull HgCommittedChangeList record) {
+                                                     @NotNull final HgCommittedChangeList record) {
 
     final VcsLogObjectsFactory factory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
     HgRevisionNumber revNumber = (HgRevisionNumber)record.getRevisionNumber();
@@ -188,11 +188,17 @@ public class HgHistoryUtil {
         return factory.createHash(parent.getChangeset());
       }
     });
+    final Collection<Change> changes = record.getChanges();
     return factory.createFullDetails(factory.createHash(revNumber.getChangeset()), parents, record.getCommitDate().getTime(), root,
                                      revNumber.getSubject(),
                                      revNumber.getAuthor(), revNumber.getEmail(), revNumber.getCommitMessage(), record.getCommitterName(),
-                                     "", record.getCommitDate().getTime(),
-                                     ContainerUtil.newArrayList(record.getChanges()), HgContentRevisionFactory.getInstance(project));
+                                     "", record.getCommitDate().getTime(), new ThrowableComputable<Collection<Change>, Exception>() {
+        @Override
+        public Collection<Change> compute() throws Exception {
+          return changes;
+        }
+      }
+    );
   }
 
   @Nullable
