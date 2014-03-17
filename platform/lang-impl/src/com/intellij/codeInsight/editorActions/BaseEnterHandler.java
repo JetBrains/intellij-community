@@ -24,7 +24,11 @@ public abstract class BaseEnterHandler extends EditorWriteActionHandler {
   private static final String GROUP_ID = "EnterHandler.GROUP_ID";
 
   protected BaseEnterHandler() {
-    super(true);
+    super(false);
+  }
+
+  protected BaseEnterHandler(boolean runForEachCaret) {
+    super(runForEachCaret);
   }
 
   @Override
