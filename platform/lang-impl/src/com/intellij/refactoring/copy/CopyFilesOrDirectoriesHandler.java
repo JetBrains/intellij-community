@@ -24,6 +24,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -72,10 +73,16 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
       if (defaultTargetDirectory == null) return;
     }
 
+    if (defaultTargetDirectory == null) {
+      VirtualFile root = project.getBaseDir();
+      if (root == null) root = VfsUtil.getUserHomeDir();
+      if (root != null) defaultTargetDirectory = PsiManager.getInstance(project).findDirectory(root);
+    }
+
     copyAsFiles(elements, defaultTargetDirectory, project);
   }
 
-  public static void copyAsFiles(PsiElement[] elements, PsiDirectory defaultTargetDirectory, Project project) {
+  public static void copyAsFiles(PsiElement[] elements, @Nullable PsiDirectory defaultTargetDirectory, Project project) {
     PsiDirectory targetDirectory = null;
     String newName = null;
     boolean openInEditor = true;
