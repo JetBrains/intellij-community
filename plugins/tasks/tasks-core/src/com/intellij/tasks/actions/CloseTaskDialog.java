@@ -50,7 +50,7 @@ public class CloseTaskDialog extends DialogWrapper {
     myTaskLabel.setIcon(task.getIcon());
 
     TaskRepository repository = task.getRepository();
-    boolean visible = task.isIssue() && repository != null && repository.getRepositoryType().getPossibleTaskStates().contains(TaskState.RESOLVED);
+    boolean visible = task.isIssue() && TaskUtil.isStateSupported(repository, TaskState.RESOLVED);
     myCloseIssue.setVisible(visible);
 
     myTaskManager = (TaskManagerImpl)TaskManager.getManager(project);

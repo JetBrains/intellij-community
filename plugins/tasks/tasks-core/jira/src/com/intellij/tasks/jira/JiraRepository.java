@@ -39,8 +39,8 @@ public class JiraRepository extends BaseRepositoryImpl {
   private final static Logger LOG = Logger.getInstance(JiraRepository.class);
   public static final String REST_API_PATH = "/rest/api/latest";
 
-  private static final boolean DEBUG_SOAP = Boolean.getBoolean("tasks.jira.soap");
-  private static final boolean REDISCOVER_API = Boolean.getBoolean("tasks.jira.rediscover");
+  private static final boolean LEGACY_API_ONLY = Boolean.getBoolean("tasks.jira.legacy.api.only");
+  private static final boolean REDISCOVER_API = Boolean.getBoolean("tasks.jira.rediscover.api");
 
   /**
    * Default JQL query
@@ -129,7 +129,8 @@ public class JiraRepository extends BaseRepositoryImpl {
 
   @NotNull
   public JiraRemoteApi discoverApiVersion() throws Exception {
-    if (DEBUG_SOAP) {
+    if (LEGACY_API_ONLY) {
+      LOG.warn("Intentionally using only legacy JIRA API");
       return new JiraSoapApi(this);
     }
 
@@ -159,7 +160,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   }
 
   private void ensureApiVersionDiscovered() throws Exception {
-    if (myApiVersion == null || DEBUG_SOAP || REDISCOVER_API) {
+    if (myApiVersion == null || LEGACY_API_ONLY || REDISCOVER_API) {
       myApiVersion = discoverApiVersion();
     }
   }
@@ -235,11 +236,12 @@ public class JiraRepository extends BaseRepositoryImpl {
 
   @Override
   protected int getFeatures() {
-    int features = super.getFeatures() | TIME_MANAGEMENT;
+    int features = super.getFeatures();
     if (myApiVersion == null || myApiVersion.getType() == JiraRemoteApi.ApiType.SOAP) {
       return features & ~NATIVE_SEARCH & ~STATE_UPDATING & ~TIME_MANAGEMENT;
+    } else {
+      return features | TIME_MANAGEMENT | STATE_UPDATING;
     }
-    return features;
   }
 
   public boolean isJqlSupported() {

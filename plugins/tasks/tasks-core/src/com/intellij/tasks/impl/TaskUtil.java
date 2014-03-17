@@ -27,7 +27,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
+import com.intellij.tasks.TaskState;
 import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,10 +50,12 @@ import java.util.regex.Pattern;
  */
 public class TaskUtil {
   private static SimpleDateFormat ISO8601_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+
   static {
     // Use UTC time zone by default (for formatting)
     ISO8601_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
   }
+
   // Almost ISO-8601 strict except date parts may be separated by '/'
   // and date only also allowed just in case
   private static Pattern ISO8601_DATE_PATTERN = Pattern.compile(
@@ -60,7 +64,8 @@ public class TaskUtil {
     "(\\d{2}:\\d{2}:\\d{2})(.\\d{3,})?" +              // optional time and milliseconds
     "(?:\\s?" +
     "([+-]\\d{2}:\\d{2}|[+-]\\d{4}|[+-]\\d{2}|Z)" +    // optional timezone info, if time is also present
-    ")?)?");
+    ")?)?"
+  );
 
 
   private TaskUtil() {
@@ -250,5 +255,13 @@ public class TaskUtil {
     catch (UnsupportedEncodingException e) {
       throw new AssertionError("UTF-8 is not supported");
     }
+  }
+
+  @Contract("null, _ -> false")
+  public static boolean isStateSupported(@Nullable TaskRepository repository, @NotNull TaskState state) {
+    if (repository == null || !repository.isSupported(TaskRepository.STATE_UPDATING)) {
+      return false;
+    }
+    return repository.getRepositoryType().getPossibleTaskStates().contains(state);
   }
 }
