@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLogDetailsFilter;
 import com.intellij.vcs.log.VcsLogStructureFilter;
@@ -68,18 +69,23 @@ public class VcsLogStructureFilterImpl implements VcsLogDetailsFilter, VcsLogStr
   }
 
   @Override
-  public boolean matches(@NotNull VcsFullCommitDetails details) {
-    for (Change change : details.getChanges()) {
-      ContentRevision before = change.getBeforeRevision();
-      if (before != null && matches(before.getFile().getPath())) {
-        return true;
+  public boolean matches(@NotNull VcsCommitMetadata details) {
+    if ((details instanceof VcsFullCommitDetails)) {
+      for (Change change : ((VcsFullCommitDetails)details).getChanges()) {
+        ContentRevision before = change.getBeforeRevision();
+        if (before != null && matches(before.getFile().getPath())) {
+          return true;
+        }
+        ContentRevision after = change.getAfterRevision();
+        if (after != null && matches(after.getFile().getPath())) {
+          return true;
+        }
       }
-      ContentRevision after = change.getAfterRevision();
-      if (after != null && matches(after.getFile().getPath())) {
-        return true;
-      }
+      return false;
     }
-    return false;
+    else {
+      return false;
+    }
   }
 
   private boolean matches(@NotNull final String path) {

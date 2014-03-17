@@ -1,7 +1,9 @@
 <html>
 <body>
-Reports any calls to a specified list of
-methods where the result of that call is ignored. For many methods, ignoring the result is perfectly
+Reports any calls to specific methods where the result of that call is ignored.
+Both methods specified in the inspection's settings and methods annotated with
+<b>org.jetbrains.annotations.Contract(pure=true)</b> are checked.
+For many methods, ignoring the result is perfectly
 legitimate, but for some methods it is almost certainly an error. Examples of methods where ignoring
 the result of a call is likely to be an error include <b>java.io.inputStream.read()</b>,
 which returns the number of bytes actually read, any method on
@@ -12,8 +14,10 @@ as all of those methods are side-effect free and thus pointless if ignored.
 Use the panel below to enter the class names and method names of the methods you wish to check for
 ignored returns. Class names must be specified as a simple string, while method names may be
 specified using a standard Java regular expression. Specifying a class names implicitly specifies
-that class and all of its subclasses. In addition, you may choose to report any
-call to a non-library call whose result is ignored
+that class and all of its subclasses.
+<p>
+Use the checkbox below to report all
+calls to non-library methods where the result of that call is ignored
 <p>
 
 </body>

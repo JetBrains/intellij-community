@@ -172,7 +172,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
       }
     };
     myFrameworksPanel = new AddSupportForFrameworksPanel(Collections.<FrameworkSupportInModuleProvider>emptyList(), model, true);
-    Disposer.register(wizard.getDisposable(), myFrameworksPanel);
+    Disposer.register(this, myFrameworksPanel);
     myFrameworksPanelPlaceholder.add(myFrameworksPanel.getMainPanel());
 
     myConfigurationUpdater = new ModuleBuilder.ModuleConfigurationUpdater() {
