@@ -93,7 +93,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   RootModelImpl(@NotNull Element element,
                 @NotNull ModuleRootManagerImpl moduleRootManager,
                 ProjectRootManagerImpl projectRootManager,
-                VirtualFilePointerManager filePointerManager) throws InvalidDataException {
+                VirtualFilePointerManager filePointerManager, boolean writable) throws InvalidDataException {
     myProjectRootManager = projectRootManager;
     myFilePointerManager = filePointerManager;
     myModuleRootManager = moduleRootManager;
@@ -123,8 +123,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
       myOrderEntries.add(new ModuleSourceOrderEntryImpl(this));
     }
 
-
-    myWritable = true;
+    myWritable = writable;
 
     RootModelImpl originalRootModel = moduleRootManager.getRootModel();
     for (ModuleExtension extension : originalRootModel.myExtensions) {

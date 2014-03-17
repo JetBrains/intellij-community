@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   private PsiSubstitutor myCalcedSubstitutor; // benign race
   private final LanguageLevel myLanguageLevel;
 
-  public MethodCandidateInfo(PsiElement candidate,
+  public MethodCandidateInfo(@NotNull PsiElement candidate,
                              PsiSubstitutor substitutor,
                              boolean accessProblem,
                              boolean staticsProblem,
@@ -59,8 +59,8 @@ public class MethodCandidateInfo extends CandidateInfo{
          PsiUtil.getLanguageLevel(argumentList));
   }
 
-  public MethodCandidateInfo(PsiElement candidate,
-                             PsiSubstitutor substitutor,
+  public MethodCandidateInfo(@NotNull PsiElement candidate,
+                             @NotNull PsiSubstitutor substitutor,
                              boolean accessProblem,
                              boolean staticsProblem,
                              PsiElement argumentList,
@@ -155,11 +155,9 @@ public class MethodCandidateInfo extends CandidateInfo{
     PsiSubstitutor incompleteSubstitutor = super.getSubstitutor();
     if (myTypeArguments != null) {
       PsiMethod method = getElement();
-      if (method != null) {
-        PsiTypeParameter[] typeParams = method.getTypeParameters();
-        for (int i = 0; i < myTypeArguments.length && i < typeParams.length; i++) {
-          incompleteSubstitutor = incompleteSubstitutor.put(typeParams[i], myTypeArguments[i]);
-        }
+      PsiTypeParameter[] typeParams = method.getTypeParameters();
+      for (int i = 0; i < myTypeArguments.length && i < typeParams.length; i++) {
+        incompleteSubstitutor = incompleteSubstitutor.put(typeParams[i], myTypeArguments[i]);
       }
     }
     return incompleteSubstitutor;
@@ -216,7 +214,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   }
 
   protected PsiElement getParent() {
-    return myArgumentList != null ? myArgumentList.getParent() : myArgumentList;
+    return myArgumentList != null ? myArgumentList.getParent() : null;
   }
 
   @Override
@@ -224,6 +222,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     return super.isValidResult() && isApplicable();
   }
 
+  @NotNull
   @Override
   public PsiMethod getElement(){
     return (PsiMethod)super.getElement();

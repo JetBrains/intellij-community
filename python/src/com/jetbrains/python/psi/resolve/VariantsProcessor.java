@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,8 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
   }
 
 
-  public boolean execute(@NotNull PsiElement element, ResolveState substitutor) {
+  @Override
+  public boolean execute(@NotNull PsiElement element, @NotNull ResolveState substitutor) {
     if (myNodeFilter != null && !myNodeFilter.value(element)) return true; // skip whatever the filter rejects
     // TODO: refactor to look saner; much code duplication
     if (element instanceof PsiNamedElement) {
@@ -141,12 +142,14 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
     return true;
   }
 
+  @Override
   @Nullable
   public <T> T getHint(@NotNull Key<T> hintKey) {
     return null;
   }
 
-  public void handleEvent(Event event, Object associated) {
+  @Override
+  public void handleEvent(@NotNull Event event, Object associated) {
   }
 
   public void setAllowedNames(List<String> namesFilter) {

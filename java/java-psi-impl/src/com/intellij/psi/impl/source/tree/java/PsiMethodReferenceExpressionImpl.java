@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -451,8 +451,8 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
               }
 
               @Override
-              protected MethodCandidateInfo createCandidateInfo(final PsiMethod method,
-                                                                final PsiSubstitutor substitutor,
+              protected MethodCandidateInfo createCandidateInfo(@NotNull final PsiMethod method,
+                                                                @NotNull final PsiSubstitutor substitutor,
                                                                 final boolean staticProblem,
                                                                 final boolean accessible, 
                                                                 final boolean varargs) {

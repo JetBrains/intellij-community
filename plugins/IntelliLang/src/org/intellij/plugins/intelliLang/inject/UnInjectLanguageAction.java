@@ -75,12 +75,13 @@ public class UnInjectLanguageAction implements IntentionAction, LowPriorityActio
     final PsiFile psiFile = InjectedLanguageUtil.findInjectedPsiNoCommit(file, offset);
     if (psiFile == null) {
       PsiReference reference = file.findReferenceAt(offset);
-      if (reference != null) {
-        PsiElement element = reference.getElement();
-        LanguageInjectionSupport support = element.getUserData(LanguageInjectionSupport.INJECTOR_SUPPORT);
-        if (support != null) {
-          support.removeInjection(element);
-          ((PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker()).incCounter();
+      if (reference != null && reference.getElement() instanceof PsiLanguageInjectionHost) {
+        PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)reference.getElement();
+        for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
+          if (support.isApplicableTo(host) && support.removeInjectionInPlace(host)) {
+            ((PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker()).incCounter();
+            return;
+          }
         }
       }
       return;

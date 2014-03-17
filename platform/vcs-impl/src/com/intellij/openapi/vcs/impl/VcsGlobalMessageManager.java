@@ -15,10 +15,25 @@
  */
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.BrowserUtil;
+import com.intellij.notification.impl.ui.NotificationsUtil;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
+import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -65,6 +80,53 @@ public class VcsGlobalMessageManager implements ProjectComponent, PersistentStat
   @Override
   public void disposeComponent() {
 
+  }
+
+  @Nullable
+  public JComponent getMessageBanner() {
+    if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+      final VcsGlobalMessage message = myState;
+      if (message != null && !StringUtil.isEmpty(message.message)) {
+        final JEditorPane text = new JEditorPane();
+        text.setEditorKit(UIUtil.getHTMLEditorKit());
+
+        text.addHyperlinkListener(new HyperlinkListener() {
+          @Override
+          public void hyperlinkUpdate(HyperlinkEvent e) {
+            if (HyperlinkEvent.EventType.ACTIVATED == e.getEventType()) BrowserUtil.browse(e.getURL());
+          }
+        });
+
+        final JLabel label = new JLabel(NotificationsUtil.buildHtml("", message.message, null));
+        text.setText(NotificationsUtil.buildHtml("", message.message, "width:" + Math.min(400, label.getPreferredSize().width) + "px;"));
+        text.setEditable(false);
+        text.setOpaque(false);
+
+        text.setBorder(null);
+
+        final JPanel content =
+          new JPanel(new BorderLayout((int)(label.getIconTextGap() * 1.5), (int)(label.getIconTextGap() * 1.5)));
+
+        text.setCaretPosition(0);
+        JScrollPane pane = ScrollPaneFactory.createScrollPane(text,
+                                                              ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                                              ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        pane.setBorder(null);
+        pane.setOpaque(false);
+        pane.getViewport().setOpaque(false);
+        content.add(pane, BorderLayout.CENTER);
+
+        final NonOpaquePanel north = new NonOpaquePanel(new BorderLayout());
+        north.add(new JLabel(AllIcons.General.BalloonWarning), BorderLayout.NORTH);
+        content.add(north, BorderLayout.WEST);
+
+        content.setBorder(new EmptyBorder(8, 4, 8, 4));
+        content.setBackground(MessageType.WARNING.getPopupBackground());
+        return content;
+      }
+    }
+
+    return null;
   }
 
   @NotNull

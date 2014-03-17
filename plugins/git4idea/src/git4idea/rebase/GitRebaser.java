@@ -72,6 +72,7 @@ public class GitRebaser {
                                 @Nullable final Runnable onCancel,
                                 @Nullable GitLineHandlerListener lineListener) {
     final GitLineHandler rebaseHandler = createHandler(root);
+    rebaseHandler.setStdoutSuppressed(false);
     rebaseHandler.addParameters(parameters);
     if (lineListener != null) {
       rebaseHandler.addLineListener(lineListener);
@@ -141,6 +142,7 @@ public class GitRebaser {
   public void abortRebase(@NotNull VirtualFile root) {
     LOG.info("abortRebase " + root);
     final GitLineHandler rh = new GitLineHandler(myProject, root, GitCommand.REBASE);
+    rh.setStdoutSuppressed(false);
     rh.addParameters("--abort");
     GitTask task = new GitTask(myProject, rh, "Aborting rebase");
     task.setProgressIndicator(myProgressIndicator);
@@ -167,6 +169,7 @@ public class GitRebaser {
   private boolean continueRebase(final @NotNull VirtualFile root, @NotNull String startOperation) {
     LOG.info("continueRebase " + root + " " + startOperation);
     final GitLineHandler rh = new GitLineHandler(myProject, root, GitCommand.REBASE);
+    rh.setStdoutSuppressed(false);
     rh.addParameters(startOperation);
     final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
     rh.addLineListener(rebaseConflictDetector);
@@ -215,6 +218,7 @@ public class GitRebaser {
     }
 
     final GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.REBASE);
+    h.setStdoutSuppressed(false);
     Integer rebaseEditorNo = null;
     GitRebaseEditorService rebaseEditorService = GitRebaseEditorService.getInstance();
     try {

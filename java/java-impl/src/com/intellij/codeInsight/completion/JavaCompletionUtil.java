@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -303,7 +303,7 @@ public class JavaCompletionUtil {
     final Ref<PsiSubstitutor> subst = Ref.create(PsiSubstitutor.EMPTY);
     class MyProcessor extends BaseScopeProcessor implements NameHint, ElementClassHint {
       @Override
-      public boolean execute(@NotNull PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         if (element == member) {
           subst.set(state.get(PsiSubstitutor.KEY));
         }
@@ -311,7 +311,7 @@ public class JavaCompletionUtil {
       }
 
       @Override
-      public String getName(ResolveState state) {
+      public String getName(@NotNull ResolveState state) {
         return member.getName();
       }
 

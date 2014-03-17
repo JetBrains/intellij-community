@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,11 +41,11 @@ public class GrCollectionTypeMembersProvider extends NonCodeMembersContributor {
   }
 
   @Override
-  public void processDynamicElements(final @NotNull PsiType qualifierType,
+  public void processDynamicElements(@NotNull final PsiType qualifierType,
                                      PsiClass aClass,
                                      final PsiScopeProcessor processor,
                                      final PsiElement place,
-                                     final ResolveState state) {
+                                     @NotNull final ResolveState state) {
     final PsiType collectionType = PsiUtil.extractIterableTypeParameter(qualifierType, true);
     if (collectionType == null) return;
 
@@ -63,7 +63,7 @@ public class GrCollectionTypeMembersProvider extends NonCodeMembersContributor {
     }
 
     @Override
-    public boolean execute(@NotNull PsiElement element, ResolveState state) {
+    public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
       if (element instanceof PsiField) {
         final PsiType type = ((PsiField)element).getType();
         final String typeText =

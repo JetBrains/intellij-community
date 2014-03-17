@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -491,7 +491,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       private final Set<String> myVarNames = new THashSet<String>();
 
       @Override
-      public boolean execute(@NotNull final PsiElement element, final ResolveState state) {
+      public boolean execute(@NotNull final PsiElement element, @NotNull final ResolveState state) {
         if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
           myVarNames.add(((PsiVariable) element).getName());
         }

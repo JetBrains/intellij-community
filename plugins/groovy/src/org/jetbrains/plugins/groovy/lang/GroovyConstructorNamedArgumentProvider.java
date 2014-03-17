@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -169,12 +169,12 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
     return false;
   }
 
-  private static abstract class MyPsiScopeProcessor implements PsiScopeProcessor, NameHint, ClassHint, ElementClassHint {
+  private abstract static class MyPsiScopeProcessor implements PsiScopeProcessor, NameHint, ClassHint, ElementClassHint {
     private String myNameHint;
     private EnumSet<ResolveKind> myResolveTargetKinds;
 
     @Override
-    public boolean execute(@NotNull PsiElement element, ResolveState state) {
+    public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
       if (element instanceof PsiMethod || element instanceof PsiField) {
         String propertyName;
         PsiType type;
@@ -225,7 +225,7 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
     }
 
     @Override
-    public void handleEvent(Event event, Object associated) {
+    public void handleEvent(@NotNull Event event, Object associated) {
 
     }
 
@@ -257,7 +257,7 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
     }
 
     @Override
-    public String getName(ResolveState state) {
+    public String getName(@NotNull ResolveState state) {
       return myNameHint;
     }
 
