@@ -55,6 +55,10 @@ public final class TrelloRepository extends BaseRepositoryImpl {
   private TrelloUser myCurrentUser;
   private TrelloBoard myCurrentBoard;
   private TrelloList myCurrentList;
+  /**
+   * Include cards not assigned to current user
+   */
+  private boolean myIncludeAllCards;
 
   /**
    * Serialization constructor
@@ -78,6 +82,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
     myCurrentUser = other.myCurrentUser;
     myCurrentBoard = other.myCurrentBoard;
     myCurrentList = other.myCurrentList;
+    myIncludeAllCards = other.myIncludeAllCards;
   }
 
   @Override
@@ -88,7 +93,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
     if (!Comparing.equal(myCurrentUser, repository.myCurrentUser)) return false;
     if (!Comparing.equal(myCurrentBoard, repository.myCurrentBoard)) return false;
     if (!Comparing.equal(myCurrentList, repository.myCurrentList)) return false;
-    return true;
+    return myIncludeAllCards == repository.myIncludeAllCards;
   }
 
   @Override
@@ -251,13 +256,15 @@ public final class TrelloRepository extends BaseRepositoryImpl {
     String allCardsUrl = baseUrl + "?actions=commentCard&filter=all";
     List<TrelloCard> cards = makeRequestAndDeserializeJsonResponse(allCardsUrl, TrelloUtil.LIST_OF_CARDS_TYPE);
     LOG.debug("Total " + cards.size() + " cards downloaded");
-    List<TrelloCard> filtered = ContainerUtil.filter(cards, new Condition<TrelloCard>() {
-      @Override
-      public boolean value(TrelloCard card) {
-        return card.getIdMembers().contains(myCurrentUser.getId());
-      }
-    });
-    LOG.debug("Total " + filtered.size() + " cards after filtering");
+    if (!myIncludeAllCards) {
+      cards = ContainerUtil.filter(cards, new Condition<TrelloCard>() {
+        @Override
+        public boolean value(TrelloCard card) {
+          return card.getIdMembers().contains(myCurrentUser.getId());
+        }
+      });
+      LOG.debug("Total " + cards.size() + " cards after filtering");
+    }
     if (!fromList) {
       // fix for IDEA-111470 and IDEA-111475
       // Select IDs of visible cards, e.d. cards that either archived explicitly, belong to archived list or closed board.
@@ -274,11 +281,11 @@ public final class TrelloRepository extends BaseRepositoryImpl {
           return card.getId();
         }
       });
-      for (TrelloCard card : filtered) {
+      for (TrelloCard card : cards) {
         card.setVisible(visibleCardsIDs.contains(card.getId()));
       }
     }
-    return filtered;
+    return cards;
   }
 
   /**
@@ -334,6 +341,14 @@ public final class TrelloRepository extends BaseRepositoryImpl {
       pseudoUrl += "/" + myCurrentList.getName();
     }
     return pseudoUrl;
+  }
+
+  public boolean isIncludeAllCards() {
+    return myIncludeAllCards;
+  }
+
+  public void setIncludeAllCards(boolean includeAllCards) {
+    myIncludeAllCards = includeAllCards;
   }
 
   @Nullable
