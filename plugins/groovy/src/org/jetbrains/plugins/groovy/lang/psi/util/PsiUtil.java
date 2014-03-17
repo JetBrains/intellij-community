@@ -1070,6 +1070,7 @@ public class PsiUtil {
 
     final PsiElement parent = expr.getParent();
     if (parent instanceof GrControlFlowOwner || parent instanceof GrCaseSection) return true;
+    if (parent instanceof GrLabeledStatement) return true;
     if (parent instanceof GrIfStatement &&
         (expr == ((GrIfStatement)parent).getThenBranch() || expr == ((GrIfStatement)parent).getElseBranch())) {
       return true;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,11 +141,17 @@ public abstract class GrIntroduceLocalVariableProcessor {
   }
 
   @NotNull
-  private GrVariable insertVariableDefinition(@NotNull GrVariableDeclaration declaration, @NotNull GrStatement anchor, PsiElement expression) throws IncorrectOperationException {
-    boolean deleteExpression = expression != null && PsiUtil.isExpressionStatement(expression) && !isSingleGStringInjectionExpr(expression);
-    boolean anchorEqualsExpression = anchor == expression;
+  private GrVariable insertVariableDefinition(@NotNull GrVariableDeclaration declaration,
+                                              @NotNull GrStatement anchor,
+                                              @Nullable PsiElement expression) throws IncorrectOperationException {
+    GrLabeledStatement labeledStatement = expression != null && expression.getParent() instanceof GrLabeledStatement ? (GrLabeledStatement)expression.getParent() : null;
 
-    if (deleteExpression && !anchorEqualsExpression) {
+    boolean expressionMustBeDeleted = expression != null && PsiUtil.isExpressionStatement(expression) && !isSingleGStringInjectionExpr(expression);
+    boolean anchorEqualsExpression = anchor == expression || labeledStatement == anchor;
+
+    String usedLabel = labeledStatement != null ? labeledStatement.getName() : null;
+
+    if (expressionMustBeDeleted && !anchorEqualsExpression) {
       expression.delete();
     }
 
@@ -158,23 +164,37 @@ public abstract class GrIntroduceLocalVariableProcessor {
 
     GrStatementOwner block = (GrStatementOwner)anchor.getParent();
 
-    if (deleteExpression && anchorEqualsExpression) {
-      declaration = (GrVariableDeclaration)anchor.replace(declaration);
+    if (usedLabel != null && expressionMustBeDeleted && anchorEqualsExpression) {
+      GrLabeledStatement definitionWithLabel = (GrLabeledStatement)GroovyPsiElementFactory.getInstance(anchor.getProject()).createStatementFromText(usedLabel + ": foo()");
+      GrLabeledStatement inserted = insertStatement(definitionWithLabel, anchor, block, true);
+      declaration = inserted.getStatement().replaceWithStatement(declaration);
     }
     else {
-      declaration = (GrVariableDeclaration)block.addStatementBefore(declaration, anchor);
+      declaration = insertStatement(declaration, anchor, block, expressionMustBeDeleted && anchorEqualsExpression);
     }
 
     final GrVariable variable = declaration.getVariables()[0];
     JavaCodeStyleManager.getInstance(declaration.getProject()).shortenClassReferences(declaration);
 
 
-    PsiElement markerPlace = deleteExpression         ? variable :
+    PsiElement markerPlace = expressionMustBeDeleted  ? variable :
                              isInsideControlStatement ? declaration.getParent()
                                                       : expression;
     refreshPositionMarker(markerPlace);
 
     return variable;
+  }
+
+  private static <T extends GrStatement> T insertStatement(T declaration,
+                                                           GrStatement anchor,
+                                                           GrStatementOwner block,
+                                                           boolean replaceAnchor) {
+    if (replaceAnchor) {
+      return (T)anchor.replace(declaration);
+    }
+    else {
+      return (T)block.addStatementBefore(declaration, anchor);
+    }
   }
 
   @NotNull

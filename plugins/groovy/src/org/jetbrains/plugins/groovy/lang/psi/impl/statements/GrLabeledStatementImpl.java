@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,5 +104,16 @@ public class GrLabeledStatementImpl extends GroovyPsiElementImpl implements GrLa
   @Override
   public PsiElement getNameIdentifier() {
     return getNameIdentifierGroovy();
+  }
+
+  @Override
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    GrStatement statement = getStatement();
+    if (statement != null && child == statement.getNode()) {
+      delete();
+    }
+    else {
+      super.deleteChildInternal(child);
+    }
   }
 }
