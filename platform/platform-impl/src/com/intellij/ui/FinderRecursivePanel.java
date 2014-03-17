@@ -26,7 +26,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
@@ -120,6 +119,11 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
   }
 
   public void init() {
+    initWithoutUpdatePanel();
+    updatePanel();
+  }
+
+  private void initWithoutUpdatePanel() {
     setFirstComponent(createLeftComponent());
     setSecondComponent(createDefaultRightComponent());
 
@@ -129,8 +133,6 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
     setDividerWidth(3);
     setShowDividerIcon(false);
     setShowDividerControls(true);
-
-    updatePanel();
   }
 
   /**
@@ -466,7 +468,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
     myList.setSelectedValue(value, true);
 
     // always recreate since instance might depend on this one's selected value
-    updateRightComponent(true);
+    createRightComponent(false);
   }
 
   @NotNull
@@ -485,6 +487,10 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
   }
 
   public void updatePanel() {
+    if (myUpdateSelectedPathModeActive.get()) {
+      return;
+    }
+
     myList.setPaintBusy(true);
     myMergingUpdateQueue.queue(new Update("update") {
       @Override
@@ -550,14 +556,14 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
 
   public void updateRightComponent(boolean force) {
     if (force) {
-      createRightComponent();
+      createRightComponent(true);
     }
     else if (myChild instanceof FinderRecursivePanel) {
       ((FinderRecursivePanel)myChild).updatePanel();
     }
   }
 
-  private void createRightComponent() {
+  private void createRightComponent(boolean withUpdatePanel) {
     T value = getSelectedValue();
     if (value != null) {
       if (myChild instanceof Disposable) {
@@ -565,7 +571,12 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
       }
       myChild = createRightComponent(value);
       if (myChild instanceof FinderRecursivePanel) {
-        ((FinderRecursivePanel)myChild).init();
+        final FinderRecursivePanel childPanel = (FinderRecursivePanel)myChild;
+        if (withUpdatePanel) {
+          childPanel.init();
+        } else {
+          childPanel.initWithoutUpdatePanel();
+        }
       }
 
       setSecondComponent(myChild);
