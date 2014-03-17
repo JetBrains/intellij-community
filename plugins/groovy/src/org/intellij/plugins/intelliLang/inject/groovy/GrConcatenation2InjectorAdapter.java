@@ -119,7 +119,7 @@ public class GrConcatenation2InjectorAdapter extends JavaConcatenationInjectorMa
     else if (right instanceof GrString) {
       processGString((GrString)right, operands);
     }
-    else {
+    else if (right != null) {
       operands.add(right);
     }
   }
