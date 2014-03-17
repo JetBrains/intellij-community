@@ -19,8 +19,8 @@ import com.intellij.ide.browsers.BrowserSpecificSettings;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +49,7 @@ public final class FirefoxSettings extends BrowserSpecificSettings {
   }
 
   public void setProfilesIniPath(@Nullable String value) {
-    myProfilesIniPath = FileUtilRt.toSystemIndependentName(StringUtil.nullize(value));
+    myProfilesIniPath = PathUtil.toSystemIndependentName(StringUtil.nullize(value));
   }
 
   @Nullable
