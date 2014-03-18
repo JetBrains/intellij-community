@@ -15,7 +15,7 @@
  */
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.CompileContext;
 
@@ -25,17 +25,29 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 /**
- * @author nik
+ * @author Sergey Evdokimov
  */
-public abstract class FileCopyingHandler {
-  public static final FileCopyingHandler DEFAULT = new FilterCopyHandler(FileUtilRt.ALL_FILES);
+public class FilterCopyHandler extends FileCopyingHandler {
 
-  public abstract void copyFile(@NotNull File from, @NotNull File to, @NotNull CompileContext context) throws IOException;
+  private final FileFilter myFilter;
 
-  public abstract void writeConfiguration(@NotNull PrintWriter out);
+  public FilterCopyHandler(@NotNull FileFilter filter) {
+    myFilter = filter;
+  }
+
+  @Override
+  public void copyFile(@NotNull File from, @NotNull File to, @NotNull CompileContext context) throws IOException {
+    FileUtil.copyContent(from, to);
+  }
+
+  @Override
+  public void writeConfiguration(@NotNull PrintWriter out) {
+
+  }
 
   @NotNull
+  @Override
   public FileFilter createFileFilter() {
-    return FileUtilRt.ALL_FILES;
+    return myFilter;
   }
 }
