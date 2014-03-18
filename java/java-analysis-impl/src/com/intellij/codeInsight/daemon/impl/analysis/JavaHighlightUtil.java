@@ -27,13 +27,26 @@ import java.util.List;
 
 public class JavaHighlightUtil {
   public static boolean isSerializable(@NotNull PsiClass aClass) {
+    return isSerializable(aClass, "java.io.Serializable");
+  }
+
+  public static boolean isSerializable(@NotNull PsiClass aClass,
+                                       String serializableClassName) {
     Project project = aClass.getManager().getProject();
-    PsiClass serializableClass = JavaPsiFacade.getInstance(project).findClass("java.io.Serializable", aClass.getResolveScope());
+    PsiClass serializableClass = JavaPsiFacade.getInstance(project).findClass(serializableClassName, aClass.getResolveScope());
     return serializableClass != null && aClass.isInheritor(serializableClass, true);
   }
 
   public static boolean isSerializationRelatedMethod(PsiMethod method, PsiClass containingClass) {
-    if (containingClass == null || method.isConstructor()) return false;
+    if (containingClass == null) return false;
+    if (method.isConstructor()) {
+      if (isSerializable(containingClass, "java.io.Externalizable") && 
+          method.getParameterList().getParametersCount() == 0 &&
+          method.hasModifierProperty(PsiModifier.PUBLIC)) {
+        return true;
+      }
+      return false;
+    }
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     @NonNls String name = method.getName();
     PsiParameter[] parameters = method.getParameterList().getParameters();
