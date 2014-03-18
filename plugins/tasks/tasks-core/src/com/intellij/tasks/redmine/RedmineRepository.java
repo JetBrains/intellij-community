@@ -173,7 +173,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
   @Override
   public boolean isConfigured() {
-    if (!super.isConfigured()) return false;
+    if (!super.isConfigured() || StringUtil.isEmpty(myUsername)) return false;
     if (isUseHttpAuthentication()) {
       return StringUtil.isNotEmpty(myPassword);
     }
