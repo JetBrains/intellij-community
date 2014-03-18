@@ -241,15 +241,15 @@ public class MavenResourceCompilerConfigurationGenerator {
 
     String webArtifactName = MavenUtil.getArtifactName("war", module, true);
 
-    MavenArtifactResourceConfiguration artifactResourceCfg = projectCfg.artifactsResources.get(webArtifactName);
+    MavenWebArtifactConfiguration artifactResourceCfg = projectCfg.webArtifactConfigs.get(webArtifactName);
     if (artifactResourceCfg == null) {
-      artifactResourceCfg = new MavenArtifactResourceConfiguration();
+      artifactResourceCfg = new MavenWebArtifactConfiguration();
       artifactResourceCfg.webArtifactName = webArtifactName;
       artifactResourceCfg.moduleName = module.getName();
-      projectCfg.artifactsResources.put(webArtifactName, artifactResourceCfg);
+      projectCfg.webArtifactConfigs.put(webArtifactName, artifactResourceCfg);
     }
     else {
-      LOG.error("MavenArtifactResourceConfiguration already exists.");
+      LOG.error("MavenWebArtifactConfiguration already exists.");
     }
 
     if (webResources != null) {
