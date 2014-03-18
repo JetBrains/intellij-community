@@ -33,6 +33,7 @@ import java.io.*;
 public class ID<K, V> {
   private static final TIntObjectHashMap<ID> ourRegistry = new TIntObjectHashMap<ID>();
   private static final TObjectIntHashMap<String> ourNameToIdRegistry = new TObjectIntHashMap<String>();
+  public static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
 
   private final String myName;
   private final short myUniqueId;
@@ -80,7 +81,7 @@ public class ID<K, V> {
     }
 
     int n = ourNameToIdRegistry.size() + 1;
-    assert n <= Short.MAX_VALUE : "Number of indices exceeded";
+    assert n <= MAX_NUMBER_OF_INDICES : "Number of indices exceeded";
 
     ourNameToIdRegistry.put(name, n);
 
