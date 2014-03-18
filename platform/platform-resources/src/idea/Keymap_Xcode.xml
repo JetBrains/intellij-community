@@ -161,8 +161,8 @@
       <keyboard-shortcut first-keystroke="alt DOWN"/>
     </action>
     <action id="EditorTextEnd">
-      <keyboard-shortcut first-keystroke="meta END" />
       <keyboard-shortcut first-keystroke="meta DOWN" />
+      <keyboard-shortcut first-keystroke="meta END" />
     </action>
     <action id="EditorTextEndWithSelection">
       <keyboard-shortcut first-keystroke="shift meta END" />
@@ -170,8 +170,8 @@
       <keyboard-shortcut first-keystroke="shift END" />
     </action>
     <action id="EditorTextStart">
-      <keyboard-shortcut first-keystroke="meta HOME" />
       <keyboard-shortcut first-keystroke="meta UP" />
+      <keyboard-shortcut first-keystroke="meta HOME" />
     </action>
     <action id="EditorTextStartWithSelection">
       <keyboard-shortcut first-keystroke="shift meta HOME" />
@@ -179,8 +179,8 @@
       <keyboard-shortcut first-keystroke="shift HOME" />
     </action>
     <action id="EditorUnindentSelection">
-      <keyboard-shortcut first-keystroke="shift TAB" />
       <keyboard-shortcut first-keystroke="meta OPEN_BRACKET" />
+      <keyboard-shortcut first-keystroke="shift TAB" />
     </action>
     <action id="ExpandRegion">
       <keyboard-shortcut first-keystroke="meta alt RIGHT"/>
@@ -188,8 +188,8 @@
       <keyboard-shortcut first-keystroke="meta EQUALS" />
     </action>
     <action id="ExternalJavaDoc">
-      <keyboard-shortcut first-keystroke="shift F1" />
       <keyboard-shortcut first-keystroke="control meta alt SLASH" />
+      <keyboard-shortcut first-keystroke="shift F1" />
     </action>
     <action id="FileChooser.GotoHome" />
     <action id="FileChooser.GotoProject" />
@@ -199,13 +199,13 @@
       <keyboard-shortcut first-keystroke="shift meta F" />
     </action>
     <action id="FindNext">
-      <keyboard-shortcut first-keystroke="F3" />
       <keyboard-shortcut first-keystroke="meta G" />
+      <keyboard-shortcut first-keystroke="F3" />
     </action>
     <action id="FindPrevious">
+      <keyboard-shortcut first-keystroke="shift meta G" />
       <keyboard-shortcut first-keystroke="shift F3" />
       <keyboard-shortcut first-keystroke="shift control L" />
-      <keyboard-shortcut first-keystroke="shift meta G" />
     </action>
     <action id="FindUsages">
       <keyboard-shortcut first-keystroke="alt F7" />
@@ -293,9 +293,9 @@
     <action id="ContextHelp">
     </action>
     <action id="QuickJavaDoc">
+      <keyboard-shortcut first-keystroke="shift control meta SLASH" />
       <keyboard-shortcut first-keystroke="F1" />
       <mouse-shortcut keystroke="control button2" />
-      <keyboard-shortcut first-keystroke="shift control meta SLASH" />
     </action>
     <action id="RemoveFromFavorites" />
     <action id="RenameElement">
@@ -308,7 +308,7 @@
     <action id="ResizeToolWindowUp" />
     <action id="Resume">
       <keyboard-shortcut first-keystroke="control Y"/>
-      <keyboard-shortcut first-keystroke="F9" />
+      <keyboard-shortcut first-keystroke="meta F9" />
     </action>
     <action id="Run">
       <keyboard-shortcut first-keystroke="meta R" />
@@ -328,15 +328,15 @@
       <keyboard-shortcut first-keystroke="meta alt S" />
     </action>
     <action id="SelectIn">
-      <keyboard-shortcut first-keystroke="alt F1" />
       <keyboard-shortcut first-keystroke="shift meta J" />
+      <keyboard-shortcut first-keystroke="alt F1" />
     </action>
     <action id="ShelvedChanges.Rename">
       <keyboard-shortcut first-keystroke="shift F6" />
     </action>
     <action id="StepOut">
-      <keyboard-shortcut first-keystroke="shift F8" />
       <keyboard-shortcut first-keystroke="F8" />
+      <keyboard-shortcut first-keystroke="shift F8" />
     </action>
     <action id="StepOver">
       <keyboard-shortcut first-keystroke="F6" />
@@ -353,8 +353,8 @@
       <keyboard-shortcut first-keystroke="alt INSERT" />
     </action>
     <action id="NewElement">
-      <keyboard-shortcut first-keystroke="control ENTER" />
       <keyboard-shortcut first-keystroke="meta N" />
+      <keyboard-shortcut first-keystroke="control ENTER" />
     </action>
     <action id="RecentFiles" />
     <action id="SwitchApply">
