@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -185,6 +186,27 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     final int line = editor.getCaretModel().getLogicalPosition().line;
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     return XSourcePositionImpl.create(file, line);
+  }
+
+  @NotNull
+  public static Collection<XSourcePosition> getAllCaretsPositions(@NotNull Project project, DataContext context) {
+    Editor editor = getEditor(project, context);
+    if (editor == null) {
+      return Collections.emptyList();
+    }
+
+    final Document document = editor.getDocument();
+    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    Collection<XSourcePosition> res = new ArrayList<XSourcePosition>();
+    List<Caret> carets = editor.getCaretModel().getAllCarets();
+    for (Caret caret : carets) {
+      int line = caret.getLogicalPosition().line;
+      XSourcePositionImpl position = XSourcePositionImpl.create(file, line);
+      if (position != null) {
+        res.add(position);
+      }
+    }
+    return res;
   }
 
   @Nullable

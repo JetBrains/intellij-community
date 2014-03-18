@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.HashSet;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -29,6 +30,8 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 /**
  * @author nik
@@ -58,13 +61,13 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
   }
 
   public void perform(@NotNull final Project project, final AnActionEvent event) {
-    XSourcePosition position = XDebuggerUtilImpl.getCaretPosition(project, event.getDataContext());
-    if (position == null) {
-      return;
-    }
-
     Editor editor = event.getData(CommonDataKeys.EDITOR);
-
-    XBreakpointUtil.toggleLineBreakpoint(project, position.getFile(), editor, position.getLine(), myTemporary, true);
+    // do not toggle more than once on the same line
+    Set<Integer> processedLines = new HashSet<Integer>();
+    for (XSourcePosition position : XDebuggerUtilImpl.getAllCaretsPositions(project, event.getDataContext())) {
+      if (processedLines.add(position.getLine())) {
+        XBreakpointUtil.toggleLineBreakpoint(project, position.getFile(), editor, position.getLine(), myTemporary, true);
+      }
+    }
   }
 }
