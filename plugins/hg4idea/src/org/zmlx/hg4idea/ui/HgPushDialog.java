@@ -177,7 +177,6 @@ public class HgPushDialog extends DialogWrapper {
     setOKActionEnabled(validateOptions());
     revisionTxt.setEnabled(revisionCbx.isSelected());
     branchComboBox.setEnabled(branchCheckBox.isSelected());
-    newBranchCheckBox.setEnabled(branchCheckBox.isSelected());
     myBookmarkComboBox.setEnabled(myBookmarkCheckBox.isSelected());
   }
 

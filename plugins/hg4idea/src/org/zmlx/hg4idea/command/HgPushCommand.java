@@ -70,13 +70,11 @@ public class HgPushCommand {
       arguments.add(myRevision);
     }
     if (myBranchName != null) {
-      if (myIsNewBranch) {
-        arguments.add("--new-branch");
-      }
-      else {
-        arguments.add("-b");
-        arguments.add(myBranchName);
-      }
+      arguments.add("-b");
+      arguments.add(myBranchName);
+    }
+    if (myIsNewBranch) {
+      arguments.add("--new-branch");
     }
     if (!StringUtil.isEmptyOrSpaces(myBookmarkName)) {
       arguments.add("-B");
