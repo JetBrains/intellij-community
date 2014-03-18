@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.github.tasks;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -47,7 +48,8 @@ public class GithubRepository extends BaseRepositoryImpl {
   @NotNull private String myToken = "";
 
   @SuppressWarnings({"UnusedDeclaration"})
-  public GithubRepository() {}
+  public GithubRepository() {
+  }
 
   public GithubRepository(GithubRepository other) {
     super(other);
@@ -83,9 +85,9 @@ public class GithubRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
+  public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed) throws Exception {
     try {
-      return getIssues(query, max);
+      return getIssues(query, offset + limit, withClosed);
     }
     catch (GithubRateLimitExceededException e) {
       return new Task[0];
@@ -101,17 +103,23 @@ public class GithubRepository extends BaseRepositoryImpl {
     }
   }
 
+  @Override
+  public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed, @NotNull ProgressIndicator cancelled)
+    throws Exception {
+    return getIssues(query, offset, limit, withClosed);
+  }
+
   @NotNull
-  private Task[] getIssues(@Nullable String query, int max) throws Exception {
+  private Task[] getIssues(@Nullable String query, int max, boolean withClosed) throws Exception {
     List<GithubIssue> issues;
     if (StringUtil.isEmptyOrSpaces(query)) {
       if (StringUtil.isEmptyOrSpaces(myUser)) {
         myUser = GithubApiUtil.getCurrentUser(getAuthData()).getLogin();
       }
-      issues = GithubApiUtil.getIssuesAssigned(getAuthData(), getRepoAuthor(), getRepoName(), myUser, max);
+      issues = GithubApiUtil.getIssuesAssigned(getAuthData(), getRepoAuthor(), getRepoName(), myUser, max, withClosed);
     }
     else {
-      issues = GithubApiUtil.getIssuesQueried(getAuthData(), getRepoAuthor(), getRepoName(), query);
+      issues = GithubApiUtil.getIssuesQueried(getAuthData(), getRepoAuthor(), getRepoName(), query, withClosed);
     }
 
     return ContainerUtil.map2Array(issues, Task.class, new Function<GithubIssue, Task>() {
@@ -210,7 +218,8 @@ public class GithubRepository extends BaseRepositoryImpl {
     return ContainerUtil.map2Array(result, Comment.class, new Function<GithubIssueComment, Comment>() {
       @Override
       public Comment fun(GithubIssueComment comment) {
-        return new GithubComment(comment.getCreatedAt(), comment.getUser().getLogin(), comment.getBodyHtml(), comment.getUser().getGravatarId(),
+        return new GithubComment(comment.getCreatedAt(), comment.getUser().getLogin(), comment.getBodyHtml(),
+                                 comment.getUser().getGravatarId(),
                                  comment.getUser().getHtmlUrl());
       }
     });
@@ -287,7 +296,7 @@ public class GithubRepository extends BaseRepositoryImpl {
   }
 
   private GithubAuthData getAuthData() {
-      return GithubAuthData.createTokenAuth(getUrl(), getToken(), isUseProxy());
+    return GithubAuthData.createTokenAuth(getUrl(), getToken(), isUseProxy());
   }
 
   @Override

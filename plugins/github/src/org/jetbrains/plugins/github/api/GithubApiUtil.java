@@ -693,14 +693,16 @@ public class GithubApiUtil {
                                                     @NotNull String user,
                                                     @NotNull String repo,
                                                     @Nullable String assigned,
-                                                    int max) throws IOException {
+                                                    int max,
+                                                    boolean withClosed) throws IOException {
     try {
+      String state = "state=" + (withClosed ? "all" : "open");
       String path;
       if (StringUtil.isEmptyOrSpaces(assigned)) {
-        path = "/repos/" + user + "/" + repo + "/issues?" + PER_PAGE;
+        path = "/repos/" + user + "/" + repo + "/issues?" + PER_PAGE + "&" + state;
       }
       else {
-        path = "/repos/" + user + "/" + repo + "/issues?assignee=" + assigned + "&" + PER_PAGE;
+        path = "/repos/" + user + "/" + repo + "/issues?assignee=" + assigned + "&" + PER_PAGE + "&" + state;
       }
 
       PagedRequest<GithubIssue> request = new PagedRequest<GithubIssue>(path, GithubIssue.class, GithubIssueRaw[].class, ACCEPT_V3_JSON);
@@ -724,9 +726,11 @@ public class GithubApiUtil {
   public static List<GithubIssue> getIssuesQueried(@NotNull GithubAuthData auth,
                                                    @NotNull String user,
                                                    @NotNull String repo,
-                                                   @Nullable String query) throws IOException {
+                                                   @Nullable String query,
+                                                   boolean withClosed) throws IOException {
     try {
-      query = URLEncoder.encode("repo:" + user + "/" + repo + " " + query, "UTF-8");
+      String state = withClosed ? "" : " state:open";
+      query = URLEncoder.encode("repo:" + user + "/" + repo + " " + query + state, "UTF-8");
       String path = "/search/issues?q=" + query;
 
       //TODO: Use bodyHtml for issues - GitHub does not support this feature for SearchApi yet
