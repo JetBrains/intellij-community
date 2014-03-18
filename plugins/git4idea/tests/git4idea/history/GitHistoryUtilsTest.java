@@ -34,7 +34,7 @@ import git4idea.history.browser.GitHeavyCommit;
 import git4idea.history.browser.SHAHash;
 import git4idea.history.wholeTree.AbstractHash;
 import git4idea.history.wholeTree.CommitHashPlusParents;
-import git4idea.test.GitTest;
+import git4idea.test.GitOldTest;
 import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -55,7 +55,7 @@ import static org.testng.Assert.*;
  *
  * @author Kirill Likhodedov
  */
-public class GitHistoryUtilsTest extends GitTest {
+public class GitHistoryUtilsTest extends GitOldTest {
 
   private VirtualFile afile;
   private FilePath bfilePath;

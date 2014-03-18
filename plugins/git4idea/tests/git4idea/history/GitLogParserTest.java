@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
-import git4idea.test.GitTest;
+import git4idea.test.GitOldTest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.BeforeMethod;
@@ -45,7 +45,7 @@ import static org.testng.Assert.assertTrue;
  * @deprecated Use {@link GitLightTest}
  */
 @Deprecated
-public class GitLogParserTest extends GitTest {
+public class GitLogParserTest extends GitOldTest {
 
   public static final GitLogOption[] GIT_LOG_OPTIONS =
     new GitLogOption[]{HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,

@@ -24,7 +24,7 @@ import com.intellij.util.ui.ColumnInfo;
 import git4idea.history.browser.CachedRefs;
 import git4idea.history.browser.ChangesFilter;
 import git4idea.history.wholeTree.*;
-import git4idea.test.GitTest;
+import git4idea.test.GitOldTest;
 import org.jetbrains.annotations.Nullable;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -41,7 +41,7 @@ import java.util.Set;
  * Date: 1/10/13
  * Time: 1:38 AM
  */
-public class GitLogPerformanceTest extends GitTest {
+public class GitLogPerformanceTest extends GitOldTest {
   private final static String ourPath = "C:/git/IDEA";
   private final static String ourPath1 = "C:/git/IDEA/community";
   private final static String ourPath2 = "C:/git/IDEA/contrib";

@@ -26,7 +26,7 @@ import com.intellij.testFramework.vcs.MockChangelistBuilder;
 import com.intellij.testFramework.vcs.MockDirtyScope;
 import git4idea.GitVcs;
 import git4idea.status.GitChangeProvider;
-import git4idea.test.GitTest;
+import git4idea.test.GitOldTest;
 import git4idea.test.GitTestUtil;
 import org.testng.annotations.BeforeMethod;
 
@@ -47,7 +47,7 @@ import static org.testng.Assert.*;
  * @deprecated Use {@link GitLightTest}
  */
 @Deprecated
-public class GitChangeProviderTest extends GitTest {
+public class GitChangeProviderTest extends GitOldTest {
 
   protected GitChangeProvider myChangeProvider;
   protected VcsModifiableDirtyScope myDirtyScope;

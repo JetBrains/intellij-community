@@ -35,7 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.repo.GitRepository;
-import git4idea.test.GitTest;
+import git4idea.test.GitOldTest;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.testng.Assert;
@@ -51,7 +51,7 @@ import java.util.Collections;
  * Date: 11/26/12
  * Time: 1:00 PM
  */
-public class GitAnnotationsClosedTest extends GitTest {
+public class GitAnnotationsClosedTest extends GitOldTest {
   private VirtualFile first;
   private VirtualFile second;
 

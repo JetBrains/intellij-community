@@ -45,7 +45,7 @@ import static org.testng.Assert.assertNotNull;
  * @deprecated Use {@link GitLightTest}
  */
 @Deprecated
-public abstract class GitTest extends AbstractVcsTestCase {
+public abstract class GitOldTest extends AbstractVcsTestCase {
 
   protected GitTestRepository myRepo;
   protected GitTestRepository myParentRepo;

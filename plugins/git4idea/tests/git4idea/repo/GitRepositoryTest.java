@@ -20,7 +20,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import git4idea.GitBranch;
 import git4idea.GitPlatformFacade;
 import git4idea.test.GitLightTest;
-import git4idea.test.GitTest;
+import git4idea.test.GitOldTest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.BeforeMethod;
@@ -45,7 +45,7 @@ import static org.testng.Assert.*;
  * @deprecated Use {@link GitLightTest}
  */
 @Deprecated
-public class GitRepositoryTest extends GitTest {
+public class GitRepositoryTest extends GitOldTest {
 
   private GitRepositoryReader myReader;
   private GitRepository myRepository;

@@ -23,7 +23,7 @@ import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.hash.HashSet;
-import git4idea.test.GitTest;
+import git4idea.test.GitOldTest;
 import git4idea.test.GitTestUtil;
 import junit.framework.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -38,7 +38,7 @@ import java.util.*;
  * Date: 7/23/12
  * Time: 7:53 PM
  */
-public class GitShelveUnshelveTest extends GitTest {
+public class GitShelveUnshelveTest extends GitOldTest {
   private Map<String,VirtualFile> myFiles;
   private VirtualFile myFile;
   private ChangeListManager myChangeListManager;

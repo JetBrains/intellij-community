@@ -17,7 +17,7 @@ package git4idea.tests;
 
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.test.GitTest;
+import git4idea.test.GitOldTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -39,7 +39,7 @@ import static org.testng.Assert.assertTrue;
  * TODO: This shouldn't rely on Git. Either test all version controls, either test a mock version control. Or even use both approaches.
  * @author Kirill Likhodedov
  */
-public class ChangeListManagerUpdateOnFileChangeTest extends GitTest {
+public class ChangeListManagerUpdateOnFileChangeTest extends GitOldTest {
 
   private ChangeListManagerImpl myChangeListManager;
   private VirtualFile afile;

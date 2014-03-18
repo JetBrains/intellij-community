@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import git4idea.test.GitTest;
+import git4idea.test.GitOldTest;
 import git4idea.test.GitTestUtil;
 import org.testng.annotations.Test;
 
@@ -35,7 +35,7 @@ import static org.testng.Assert.assertTrue;
  * @deprecated Use {@link GitLightTest}
  */
 @Deprecated
-public class GitMergeTest extends GitTest {
+public class GitMergeTest extends GitOldTest {
 
   /**
    * Tests that merge commit after resolving a conflict works fine if there is a file with spaces in its path.
