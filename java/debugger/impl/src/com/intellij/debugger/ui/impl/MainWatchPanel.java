@@ -46,9 +46,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.util.ui.EditableModel;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 
 import javax.swing.*;
+import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.KeyEvent;
@@ -133,6 +136,8 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
       public void updateDraggedImage(final Image image, final Point dropPoint, final Point imageOffset) {
       }
     }, myTree);
+
+    RowsDnDSupport.install(myTree, new WatchesDnDModel());
   }
 
   private void addWatchesFrom(final DebuggerTreeNodeImpl[] nodes) {
@@ -252,5 +257,32 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
     AnActionEvent actionEvent =
       new AnActionEvent(null, context, ActionPlaces.DEBUGGER_TOOLBAR, presentation, ActionManager.getInstance(), 0);
     action.actionPerformed(actionEvent);
+  }
+
+  private class WatchesDnDModel implements EditableModel {
+    private final DebuggerTreeNodeImpl root = (DebuggerTreeNodeImpl) myTree.getModel().getRoot();
+
+    @Override
+    public void exchangeRows(int oldIndex, int newIndex) {
+      myTree.saveState();
+      root.insert((MutableTreeNode)root.getChildAt(getIndexInRoot(oldIndex)), getIndexInRoot(newIndex));
+      myTree.treeChanged();
+    }
+
+    @Override
+    public boolean canExchangeRows(int oldIndex, int newIndex) {
+      return getIndexInRoot(oldIndex) != -1 && getIndexInRoot(newIndex) != -1;
+    }
+
+    private int getIndexInRoot(int row) {
+      TreeNode component = (TreeNode)myTree.getPathForRow(row).getLastPathComponent();
+      return root.getIndex(component);
+    }
+
+    @Override
+    public void addRow() {}
+
+    @Override
+    public void removeRow(int idx) {}
   }
 }
