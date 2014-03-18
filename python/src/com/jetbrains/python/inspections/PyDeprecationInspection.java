@@ -58,7 +58,7 @@ public class PyDeprecationInspection extends PyInspection {
         final PyExpression exceptClass = exceptPart.getExceptClass();
         if (exceptClass != null && "ImportError".equals(exceptClass.getText())) return;
       }
-      PsiElement resolveResult = node.getReference(resolveWithoutImplicits()).resolve();
+      PsiElement resolveResult = node.getReference(getResolveContext()).resolve();
       String deprecationMessage = null;
       if (resolveResult instanceof PyFunction) {
         deprecationMessage = ((PyFunction) resolveResult).getDeprecationMessage();

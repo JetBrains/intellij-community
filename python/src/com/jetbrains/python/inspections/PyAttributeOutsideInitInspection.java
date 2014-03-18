@@ -67,6 +67,8 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
     public void visitPyFunction(PyFunction node) {
       final PyClass containingClass = node.getContainingClass();
       if (containingClass == null) return;
+      final String name = node.getName();
+      if (name != null && name.startsWith("_")) return;
       if (!isApplicable(containingClass)) {
         return;
       }

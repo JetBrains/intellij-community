@@ -124,8 +124,21 @@ public class DiffUtil {
     return FileTypes.UNKNOWN.equals(diffContent.getContentType());
   }
 
+  private static boolean isEmptyFileType(@NotNull DiffContent diffContent) {
+    return diffContent.getContentType() == null;
+  }
+
   public static boolean oneIsUnknown(@Nullable DiffContent content1, @Nullable DiffContent content2) {
-    return content1 != null && isUnknownFileType(content1) || content2 != null && isUnknownFileType(content2);
+    if (content1 == null && content2 == null) return true;
+    if (content1 != null && content2 != null) {
+      return isUnknownFileType(content1) || isUnknownFileType(content2) || (isEmptyFileType(content1) && isEmptyFileType(content2));
+    }
+    if (content1 != null) {
+      return isUnknownFileType(content1) || isEmptyFileType(content1);
+    }
+    else {
+      return isUnknownFileType(content2) || isEmptyFileType(content2);
+    }
   }
 
 }

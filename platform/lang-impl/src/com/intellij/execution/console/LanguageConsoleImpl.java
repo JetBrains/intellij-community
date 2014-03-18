@@ -322,6 +322,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   @SuppressWarnings("UnusedDeclaration")
   @NotNull
+  @Deprecated
   public LightVirtualFile getHistoryFile() {
     return myHistoryFile;
   }

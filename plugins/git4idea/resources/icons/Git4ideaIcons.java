@@ -38,6 +38,7 @@ public class Git4ideaIcons {
   public static final Icon Ball7 = load("/icons/ball7.png"); // 8x8
   public static final Icon Branch = load("/icons/branch.png"); // 16x16
   public static final Icon CherryPick = load("/icons/cherryPick.png"); // 16x16
+  public static final Icon DeepCompare = load("/icons/DeepCompare.png"); // 16x16
   public static final Icon Greyball = load("/icons/greyball.png"); // 8x8
   public static final Icon Star = load("/icons/star.png"); // 13x13
 }

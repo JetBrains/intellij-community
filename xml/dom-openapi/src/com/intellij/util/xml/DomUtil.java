@@ -477,7 +477,7 @@ public class DomUtil {
   }
 
   public static boolean hasXml(@NotNull DomElement element) {
-    return element.getXmlElement() != null;
+    return element.exists();
   }
 
   public static Pair<TextRange, PsiElement> getProblemRange(final XmlTag tag) {

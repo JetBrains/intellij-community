@@ -56,7 +56,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
     if (SystemInfo.isMac) {
       smallFont = UIUtil.getLabelFont(UIUtil.FontSize.MINI);
     } else {
-      smallFont = UIUtil.getLabelFont().deriveFont(Math.max(UIUtil.getLabelFont().getSize() - 2, 11f));
+      smallFont = UIUtil.getLabelFont().deriveFont(Math.max(UIUtil.getLabelFont().getSize() - 2, 10f));
     }
     myName.setFont(UIUtil.getLabelFont().deriveFont(UIUtil.getLabelFont().getSize() + 1.0f));
     myStatus.setFont(smallFont);
@@ -114,6 +114,9 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
         if (downloads.length() > 3) {
           downloads = new DecimalFormat("#,###").format(Integer.parseInt(downloads));
         }
+        //if (myDownloads.getFont().canDisplay('\u2193')) {
+        //  downloads += '\u2193';
+        //}
         myDownloads.setText(downloads);
 
         myRating.setRate(pluginNode.getRating());
@@ -136,7 +139,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
         if (!isSelected) myName.setForeground(FileStatus.MODIFIED.getColor());
         if (hasNewerVersion) {
           if (!isSelected) {
-            myName.setForeground(JBColor.RED);
+            myName.setForeground(FileStatus.MODIFIED.getColor());
           }
           myStatus.setIcon(AllIcons.Nodes.Pluginobsolete);
         }
@@ -147,11 +150,20 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
       if (InstalledPluginsTableModel.hasNewerVersion(myPluginDescriptor.getPluginId())) {
         myStatus.setIcon(AllIcons.Nodes.Pluginobsolete);
         if (!isSelected) {
-          myName.setForeground(JBColor.RED);
+          myName.setForeground(FileStatus.MODIFIED.getColor());
         }
       }
       if (!myPluginDescriptor.isEnabled()) {
         myStatus.setIcon(IconLoader.getDisabledIcon(myStatus.getIcon()));
+      }
+    }
+    if (!isSelected) {
+      if (PluginManagerCore.isIncompatible(myPluginDescriptor)) {
+        myName.setForeground(JBColor.RED);
+      } else if (myPluginDescriptor != null && table.getModel() instanceof InstalledPluginsTableModel) {
+        if (((InstalledPluginsTableModel)table.getModel()).hasProblematicDependencies(myPluginDescriptor.getPluginId())) {
+          myName.setForeground(JBColor.RED);
+        }
       }
     }
 

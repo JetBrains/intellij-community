@@ -26,10 +26,9 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
+import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
-import com.jetbrains.python.psi.types.PyModuleType;
-import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.testing.pytest.PyTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,8 +76,7 @@ public class PyPep8NamingInspection extends PyInspection {
         if (expression instanceof PyTargetExpression) {
           final PyExpression qualifier = ((PyTargetExpression)expression).getQualifier();
           if (qualifier != null) {
-            final PyType type = myTypeEvalContext.getType(qualifier);
-            if (type instanceof PyModuleType) return;
+            return;
           }
         }
         if (!LOWERCASE_REGEX.matcher(name).matches() && !name.startsWith("_")) {

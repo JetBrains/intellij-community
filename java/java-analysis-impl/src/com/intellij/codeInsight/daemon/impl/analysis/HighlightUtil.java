@@ -550,7 +550,7 @@ public class HighlightUtil extends HighlightUtilBase {
       boolean isMethodVoid = returnType == null || PsiType.VOID.equals(returnType);
       final PsiExpression returnValue = statement.getReturnValue();
       if (returnValue != null) {
-        PsiType valueType = returnValue.getType();
+        PsiType valueType = RefactoringChangeUtil.getTypeByExpression(returnValue);
         if (isMethodVoid) {
           description = JavaErrorMessages.message("return.from.void.method");
           errorResult =

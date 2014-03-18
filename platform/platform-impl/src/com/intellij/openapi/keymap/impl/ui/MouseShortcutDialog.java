@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.impl.ShortcutRestrictions;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
@@ -59,7 +60,8 @@ class MouseShortcutDialog extends DialogWrapper{
     MouseShortcut shortcut,
     @NotNull Keymap keymap,
     @NotNull String actiondId,
-    @NotNull Group mainGroup
+    @NotNull Group mainGroup,
+    @NotNull ShortcutRestrictions restrictions
   ){
     super(parentComponent,true);
     setTitle(KeyMapBundle.message("mouse.shortcut.dialog.title"));
@@ -98,6 +100,8 @@ class MouseShortcutDialog extends DialogWrapper{
       myButton=-1;
       myModifiers=-1;
     }
+
+    myRbDoubleClick.setEnabled(restrictions.allowMouseDoubleClick);
 
     updatePreviewAndConflicts();
 

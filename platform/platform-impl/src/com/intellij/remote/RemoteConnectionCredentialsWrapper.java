@@ -162,9 +162,11 @@ public class RemoteConnectionCredentialsWrapper {
     }
   }
 
-  public interface RemoteSdkConnectionAcceptor {
-    void ssh(RemoteCredentialsHolder cred);
-    void vagrant(VagrantBasedCredentialsHolder cred);
-    void deployment(WebDeploymentCredentialsHolder cred);
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof RemoteConnectionCredentialsWrapper) {
+      return getId().equals(((RemoteConnectionCredentialsWrapper)obj).getId());
+    }
+    return false;
   }
 }

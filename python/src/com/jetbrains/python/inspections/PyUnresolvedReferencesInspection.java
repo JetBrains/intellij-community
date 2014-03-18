@@ -421,13 +421,13 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       String description = null;
       final String text = reference.getElement().getText();
       TextRange rangeInElement = reference.getRangeInElement();
-      String ref_text = text;  // text of the part we're working with
+      String refText = text;  // text of the part we're working with
       if (rangeInElement.getStartOffset() > 0 && rangeInElement.getEndOffset() > 0) {
-        ref_text = rangeInElement.substring(text);
+        refText = rangeInElement.substring(text);
       }
       final PsiElement element = reference.getElement();
       final List<LocalQuickFix> actions = new ArrayList<LocalQuickFix>(2);
-      final String refName = (element instanceof PyQualifiedExpression) ? ((PyQualifiedExpression)element).getReferencedName() : ref_text;
+      final String refName = (element instanceof PyQualifiedExpression) ? ((PyQualifiedExpression)element).getReferencedName() : refText;
       // Empty text, nothing to highlight
       if (refName == null || refName.length() <= 0) {
         return;
@@ -471,7 +471,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               actions.add(new UnresolvedRefAddFutureImportQuickFix());
             }
           }
-          if (ref_text.equals("true") || ref_text.equals("false")) {
+          if (refText.equals("true") || refText.equals("false")) {
             actions.add(new UnresolvedRefTrueFalseQuickFix(element));
           }
           addAddSelfFix(node, expr, actions);
@@ -498,7 +498,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           ) != null
         )) {
           severity = HighlightSeverity.WEAK_WARNING;
-          description = PyBundle.message("INSP.module.$0.not.found", ref_text);
+          description = PyBundle.message("INSP.module.$0.not.found", refText);
           // TODO: mark the node so that future references pointing to it won't result in a error, but in a warning
         }
       }
@@ -506,11 +506,11 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         description = ((PsiReferenceEx)reference).getUnresolvedDescription();
       }
       if (description == null) {
-        boolean marked_qualified = false;
+        boolean markedQualified = false;
         if (element instanceof PyQualifiedExpression) {
           // TODO: Add __qualname__ for Python 3.3 to the skeleton of <class 'object'>, introduce a pseudo-class skeleton for
           // <class 'function'>
-          if ("__qualname__".equals(ref_text) && LanguageLevel.forElement(element).isAtLeast(LanguageLevel.PYTHON33)) {
+          if ("__qualname__".equals(refText) && LanguageLevel.forElement(element).isAtLeast(LanguageLevel.PYTHON33)) {
             return;
           }
           final PyQualifiedExpression expr = (PyQualifiedExpression)element;
@@ -524,7 +524,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               if (ignoreUnresolvedMemberForType(type, reference, refName)) {
                 return;
               }
-              addCreateMemberFromUsageFixes(type, reference, ref_text, actions);
+              addCreateMemberFromUsageFixes(type, reference, refText, actions);
               if (type instanceof PyClassTypeImpl) {
                 if (reference instanceof PyOperatorReference) {
                   description = PyBundle.message("INSP.unresolved.operator.ref",
@@ -532,26 +532,26 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                                                  ((PyOperatorReference)reference).getReadableOperatorName());
                 }
                 else {
-                  description = PyBundle.message("INSP.unresolved.ref.$0.for.class.$1", ref_text, type.getName());
+                  description = PyBundle.message("INSP.unresolved.ref.$0.for.class.$1", refText, type.getName());
                 }
-                marked_qualified = true;
+                markedQualified = true;
               }
               else {
-                description = PyBundle.message("INSP.cannot.find.$0.in.$1", ref_text, type.getName());
-                marked_qualified = true;
+                description = PyBundle.message("INSP.cannot.find.$0.in.$1", refText, type.getName());
+                markedQualified = true;
               }
             }
           }
         }
-        if (!marked_qualified) {
-          description = PyBundle.message("INSP.unresolved.ref.$0", ref_text);
+        if (!markedQualified) {
+          description = PyBundle.message("INSP.unresolved.ref.$0", refText);
 
           // look in other imported modules for this whole name
           if (PythonReferenceImporter.isImportable(element)) {
             addAutoImportFix(node, reference, actions);
           }
 
-          addCreateClassFix(ref_text, element, actions);
+          addCreateClassFix(refText, element, actions);
         }
       }
       ProblemHighlightType hl_type;
@@ -751,16 +751,16 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         PyClass cls = ((PyClassType)type).getPyClass();
         if (!PyBuiltinCache.getInstance(element).isBuiltin(cls)) {
           if (element.getParent() instanceof PyCallExpression) {
-            actions.add(new AddMethodQuickFix(refText, (PyClassType)type, true));
+            actions.add(new AddMethodQuickFix(refText, cls.getName(), true));
           }
           else if (!(reference instanceof PyOperatorReference)) {
-            actions.add(new AddFieldQuickFix(refText, (PyClassType)type, "None"));
+            actions.add(new AddFieldQuickFix(refText, "None", type.getName()));
           }
         }
       }
       else if (type instanceof PyModuleType) {
         PyFile file = ((PyModuleType)type).getModule();
-        actions.add(new AddFunctionQuickFix(refText, file));
+        actions.add(new AddFunctionQuickFix(refText, file.getName()));
       }
     }
 

@@ -116,6 +116,7 @@ public class CloudAccountSelectionEditor<SC extends CloudConfigurationBase,
 
     if (getSelectedServerItem().isNew()) {
       RemoteServersManager.getInstance().addServer(server);
+      myNewServer = null;
     }
 
     String serverName = server.getName();

@@ -75,8 +75,6 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
       if (property != null) return;
 
       final PyStatementList statementList = node.getStatementList();
-      if (statementList == null) return;
-
       final PyStatement[] statements = statementList.getStatements();
 
       if (statements.length == 1 && statements[0] instanceof PyPassStatement) return;

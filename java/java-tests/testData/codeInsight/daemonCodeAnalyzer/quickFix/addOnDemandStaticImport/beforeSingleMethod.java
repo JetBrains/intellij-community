@@ -1,4 +1,4 @@
-// "Add static import for 'test.Bar.f'" "true"
+// "Add static import for 'test.Bar.f'" "false"
 package test;
 
 class Bar {

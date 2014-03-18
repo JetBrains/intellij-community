@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
 
@@ -40,7 +41,7 @@ public class HgFile {
   }
 
   public HgFile(@NotNull Project project, @NotNull VirtualFile file) {
-    this(VcsUtil.getVcsRootFor(project, file), VcsUtil.getFilePath(file.getPath()));
+    this(HgUtil.getHgRootOrNull(project, file), VcsUtil.getFilePath(file.getPath()));
   }
 
   @NotNull

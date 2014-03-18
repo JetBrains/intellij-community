@@ -68,18 +68,17 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
 
     openFiles("  <component name=\"FileEditorManager\">\n" +
         "    <leaf>\n" +
-        "      <file leaf-file-name=\"Bar.java\" pinned=\"false\" current=\"false\" current-in-tab=\"false\">\n" +
-        "        <entry file=\"file://$PROJECT_DIR$/src/Bar.java\">\n" +
-        "          <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
-        "            <state vertical-scroll-proportion=\"0.0\" vertical-offset=\"0\" max-vertical-offset=\"187\">\n" +
-        "              <caret line=\"1\" column=\"26\" selection-start=\"45\" selection-end=\"45\" />\n" +
-        "              <folding>\n" +
-        "                <element signature=\"e#69#70#0\" expanded=\"true\" />\n" +
-        "              </folding>\n" +
-        "            </state>\n" +
+        "      <file leaf-file-name=\"foo.xsd\" pinned=\"false\" current=\"true\" current-in-tab=\"true\">\n" +
+        "        <entry selected=\"true\" file=\"file://$PROJECT_DIR$/src/1.txt\">\n" +
+        "          <provider editor-type-id=\"mock\" selected=\"true\">\n" +
+        "            <state />\n" +
+        "          </provider>\n" +
+        "          <provider editor-type-id=\"text-editor\">\n" +
+        "            <state/>\n" +
         "          </provider>\n" +
         "        </entry>\n" +
         "      </file>\n" +
+        "    </leaf>\n" +
         "  </component>\n");
     FileEditor[] selectedEditors = myManager.getSelectedEditors();
     assertEquals(1, selectedEditors.length);

@@ -150,7 +150,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     }
   }
 
-  public static void buildText(@NotNull XValuePresentation valuePresenter, @NotNull final ColoredTextContainer text) {
+  public static void buildText(@NotNull XValuePresentation valuePresenter, @NotNull ColoredTextContainer text) {
     XValuePresentationUtil.appendSeparator(text, valuePresenter.getSeparator());
     String type = valuePresenter.getType();
     if (type != null) {

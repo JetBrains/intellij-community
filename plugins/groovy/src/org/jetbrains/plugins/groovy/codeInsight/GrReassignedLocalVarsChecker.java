@@ -15,8 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.codeInsight;
 
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Ref;
@@ -25,7 +23,11 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,9 +53,6 @@ import java.util.Set;
  * @author Max Medvedev
  */
 public class GrReassignedLocalVarsChecker {
-  private static final Key<CachedValue<PsiType>> LEAST_UPPER_BOUND_TYPE = Key.create("least upper bound type");
-  private static final Key<CachedValue<Set<String>>> ASSIGNED_VARS = Key.create("assigned vars inside block");
-  private static final Key<CachedValue<Boolean>> REASSIGNED_VAR = Key.create("least upper bound type");
 
   @Nullable
   public static Boolean isReassignedVar(@NotNull final GrReferenceExpression refExpr) {
@@ -70,19 +69,14 @@ public class GrReassignedLocalVarsChecker {
       return false;
     }
 
-    assert resolved != null;
-    CachedValue<Boolean> data = resolved.getUserData(REASSIGNED_VAR);
-    if (data == null) {
-      data = CachedValuesManager.getManager(refExpr.getProject()).createCachedValue(new CachedValueProvider<Boolean>() {
-        @Nullable
-        @Override
-        public Result<Boolean> compute() {
-          return Result.create(isReassignedVarImpl((GrVariable)resolved), PsiModificationTracker.MODIFICATION_COUNT, ProjectRootManager.getInstance(resolved.getProject()));
-        }
-      }, false);
-      resolved.putUserData(REASSIGNED_VAR, data);
-    }
-    return data.getValue();
+    assert resolved instanceof GrVariable;
+    return CachedValuesManager.getCachedValue(resolved, new CachedValueProvider<Boolean>() {
+      @Nullable
+      @Override
+      public Result<Boolean> compute() {
+        return Result.create(isReassignedVarImpl((GrVariable)resolved), PsiModificationTracker.MODIFICATION_COUNT);
+      }
+    });
   }
 
   private static boolean isReassignedVarImpl(@NotNull final GrVariable resolved) {
@@ -127,42 +121,38 @@ public class GrReassignedLocalVarsChecker {
       return null;
     }
 
-    assert resolved != null;
-    return getLeastUpperBoundByVar((GrVariable)resolved);
+    assert resolved instanceof GrVariable;
+
+    return TypeInferenceHelper.getCurrentContext().getExpressionType(((GrVariable)resolved), new Function<GrVariable, PsiType>() {
+      @Override
+      public PsiType fun(GrVariable variable) {
+        return getLeastUpperBoundByVar(variable);
+      }
+    });
   }
 
   @Nullable
-  private static PsiType getLeastUpperBoundByVar(@NotNull final GrVariable resolved) {
-    CachedValue<PsiType> data = resolved.getUserData(LEAST_UPPER_BOUND_TYPE);
-    if (data == null) {
-      data = CachedValuesManager.getManager(resolved.getProject()).createCachedValue(new CachedValueProvider<PsiType>() {
-        @Override
-        public Result<PsiType> compute() {
-          return Result.create(getLeastUpperBoundByVarImpl(resolved), PsiModificationTracker.MODIFICATION_COUNT, ProjectRootManager.getInstance(resolved.getProject()));
-        }
-      }, false);
-      resolved.putUserData(LEAST_UPPER_BOUND_TYPE, data);
-    }
-    return data.getValue();
-  }
-
-  @Nullable
-  private static PsiType getLeastUpperBoundByVarImpl(@NotNull final GrVariable resolved) {
-    return RecursionManager.doPreventingRecursion(resolved, false, new NullableComputable<PsiType>() {
+  private static PsiType getLeastUpperBoundByVar(@NotNull final GrVariable var) {
+    return RecursionManager.doPreventingRecursion(var, false, new NullableComputable<PsiType>() {
       @Override
       public PsiType compute() {
-        final Collection<PsiReference> all = ReferencesSearch.search(resolved).findAll();
+        final Collection<PsiReference> all = ReferencesSearch.search(var, var.getUseScope()).findAll();
+        final GrExpression initializer = var.getInitializerGroovy();
 
-        final GrExpression initializer = resolved.getInitializerGroovy();
+        if (initializer == null && all.isEmpty()) {
+          return var.getDeclaredType();
+        }
+
         PsiType result = initializer != null ? initializer.getType() : null;
 
-        final PsiManager manager = resolved.getManager();
+        final PsiManager manager = var.getManager();
         for (PsiReference reference : all) {
           final PsiElement ref = reference.getElement();
           if (ref instanceof GrReferenceExpression && PsiUtil.isLValue(((GrReferenceExpression)ref))) {
             result = TypesUtil.getLeastUpperBoundNullable(result, TypeInferenceHelper.getInitializerTypeFor(ref), manager);
           }
         }
+
         return result;
       }
     });
@@ -170,10 +160,7 @@ public class GrReassignedLocalVarsChecker {
 
   @NotNull
   private static Set<String> getUsedVarsInsideBlock(@NotNull final GrCodeBlock block) {
-    CachedValue<Set<String>> data = block.getUserData(ASSIGNED_VARS);
-
-    if (data == null) {
-      data = CachedValuesManager.getManager(block.getProject()).createCachedValue(new CachedValueProvider<Set<String>>() {
+      return CachedValuesManager.getCachedValue(block, new CachedValueProvider<Set<String>>() {
         @Nullable
         @Override
         public Result<Set<String>> compute() {
@@ -200,11 +187,7 @@ public class GrReassignedLocalVarsChecker {
           });
           return Result.create(result, block);
         }
-      }, false);
-      block.putUserData(ASSIGNED_VARS, data);
-    }
-
-    return data.getValue();
+      });
   }
 
 }

@@ -40,7 +40,7 @@ public final class HgConflictResolver {
     this(project, null);
   }
 
-  public HgConflictResolver(Project project, UpdatedFiles updatedFiles) {
+  public HgConflictResolver(@NotNull Project project, UpdatedFiles updatedFiles) {
     this.myProject = project;
     this.updatedFiles = updatedFiles;
   }
@@ -65,7 +65,7 @@ public final class HgConflictResolver {
         updatedFiles.getGroupById(FileGroup.UPDATED_ID).remove(file.getAbsolutePath());
         //TODO get the correct revision to pass to the UpdatedFiles
         updatedFiles.getGroupById(fileGroupId)
-          .add(file.getPath(), HgVcs.VCS_NAME, null); 
+          .add(file.getPath(), HgVcs.VCS_NAME, null);
       }
     }
 
@@ -74,7 +74,9 @@ public final class HgConflictResolver {
     }
 
     final HgVcs vcs = HgVcs.getInstance(myProject);
-    if (vcs == null) { return; }
+    if (vcs == null) {
+      return;
+    }
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
         AbstractVcsHelper.getInstance(myProject).showMergeDialog(conflicts, vcs.getMergeProvider());
@@ -82,4 +84,19 @@ public final class HgConflictResolver {
     }, ModalityState.defaultModalityState());
   }
 
+  public static List<VirtualFile> findConflicts(final Project project, VirtualFile repo) {
+    Map<HgFile, HgResolveStatusEnum> resolves = new HgResolveCommand(project).getListSynchronously(repo);
+    final List<VirtualFile> conflicts = new ArrayList<VirtualFile>();
+    for (Map.Entry<HgFile, HgResolveStatusEnum> entry : resolves.entrySet()) {
+      File file = entry.getKey().getFile();
+      switch (entry.getValue()) {
+        case UNRESOLVED:
+          conflicts.add(VcsUtil.getVirtualFile(file));
+          break;
+        default:
+          break;
+      }
+    }
+    return conflicts;
+  }
 }

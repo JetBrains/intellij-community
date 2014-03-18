@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,12 @@ package com.intellij.psi.scope;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.ResolveState;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface NameHint {
   Key<NameHint> KEY = Key.create("NameHint");
 
   @Nullable
-  String getName(ResolveState state);
+  String getName(@NotNull ResolveState state);
 }

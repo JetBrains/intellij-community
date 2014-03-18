@@ -20,6 +20,7 @@ import com.google.common.collect.Collections2;
 import com.intellij.dvcs.test.MockVcsHelper;
 import com.intellij.dvcs.test.MockVirtualFile;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.changes.Change;
@@ -39,7 +40,6 @@ import cucumber.annotation.en.Then;
 import cucumber.annotation.en.When;
 import git4idea.cherrypick.GitCherryPicker;
 import git4idea.config.GitVersionSpecialty;
-import git4idea.log.GitContentRevisionFactory;
 
 import java.util.*;
 
@@ -260,11 +260,17 @@ public class GitCherryPickStepdefs {
   }
 
   private static VcsFullCommitDetails mockCommit(String hash, String message) {
-    List<Change> changes = new ArrayList<Change>();
+    final List<Change> changes = new ArrayList<Change>();
     changes.add(new Change(null, new MockContentRevision(new FilePathImpl(new MockVirtualFile("name")), VcsRevisionNumber.NULL)));
     return ServiceManager.getService(myProject, VcsLogObjectsFactory.class).createFullDetails(
       HashImpl.build(hash), Collections.<Hash>emptyList(), 0, NullVirtualFile.INSTANCE, message, "John Smith", "john@mail.com", message,
-      "John Smith", "john@mail.com", 0, changes, GitContentRevisionFactory.getInstance(myProject));
+      "John Smith", "john@mail.com", 0, new ThrowableComputable<Collection<Change>, Exception>() {
+        @Override
+        public Collection<Change> compute() throws Exception {
+          return changes;
+        }
+      }
+    );
   }
 
 }

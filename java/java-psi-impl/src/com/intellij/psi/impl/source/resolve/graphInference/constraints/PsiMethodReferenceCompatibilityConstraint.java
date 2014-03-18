@@ -156,12 +156,18 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         session.initBounds(containingClass.getTypeParameters());
       }
 
+      //if i) the method reference elides NonWildTypeArguments, 
+      //  ii) the compile-time declaration is a generic method, and 
+      // iii) the return type of the compile-time declaration mentions at least one of the method's type parameters;
       if (typeParameters.length == 0 && method.getTypeParameters().length > 0) {
         final PsiClass interfaceClass = classResolveResult.getElement();
         LOG.assertTrue(interfaceClass != null);
         if (PsiPolyExpressionUtil.mentionsTypeParameters(referencedMethodReturnType,
                                                          ContainerUtil.newHashSet(method.getTypeParameters()))) {
-          constraints.add(new TypeCompatibilityConstraint(referencedMethodReturnType, returnType));
+          //the constraint reduces to the bound set B3 which would be used to determine the method reference's invocation type 
+          //when targeting the return type of the function type, as defined in 18.5.2.
+          //as there is no parameters, only constraint for return types is left. Here you are:
+          session.registerConstraints(referencedMethodReturnType, returnType);
           return true;
         }
       }
@@ -208,7 +214,6 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         if (res instanceof PsiClass) {
           PsiClass containingClass = (PsiClass)res;
           final boolean isRawSubst = !myExpression.isConstructor() &&
-                                     PsiTreeUtil.isAncestor(containingClass, myExpression, true) &&
                                      PsiUtil.isRawSubstitutor(containingClass, resolveResult.getSubstitutor());
           qualifierType = JavaPsiFacade.getElementFactory(res.getProject()).createType(containingClass, isRawSubst ? PsiSubstitutor.EMPTY : resolveResult.getSubstitutor());
         }

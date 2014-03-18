@@ -189,6 +189,14 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   @Override
+  public void updateUI() {
+    super.updateUI();
+    for (Component component : getComponents()) {
+      tweakActionComponentUI(component);
+    }
+  }
+
+  @Override
   public void addNotify() {
     super.addNotify();
     ourToolbars.add(this);
@@ -316,18 +324,17 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private JComponent getCustomComponent(AnAction action) {
     Presentation presentation = myPresentationFactory.getPresentation(action);
     JComponent customComponent = ((CustomComponentAction)action).createCustomComponent(presentation);
-    if (ActionPlaces.EDITOR_TOOLBAR.equals(myPlace)) {
-      // tweak font & color for editor toolbar to match editor tabs style
-      Color foreground = customComponent.getForeground();
-      customComponent.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
-      if (foreground != null) customComponent.setForeground(ColorUtil.dimmer(foreground));
-    }
+    tweakActionComponentUI(customComponent);
     presentation.putClientProperty(CustomComponentAction.CUSTOM_COMPONENT_PROPERTY, customComponent);
     return customComponent;
   }
 
-  private boolean isNavBar() {
-    return myPlace == ActionPlaces.NAVIGATION_BAR;
+  private void tweakActionComponentUI(@NotNull Component actionComponent) {
+    if (ActionPlaces.EDITOR_TOOLBAR.equals(myPlace)) {
+      // tweak font & color for editor toolbar to match editor tabs style
+      actionComponent.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+      actionComponent.setForeground(ColorUtil.dimmer(JBColor.BLACK));
+    }
   }
 
   private Dimension getMinimumButtonSize() {

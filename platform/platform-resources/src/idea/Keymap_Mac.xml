@@ -238,6 +238,7 @@
       <keyboard-shortcut first-keystroke="meta Q"/>
     </action>
     <action id="GotoTypeDeclaration">
+      <keyboard-shortcut first-keystroke="meta shift B"/>
       <keyboard-shortcut first-keystroke="control shift B"/>
       <mouse-shortcut keystroke="meta shift button1"/>
       <mouse-shortcut keystroke="shift button2"/>

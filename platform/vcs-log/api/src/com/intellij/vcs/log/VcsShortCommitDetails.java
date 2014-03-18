@@ -11,11 +11,12 @@ import java.util.List;
  * <p>These details will be displayed in the log table.</p>
  *
  * <p>An instance of this object can be obtained via
- *    {@link VcsLogObjectsFactory#createShortDetails(Hash, List, long, VirtualFile, String, String, String) VcsLogObjectsFactory#createShortDetails}
+ *    {@link VcsLogObjectsFactory#createShortDetails(Hash, List, long, VirtualFile, String, String, String)
+ *    VcsLogObjectsFactory#createShortDetails}
  * </p>
  *
+ * @see VcsCommitMetadata
  * @see VcsFullCommitDetails
- * @author Kirill Likhodedov
  */
 public interface VcsShortCommitDetails {
 

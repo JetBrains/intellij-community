@@ -65,6 +65,7 @@
       <action id="Git.Rebase.Continue" class="git4idea.actions.GitRebaseContinue" text="Continue Rebasing"/>
       <action id="Git.Rebase.Skip" class="git4idea.actions.GitRebaseSkip" text="Skip Commit in Rebasing"/>
       <separator/>
+      <action id="Git.Edit.Global.Message" class="git4idea.actions.GitEditGlobalMessageAction" text="Edit Global Message"/>
     </group>
 
     <group id="Git.Menu" class="git4idea.actions.GitMenu" popup="true" text="_Git">
@@ -107,6 +108,9 @@
     <group id="Git.Log.Toolbar">
       <reference id="Git.CherryPick"/>
       <add-to-group group-id="Vcs.Log.Toolbar" />
+      <action id="Git.Log.DeepCompare" class="git4idea.branch.DeepCompareAction" text="Highlight non-picked commits"
+              icon="Git4ideaIcons.DeepCompare"
+              description="Dims those commits which have equivalent changes in the current branch"/>
     </group>
     
 
@@ -174,6 +178,7 @@
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
 
     <projectService serviceImplementation="git4idea.log.GitContentRevisionFactory" />
+    <projectService serviceImplementation="git4idea.branch.DeepComparatorHolder"/>
 
     <applicationService serviceImplementation="git4idea.history.wholeTree.GitCommitsSequentialIndex"
                         serviceInterface="git4idea.history.wholeTree.GitCommitsSequentially"/>

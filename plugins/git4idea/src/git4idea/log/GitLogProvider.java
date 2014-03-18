@@ -66,8 +66,7 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsFullCommitDetails> readFirstBlock(@NotNull VirtualFile root,
-                                                             boolean ordered, int commitCount) throws VcsException {
+  public List<? extends VcsCommitMetadata> readFirstBlock(@NotNull VirtualFile root, boolean ordered, int commitCount) throws VcsException {
     if (!isRepositoryReady(root)) {
       return Collections.emptyList();
     }
@@ -77,7 +76,7 @@ public class GitLogProvider implements VcsLogProvider {
     if (ordered) {
       params = ArrayUtil.append(params, "--date-order");
     }
-    return GitHistoryUtils.history(myProject, root, params);
+    return GitHistoryUtils.loadMetadata(myProject, root, params);
   }
 
   @NotNull
@@ -92,7 +91,8 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsShortCommitDetails> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException {
+  public List<? extends VcsShortCommitDetails> readShortDetails(@NotNull VirtualFile root,
+                                                                @NotNull List<String> hashes) throws VcsException {
     return GitHistoryUtils.readMiniDetails(myProject, root, hashes);
   }
 
@@ -194,7 +194,7 @@ public class GitLogProvider implements VcsLogProvider {
 
       boolean atLeastOneBranchExists = false;
       for (String branchName : filterCollection.getBranchFilter().getBranchNames()) {
-        if (repository.getBranches().findBranchByName(branchName) != null) {
+        if (branchName.equals("HEAD") || repository.getBranches().findBranchByName(branchName) != null) {
           filterParameters.add(branchName);
           atLeastOneBranchExists = true;
         }
@@ -259,6 +259,11 @@ public class GitLogProvider implements VcsLogProvider {
     return GitBranchUtil.getBranches(myProject, root, true, true, commitHash.asString());
   }
 
+  @Override
+  public boolean supportsFastUnorderedCommits() {
+    return true;
+  }
+
   private static String prepareParameter(String paramName, String value) {
     return "--" + paramName + "=" + value; // no value quoting needed, because the parameter itself will be quoted by GeneralCommandLine
   }
@@ -281,5 +286,4 @@ public class GitLogProvider implements VcsLogProvider {
     }
     return true;
   }
-
 }

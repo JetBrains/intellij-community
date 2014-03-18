@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,13 +33,13 @@ public class StaticImportResolveProcessor extends BaseScopeProcessor implements 
   private final List<JavaResolveResult> myClassResult = new SmartList<JavaResolveResult>();
   private final List<JavaResolveResult> myResults = new SmartList<JavaResolveResult>();
 
-  public StaticImportResolveProcessor(final PsiImportStaticReferenceElement reference) {
+  public StaticImportResolveProcessor(@NotNull PsiImportStaticReferenceElement reference) {
     myReference = reference;
     myName = myReference.getReferenceName();
   }
 
   @Override
-  public boolean execute(@NotNull final PsiElement candidate, final ResolveState state) {
+  public boolean execute(@NotNull final PsiElement candidate, @NotNull final ResolveState state) {
     if (candidate instanceof PsiMember && ((PsiModifierListOwner)candidate).hasModifierProperty(PsiModifier.STATIC)) {
       if (candidate instanceof PsiField) {
         if (checkDomination((PsiMember)candidate, myFieldResults)) return true;
@@ -86,7 +86,7 @@ public class StaticImportResolveProcessor extends BaseScopeProcessor implements 
   }
 
   @Override
-  public String getName(final ResolveState state) {
+  public String getName(@NotNull final ResolveState state) {
     return myName;
   }
 
@@ -124,7 +124,7 @@ public class StaticImportResolveProcessor extends BaseScopeProcessor implements 
   private static class OurResolveResult extends CandidateInfo {
     private final PsiImportStaticReferenceElement myReference;
 
-    public OurResolveResult(final PsiElement candidate, final PsiImportStaticReferenceElement reference) {
+    public OurResolveResult(@NotNull PsiElement candidate, final PsiImportStaticReferenceElement reference) {
       super(candidate, PsiSubstitutor.EMPTY);
       myReference = reference;
     }

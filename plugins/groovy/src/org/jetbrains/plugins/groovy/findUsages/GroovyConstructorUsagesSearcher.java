@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -391,7 +391,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
     return true;
   }
 
-  private static void processImplicitConstructorCall(final PsiMember usage,
+  private static void processImplicitConstructorCall(@NotNull final PsiMember usage,
                                                      final Processor<PsiReference> processor,
                                                      final PsiMethod constructor) {
     if (constructor instanceof GrMethod) {
@@ -404,10 +404,12 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
     PsiManager manager = constructor.getManager();
     if (manager.areElementsEquivalent(usage, constructor) || manager.areElementsEquivalent(constructor.getContainingClass(), usage.getContainingClass())) return;
     processor.process(new LightMemberReference(manager, usage, PsiSubstitutor.EMPTY) {
+      @Override
       public PsiElement getElement() {
         return usage;
       }
 
+      @Override
       public TextRange getRangeInElement() {
         if (usage instanceof PsiClass) {
           PsiIdentifier identifier = ((PsiClass)usage).getNameIdentifier();

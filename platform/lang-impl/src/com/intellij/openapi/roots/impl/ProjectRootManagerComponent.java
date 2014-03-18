@@ -58,7 +58,7 @@ import java.util.Set;
 public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ProjectManagerComponent");
   private static final boolean ourScheduleCacheUpdateInDumbMode = SystemProperties.getBooleanProperty(
-    "idea.schedule.cache.update.in.dumb.mode", ApplicationManager.getApplication().isInternal() || ApplicationManager.getApplication().isEAP());
+    "idea.schedule.cache.update.in.dumb.mode", true);
   private boolean myPointerChangesDetected = false;
   private int myInsideRefresh = 0;
   private boolean myLargeVfsUpdateDetected;

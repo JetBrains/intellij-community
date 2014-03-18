@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.inspections.quickfix.PyRemoveStatementQuickFix;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyReturnStatement;
@@ -61,7 +62,7 @@ public class PyReturnFromInitInspection extends PyInspection {
         Collection<PsiElement> offenders = new ArrayList<PsiElement>();
         findReturnValueInside(function, offenders);
         for (PsiElement offender : offenders) {
-          registerProblem(offender, PyBundle.message("INSP.cant.return.value.from.init"));
+          registerProblem(offender, PyBundle.message("INSP.cant.return.value.from.init"), new PyRemoveStatementQuickFix());
         }
       }
     }

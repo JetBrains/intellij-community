@@ -745,6 +745,47 @@ public abstract class ResourceFilteringTest extends MavenCompilingTestCase {
                                                    "value3=value2\n");
   }
 
+  public void testCustomFiltersViaPlugin() throws Exception {
+    createProjectSubFile("filters/filter.properties", "xxx=value");
+    createProjectSubFile("resources/file.properties", "value1=${xxx}");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>\n" +
+                  "    <plugin>\n" +
+                  "      <groupId>org.codehaus.mojo</groupId>\n" +
+                  "      <artifactId>properties-maven-plugin</artifactId>\n" +
+                  "      <executions>\n" +
+                  "        <execution>\n" +
+                  "          <id>common-properties</id>\n" +
+                  "          <phase>initialize</phase>\n" +
+                  "          <goals>\n" +
+                  "            <goal>read-project-properties</goal>\n" +
+                  "          </goals>\n" +
+                  "          <configuration>\n" +
+                  "            <files>\n" +
+                  "              <file>filters/filter.properties</file>\n" +
+                  "            </files>\n" +
+                  "          </configuration>\n" +
+                  "        </execution>\n" +
+                  "      </executions>\n" +
+                  "    </plugin>" +
+                  "  </plugins>\n" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+    compileModules("project");
+
+    assertResult("target/classes/file.properties", "value1=value");
+  }
+
   public void testCustomFilterWithPropertyInThePath() throws Exception {
     createProjectSubFile("filters/filter.properties", "xxx=value");
     createProjectSubFile("resources/file.properties", "value=${xxx}");
@@ -999,7 +1040,7 @@ public abstract class ResourceFilteringTest extends MavenCompilingTestCase {
     assertNotNull(myProjectPom.getParent().findFileByRelativePath("target/classes/file.xyz"));
   }
 
-  public void testTwoResourcesMapping() throws Exception {
+  public void testResourcesOrdering1() throws Exception {
     createProjectSubFile("resources/file.properties", "value=${project.version}\n");
 
     importProject("<groupId>test</groupId>" +
@@ -1022,7 +1063,162 @@ public abstract class ResourceFilteringTest extends MavenCompilingTestCase {
 
     compileModules("project");
 
-    assertResult("target/classes/file.properties", "value=1\n");
+    assertResult("target/classes/file.properties", "value=1\n"); // Filtered file override non-filtered file
+  }
+
+  public void testResourcesOrdering2() throws Exception {
+    if (!useJps()) return;
+
+    createProjectSubFile("resources/file.properties", "value=${project.version}\n");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "    <resource>" +
+                  "      <directory>resources</directory>" +
+                  "      <filtering>false</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+
+    compileModules("project");
+
+    assertResult("target/classes/file.properties", "value=1\n"); // Filtered file override non-filtered file
+  }
+
+  public void testResourcesOrdering3() throws Exception {
+    if (!useJps()) return;
+
+    createProjectSubFile("resources1/a.txt", "1");
+    createProjectSubFile("resources2/a.txt", "2");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources1</directory>" +
+                  "    </resource>" +
+                  "    <resource>" +
+                  "      <directory>resources2</directory>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+
+    compileModules("project");
+
+    assertResult("target/classes/a.txt", "1"); // First file was copied, second file was not override first file
+  }
+
+  public void testResourcesOrdering4() throws Exception {
+    createProjectSubFile("resources1/a.txt", "1");
+    createProjectSubFile("resources2/a.txt", "2");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources1</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "    <resource>" +
+                  "      <directory>resources2</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+
+    compileModules("project");
+
+    assertResult("target/classes/a.txt", "2"); // For the filtered files last file override other files.
+  }
+
+  public void testOverwriteParameter1() throws Exception {
+    if (!useJps()) return;
+
+    createProjectSubFile("resources1/a.txt", "1");
+    createProjectSubFile("resources2/a.txt", "2");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources1</directory>" +
+                  "    </resource>" +
+                  "    <resource>" +
+                  "      <directory>resources2</directory>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <artifactId>maven-resources-plugin</artifactId>" +
+                  "      <configuration>" +
+                  "        <overwrite>true</overwrite>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    compileModules("project");
+
+    assertResult("target/classes/a.txt", "2");
+  }
+
+  public void testOverwriteParameter2() throws Exception {
+    if (!useJps()) return;
+
+    createProjectSubFile("resources1/a.txt", "1");
+    createProjectSubFile("resources2/a.txt", "2");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources1</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "    <resource>" +
+                  "      <directory>resources2</directory>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <artifactId>maven-resources-plugin</artifactId>" +
+                  "      <configuration>" +
+                  "        <overwrite>true</overwrite>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    compileModules("project");
+
+    assertResult("target/classes/a.txt", "2");
   }
 
 }

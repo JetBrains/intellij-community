@@ -789,7 +789,7 @@ public class ResolveUtil {
       ContainerUtil.addAll(allCandidates, applicable);
     }
 
-    if (allCandidates.size() > 0) {
+    if (!allCandidates.isEmpty()) {
       return allCandidates.toArray(new GroovyResolveResult[allCandidates.size()]);
     }
     else if (!hasApplicableMethods) {
@@ -960,7 +960,7 @@ public class ResolveUtil {
     }
 
     @Override
-    public boolean execute(@NotNull PsiElement element, ResolveState state) {
+    public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
       if (myBorderPassed) {
         return false;
       }
@@ -972,7 +972,7 @@ public class ResolveUtil {
     }
 
     @Override
-    public void handleEvent(Event event, Object associated) {
+    public void handleEvent(@NotNull Event event, Object associated) {
       if (event == DECLARATION_SCOPE_PASSED) {
         myBorderPassed = true;
       }

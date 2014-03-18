@@ -87,3 +87,13 @@ class Foo(object):
         for data in [1,2,3]:
             for self.data in [1,2,3]:
                 pass
+
+def contains_even_number(l):
+    """
+    See: PY-12367
+    """
+    for elt in range(10):
+        print elt
+    else:
+        for elt in range(10):
+            pass

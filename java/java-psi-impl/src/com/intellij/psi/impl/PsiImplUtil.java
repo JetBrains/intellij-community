@@ -710,10 +710,9 @@ public class PsiImplUtil {
     if (count == 0) return result;
     int idx = 0;
     for (ASTNode child = psiCodeBlock.getFirstChildNode(); child != null && idx < count; child = child.getTreeNext()) {
-      if (child.getPsi() instanceof PsiStatement) {
-        PsiStatement element = (PsiStatement)child.getPsi();
-        LOG.assertTrue(element != null, child);
-        result[idx++] = element;
+      PsiElement element = child.getPsi();
+      if (element instanceof PsiStatement) {
+        result[idx++] = (PsiStatement)element;
       }
     }
     return result;
@@ -741,12 +740,17 @@ public class PsiImplUtil {
     return null;
   }
 
+  public static boolean isTypeAnnotation(@Nullable PsiElement element) {
+    return element instanceof PsiAnnotation &&
+           findApplicableTarget((PsiAnnotation)element, TargetType.TYPE_USE) == TargetType.TYPE_USE;
+  }
+
   @Nullable
   public static List<PsiAnnotation> getTypeUseAnnotations(@NotNull PsiModifierList modifierList) {
     SmartList<PsiAnnotation> result = null;
 
     for (PsiAnnotation annotation : modifierList.getAnnotations()) {
-      if (findApplicableTarget(annotation, TargetType.TYPE_USE) == TargetType.TYPE_USE) {
+      if (isTypeAnnotation(annotation)) {
         if (result == null) result = new SmartList<PsiAnnotation>();
         result.add(annotation);
       }
@@ -758,10 +762,10 @@ public class PsiImplUtil {
   private static final Key<Boolean> TYPE_ANNO_MARK = Key.create("type.annotation.mark");
 
   public static void markTypeAnnotations(@NotNull PsiTypeElement typeElement) {
-    PsiElement left = PsiTreeUtil.skipSiblingsBackward(typeElement, PsiComment.class, PsiWhiteSpace.class, PsiAnnotation.class);
+    PsiElement left = PsiTreeUtil.skipSiblingsBackward(typeElement, PsiComment.class, PsiWhiteSpace.class, PsiTypeParameterList.class);
     if (left instanceof PsiModifierList) {
       for (PsiAnnotation annotation : ((PsiModifierList)left).getAnnotations()) {
-        if (findApplicableTarget(annotation, TargetType.TYPE_USE) == TargetType.TYPE_USE) {
+        if (isTypeAnnotation(annotation)) {
           annotation.putUserData(TYPE_ANNO_MARK, Boolean.TRUE);
         }
       }
@@ -769,7 +773,7 @@ public class PsiImplUtil {
   }
 
   public static void deleteTypeAnnotations(@NotNull PsiTypeElement typeElement) {
-    PsiElement left = PsiTreeUtil.skipSiblingsBackward(typeElement, PsiComment.class, PsiWhiteSpace.class, PsiAnnotation.class);
+    PsiElement left = PsiTreeUtil.skipSiblingsBackward(typeElement, PsiComment.class, PsiWhiteSpace.class, PsiTypeParameterList.class);
     if (left instanceof PsiModifierList) {
       for (PsiAnnotation annotation : ((PsiModifierList)left).getAnnotations()) {
         if (TYPE_ANNO_MARK.get(annotation) == Boolean.TRUE) {

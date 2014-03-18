@@ -15,24 +15,27 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
-import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.testFramework.TestFileType;
+
+import java.awt.event.InputEvent;
 
 public class EditorMultiCaretTest extends AbstractEditorTest {
   private boolean myStoredVirtualSpaceSetting;
 
   public void setUp() throws Exception {
     super.setUp();
-    EditorTestUtil.enableMultipleCarets();
     myStoredVirtualSpaceSetting = EditorSettingsExternalizable.getInstance().isVirtualSpace();
     EditorSettingsExternalizable.getInstance().setVirtualSpace(false);
   }
 
   public void tearDown() throws Exception {
     EditorSettingsExternalizable.getInstance().setVirtualSpace(myStoredVirtualSpaceSetting);
-    EditorTestUtil.disableMultipleCarets();
     super.tearDown();
   }
 
@@ -66,6 +69,21 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
                       "another line");
   }
 
+  public void testCustomShortcut() throws Exception {
+    Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
+    MouseShortcut shortcut = new MouseShortcut(1, InputEvent.ALT_DOWN_MASK, 1);
+    try {
+      keymap.addShortcut(IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET, shortcut);
+
+      init("<caret>text", TestFileType.TEXT);
+      mouse().alt().clickAt(0, 2);
+      checkResultByText("<caret>te<caret>xt");
+    }
+    finally {
+      keymap.removeShortcut(IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET, shortcut);
+    }
+  }
+
   public void testAltDragStartingFromWithinLine() throws Exception {
     init("<caret>line\n" +
          "long line\n" +
@@ -73,7 +91,7 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
          "long line\n" +
          "line",
          TestFileType.TEXT);
-    EditorTestUtil.setEditorVisibleSize(myEditor, 1000, 1000);
+    setEditorVisibleSize(1000, 1000);
 
     mouse().alt().pressAt(1, 6);
     checkResultByText("line\n" +
@@ -111,7 +129,7 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
          "long line\n" +
          "line",
          TestFileType.TEXT);
-    EditorTestUtil.setEditorVisibleSize(myEditor, 1000, 1000);
+    setEditorVisibleSize(1000, 1000);
 
     mouse().middle().pressAt(1, 17);
     checkResultByText("line\n" +

@@ -334,7 +334,6 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
     myFullscreenQueue.runOrEnqueue( new Runnable() {
       @Override
       public void run() {
-        if (SystemInfo.isJavaVersionAtLeast("1.7")) {
           try {
             requestToggleFullScreenMethod.invoke(Application.getApplication(),myFrame);
           }
@@ -344,16 +343,6 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
           catch (InvocationTargetException e) {
             LOG.error(e);
           }
-        } else {
-          final ID window = MacUtil.findWindowForTitle(myFrame.getTitle());
-          if (window == null) return;
-          Foundation.executeOnMainThread(new Runnable() {
-            @Override
-            public void run() {
-              invoke(window, "toggleFullScreen:", window);
-            }
-          }, true, true);
-        }
       }
     });
   }

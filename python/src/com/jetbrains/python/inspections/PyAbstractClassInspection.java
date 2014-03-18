@@ -16,7 +16,6 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
@@ -63,14 +62,16 @@ public class PyAbstractClassInspection extends PyInspection {
       Set<PyFunction> toBeImplemented = new HashSet<PyFunction>();
       final Collection<PyFunction> functions = PyOverrideImplementUtil.getAllSuperFunctions(node);
       for (PyFunction method : functions) {
-        if (node.findMethodByName(method.getName(), false) == null && PyUtil.isDecoratedAsAbstract(method)) {
+        final String methodName = method.getName();
+        if (methodName != null && PyUtil.isDecoratedAsAbstract(method) &&
+            node.findMethodByName(methodName, false) == null && node.findClassAttribute(methodName, false) == null) {
           toBeImplemented.add(method);
         }
       }
       final ASTNode nameNode = node.getNameNode();
       if (!toBeImplemented.isEmpty() && nameNode != null) {
         registerProblem(nameNode.getPsi(), PyBundle.message("INSP.NAME.abstract.class.$0.must.implement", node.getName()),
-                        ProblemHighlightType.INFO, null, new PyImplementMethodsQuickFix(node, toBeImplemented));
+                        new PyImplementMethodsQuickFix(node, toBeImplemented));
       }
     }
   }

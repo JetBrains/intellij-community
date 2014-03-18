@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.refactoring.changeSignature.ChangeSignatureUtil.deepTypeEqual;
 
 class JavaChangeInfoImpl implements JavaChangeInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.JavaChangeInfoImpl");
@@ -195,22 +197,22 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
     if (isNameChanged) {
       newNameIdentifier = factory.createIdentifier(newName);
     }
-
   }
 
   protected void fillOldParams(PsiMethod method) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     oldParameterNames = new String[parameters.length];
     oldParameterTypes = new String[parameters.length];
-    for(int i = 0; i < parameters.length; i++){
+
+    PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+    for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       oldParameterNames[i] = parameter.getName();
-      oldParameterTypes[i] =
-        JavaPsiFacade.getInstance(parameter.getProject()).getElementFactory().createTypeElement(parameter.getType()).getText();
+      oldParameterTypes[i] = factory.createTypeElement(parameter.getType()).getText();
     }
     if (!method.isConstructor()){
       try {
-        isReturnTypeChanged = !newReturnType.getType(this.method, method.getManager()).equals(this.method.getReturnType());
+        isReturnTypeChanged = !deepTypeEqual(newReturnType.getType(this.method, method.getManager()), this.method.getReturnType());
       }
       catch (IncorrectOperationException e) {
         isReturnTypeChanged = true;
@@ -233,7 +235,9 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
   }
 
   private void setupExceptions(ThrownExceptionInfo[] newExceptions, final PsiMethod method) {
-    if (newExceptions == null) newExceptions = JavaThrownExceptionInfo.extractExceptions(method);
+    if (newExceptions == null) {
+      newExceptions = JavaThrownExceptionInfo.extractExceptions(method);
+    }
 
     this.newExceptions = newExceptions;
 
@@ -242,7 +246,7 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
     if (!isExceptionSetChanged) {
       for (int i = 0; i < newExceptions.length; i++) {
         try {
-          if (newExceptions[i].getOldIndex() < 0 || !types[i].equals(newExceptions[i].createType(method, method.getManager()))) {
+          if (newExceptions[i].getOldIndex() < 0 || !deepTypeEqual(types[i], newExceptions[i].createType(method, method.getManager()))) {
             isExceptionSetChanged = true;
             break;
           }

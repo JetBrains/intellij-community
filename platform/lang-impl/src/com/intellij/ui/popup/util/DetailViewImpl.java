@@ -73,7 +73,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
   public DetailViewImpl(Project project) {
     super(new BorderLayout());
     myProject = project;
-    setPreferredSize(new Dimension(700, 400));
+    setPreferredSize(new Dimension(600, 300));
     myLabel.setVerticalAlignment(SwingConstants.CENTER);
   }
 
@@ -196,7 +196,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
     if (panel != null) {
       if (myDetailPanelWrapper == null) {
         myDetailPanelWrapper = new JPanel(new GridLayout(1, 1));
-        myDetailPanelWrapper.setBorder(IdeBorderFactory.createEmptyBorder(5, 30, 5, 5));
+        myDetailPanelWrapper.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 5));
         myDetailPanelWrapper.add(panel);
 
         add(myDetailPanelWrapper, BorderLayout.NORTH);

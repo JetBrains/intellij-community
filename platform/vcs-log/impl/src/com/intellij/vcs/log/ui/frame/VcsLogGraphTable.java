@@ -16,14 +16,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.*;
-import com.intellij.vcs.log.graph.render.CommitCell;
 import com.intellij.vcs.log.graph.render.GraphCommitCell;
 import com.intellij.vcs.log.graph.render.PositionUtil;
-import com.intellij.vcs.log.ui.VcsLogUI;
-import com.intellij.vcs.log.ui.render.CommitCellRender;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRender;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +36,7 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -50,25 +50,26 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   private static final int MAX_ROWS_TO_CALC_WIDTH = 1000;
   private static final int MAX_ROWS_TO_CALC_OFFSET = 100;
 
-  @NotNull private final VcsLogUI myUI;
+  @NotNull private final VcsLogUiImpl myUI;
   private final VcsLogDataHolder myLogDataHolder;
   private final GraphCommitCellRender myGraphCommitCellRender;
 
   private boolean myColumnsSizeInitialized = false;
   private volatile boolean myRepaintFreezed;
 
+  @NotNull private final Collection<VcsLogHighlighter> myHighlighters = ContainerUtil.newArrayList();
+
   @NotNull private DataPack myDataPack;
 
-  public VcsLogGraphTable(@NotNull VcsLogUI UI, @NotNull final VcsLogDataHolder logDataHolder, @NotNull DataPack initialDataPack) {
+  public VcsLogGraphTable(@NotNull VcsLogUiImpl UI, @NotNull final VcsLogDataHolder logDataHolder, @NotNull DataPack initialDataPack) {
     super();
     myUI = UI;
     myLogDataHolder = logDataHolder;
     myDataPack = initialDataPack;
-    myGraphCommitCellRender = new GraphCommitCellRender(myUI.getColorManager(), logDataHolder, myDataPack.getGraphFacade());
+    myGraphCommitCellRender = new GraphCommitCellRender(myUI.getColorManager(), logDataHolder, myDataPack.getGraphFacade(), this);
 
-    setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUI));
+    setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUI, myLogDataHolder.isMultiRoot()));
     setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRender);
-    setDefaultRenderer(CommitCell.class, new CommitCellRender(myUI.getColorManager(), logDataHolder));
     setDefaultRenderer(String.class, new StringCellRenderer());
 
     setRowHeight(HEIGHT_CELL);
@@ -89,7 +90,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     addMouseMotionListener(mouseAdapter);
     addMouseListener(mouseAdapter);
 
-    PopupHandler.installPopupHandler(this, VcsLogUI.POPUP_ACTION_GROUP, VcsLogUI.VCS_LOG_TABLE_PLACE);
+    PopupHandler.installPopupHandler(this, VcsLogUiImpl.POPUP_ACTION_GROUP, VcsLogUiImpl.VCS_LOG_TABLE_PLACE);
   }
 
   @Override
@@ -243,6 +244,32 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     myGraphCommitCellRender.updateGraphFacade(dataPack.getGraphFacade());
   }
 
+  public void addHighlighter(@NotNull VcsLogHighlighter highlighter) {
+    myHighlighters.add(highlighter);
+  }
+
+  public void removeHighlighter(@NotNull VcsLogHighlighter highlighter) {
+    myHighlighters.remove(highlighter);
+  }
+
+  public void removeAllHighlighters() {
+    myHighlighters.clear();
+  }
+
+  public void applyHighlighters(@NotNull Component rendererComponent, int row, boolean selected) {
+    boolean fgUpdated = false;
+    for (VcsLogHighlighter highlighter : myHighlighters) {
+      Color color = highlighter.getForeground(myDataPack.getGraphFacade().getCommitAtRow(row), selected);
+      if (color != null) {
+        rendererComponent.setForeground(color);
+        fgUpdated = true;
+      }
+    }
+    if (!fgUpdated) { // reset highlighting if no-one wants to change it
+      rendererComponent.setForeground(UIUtil.getTableForeground(selected));
+    }
+  }
+
   private class MyMouseAdapter extends MouseAdapter {
     private final TableLinkMouseListener myLinkListener;
 
@@ -316,12 +343,14 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
   private static class RootCellRenderer extends JPanel implements TableCellRenderer {
 
-    @NotNull private final VcsLogUI myUi;
+    @NotNull private final VcsLogUiImpl myUi;
 
     @NotNull private Color myColor = UIUtil.getTableBackground();
 
-    RootCellRenderer(@NotNull VcsLogUI ui) {
+    RootCellRenderer(@NotNull VcsLogUiImpl ui, boolean multiRoot) {
       myUi = ui;
+      int rootWidth = multiRoot ? ROOT_INDICATOR_WIDTH : 0;
+      setPreferredSize(new Dimension(rootWidth, -1));
     }
 
     @Override
@@ -349,6 +378,8 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Component rendererComponent = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       setBackground(isSelected ? table.getSelectionBackground() : JBColor.WHITE);
+      setBorder(null);
+      applyHighlighters(rendererComponent, row, isSelected);
       return rendererComponent;
     }
 

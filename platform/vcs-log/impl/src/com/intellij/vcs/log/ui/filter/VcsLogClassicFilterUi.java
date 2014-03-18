@@ -24,25 +24,25 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.VcsLogTextFilter;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
-import com.intellij.vcs.log.ui.VcsLogUI;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
 
 /**
  */
 public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
   @NotNull private final SearchTextField myTextFilter;
-  @NotNull private final VcsLogUI myUi;
+  @NotNull private final VcsLogUiImpl myUi;
   @NotNull private final DefaultActionGroup myActionGroup;
 
   @NotNull private final BranchFilterPopupComponent myBranchFilterComponent;
@@ -50,7 +50,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   @NotNull private final DateFilterPopupComponent myDateFilterComponent;
   @NotNull private final StructureFilterPopupComponent myStructureFilterComponent;
 
-  public VcsLogClassicFilterUi(@NotNull VcsLogUI ui, @NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties,
+  public VcsLogClassicFilterUi(@NotNull VcsLogUiImpl ui, @NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties,
                                @NotNull DataPack initialDataPack) {
     myUi = ui;
 
@@ -63,7 +63,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       }
     });
 
-    myBranchFilterComponent = new BranchFilterPopupComponent(this, logDataHolder, initialDataPack.getRefsModel(), uiProperties);
+    myBranchFilterComponent = new BranchFilterPopupComponent(this, initialDataPack, uiProperties);
     myUserFilterComponent = new UserFilterPopupComponent(this, logDataHolder, uiProperties);
     myDateFilterComponent  = new DateFilterPopupComponent(this);
     myStructureFilterComponent = new StructureFilterPopupComponent(this, logDataHolder.getRoots());
@@ -76,12 +76,14 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     myActionGroup.add(new FilterActionComponent(myStructureFilterComponent));
   }
 
-  @Override
   public void updateDataPack(@NotNull DataPack dataPack) {
-    myBranchFilterComponent.updateRefsModel(dataPack.getRefsModel());
+    myBranchFilterComponent.updateDataPack(dataPack);
   }
 
-  @Override
+  /**
+   * Returns filter components which will be added to the Log toolbar.
+   */
+  @NotNull
   public ActionGroup getFilterActionComponents() {
     return myActionGroup;
   }
@@ -89,15 +91,23 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   @NotNull
   @Override
   public VcsLogFilterCollection getFilters() {
-    VcsLogTextFilter textFilter = !myTextFilter.getText().isEmpty() ? new VcsLogTextFilterImpl(myTextFilter.getText()) : null;
+    VcsLogTextFilter textFilter = !myTextFilter.getText().isEmpty() ? new VcsLogTextFilterImpl(myTextFilter.getText().trim()) : null;
     return new VcsLogFilterCollectionImpl(myBranchFilterComponent.getFilter(), myUserFilterComponent.getFilter(),
                                           myDateFilterComponent.getFilter(), textFilter, myStructureFilterComponent.getFilter());
+  }
+
+  @Override
+  public void setFilter(@NotNull VcsLogFilter filter) {
+    if (filter instanceof VcsLogBranchFilter) {
+      Collection<String> values = ((VcsLogBranchFilter)filter).getBranchNames();
+      myBranchFilterComponent.apply(values, MultipleValueFilterPopupComponent.displayableText(values),
+                                    MultipleValueFilterPopupComponent.tooltip(values));
+    }
   }
 
   void applyFilters() {
     myUi.applyFiltersAndUpdateUi();
   }
-
 
   private static class TextFilterComponent extends DumbAwareAction implements CustomComponentAction {
 

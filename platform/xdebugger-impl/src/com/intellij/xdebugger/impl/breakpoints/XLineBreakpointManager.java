@@ -49,7 +49,6 @@ import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
@@ -276,7 +275,7 @@ public class XLineBreakpointManager {
               public void run() {
                 if (!myProject.isDisposed() && myProject.isInitialized() && file.isValid()) {
                   XLineBreakpoint breakpoint =
-                    XDebuggerUtil.getInstance().toggleLineBreakpoint(myProject, file, line, mouseEvent.isAltDown());
+                      XBreakpointUtil.toggleLineBreakpoint(myProject, file, editor, line, mouseEvent.isAltDown(), false);
                   if (!mouseEvent.isAltDown() && mouseEvent.isShiftDown() && breakpoint != null) {
                     breakpoint.setSuspendPolicy(SuspendPolicy.NONE);
                     String selection = editor.getSelectionModel().getSelectedText();

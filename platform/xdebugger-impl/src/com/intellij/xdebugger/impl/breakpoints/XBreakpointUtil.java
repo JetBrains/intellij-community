@@ -15,14 +15,20 @@
  */
 package com.intellij.xdebugger.impl.breakpoints;
 
+import com.intellij.codeInsight.folding.impl.FoldingUtil;
+import com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import org.jetbrains.annotations.NonNls;
@@ -115,6 +121,66 @@ public class XBreakpointUtil {
         return support;
       items.clear();
     }
+    return null;
+  }
+
+  /**
+   * Toggle line breakpoint with editor support:
+   * - unfolds folded block on the line
+   * - if folded, checks if line breakpoints could be toggled inside folded text
+   */
+  public static XLineBreakpoint toggleLineBreakpoint(Project project,
+                                                     VirtualFile file,
+                                                     Editor editor,
+                                                     int lineStart,
+                                                     boolean temporary,
+                                                     boolean moveCarret) {
+    // for folded text check each line and find out type with the biggest priority
+    int linesEnd = lineStart;
+    if (editor != null) {
+      FoldRegion region = FoldingUtil.findFoldRegionStartingAtLine(editor, lineStart);
+      if (region != null && !region.isExpanded()) {
+        linesEnd = region.getDocument().getLineNumber(region.getEndOffset());
+      }
+    }
+
+    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    XLineBreakpointType<?>[] lineTypes = XDebuggerUtil.getInstance().getLineBreakpointTypes();
+    XLineBreakpointType<?> typeWinner = null;
+    int lineWinner = -1;
+    for (int line = lineStart; line <= linesEnd; line++) {
+      int maxPriority = 0;
+      for (XLineBreakpointType<?> type : lineTypes) {
+        maxPriority = Math.max(maxPriority, type.getPriority());
+        final XLineBreakpoint<? extends XBreakpointProperties> breakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
+        if (breakpoint != null && temporary && !breakpoint.isTemporary()) {
+          breakpoint.setTemporary(true);
+        } else if (type.canPutAt(file, line, project) || breakpoint != null) {
+          if (typeWinner == null || type.getPriority() > typeWinner.getPriority()) {
+            typeWinner = type;
+            lineWinner = line;
+          }
+        }
+      }
+      // already found max priority type - stop
+      if (typeWinner != null && typeWinner.getPriority() == maxPriority) {
+        break;
+      }
+    }
+
+    if (typeWinner != null) {
+      XLineBreakpoint res = XDebuggerUtilImpl.toggleAndReturnLineBreakpoint(project, typeWinner, file, lineWinner, temporary);
+
+      if (editor != null && lineStart != lineWinner) {
+        int offset = editor.getDocument().getLineStartOffset(lineWinner);
+        ExpandRegionAction.expandRegionAtOffset(project, editor, offset);
+        if (moveCarret) {
+          editor.getCaretModel().moveToOffset(offset);
+        }
+      }
+      return res;
+    }
+
     return null;
   }
 }

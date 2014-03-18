@@ -112,14 +112,14 @@ public class PyStatementEffectInspection extends PyInspection {
           PyType type = myTypeEvalContext.getType(leftExpression);
           if (type != null &&
               !type.isBuiltin() &&
-              type.resolveMember(method, null, AccessDirection.READ, resolveWithoutImplicits()) != null) {
+              type.resolveMember(method, null, AccessDirection.READ, getResolveContext()) != null) {
             return true;
           }
           if (rightExpression != null) {
             type = myTypeEvalContext.getType(rightExpression);
             if (type != null) {
               String rmethod = "__r" + method.substring(2); // __add__ -> __radd__
-              if (!type.isBuiltin() && type.resolveMember(rmethod, null, AccessDirection.READ, resolveWithoutImplicits()) != null) {
+              if (!type.isBuiltin() && type.resolveMember(rmethod, null, AccessDirection.READ, getResolveContext()) != null) {
                 return true;
               }
             }
@@ -136,7 +136,7 @@ public class PyStatementEffectInspection extends PyInspection {
       }
       else if (expression instanceof PyReferenceExpression) {
         PyReferenceExpression referenceExpression = (PyReferenceExpression)expression;
-        ResolveResult[] results = referenceExpression.getReference(resolveWithoutImplicits()).multiResolve(true);
+        ResolveResult[] results = referenceExpression.getReference(getResolveContext()).multiResolve(true);
         for (ResolveResult res : results) {
           if (res.getElement() instanceof PyFunction) {
             registerProblem(expression, "Statement seems to have no effect and can be replaced with function call to have effect", new StatementEffectFunctionCallQuickFix());

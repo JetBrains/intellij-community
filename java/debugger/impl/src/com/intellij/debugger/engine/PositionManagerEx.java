@@ -16,12 +16,20 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.PositionManager;
-import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
+import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.frame.XStackFrame;
+import com.sun.jdi.Location;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class PositionManagerEx implements PositionManager {
   @Nullable
-  public abstract XStackFrame createStackFrame(@NotNull StackFrameDescriptorImpl frameDescriptor);
+  public abstract XStackFrame createStackFrame(@NotNull StackFrameProxyImpl frame, @NotNull DebugProcessImpl debugProcess, @NotNull Location location);
+
+  public abstract ThreeState evaluateCondition(@NotNull EvaluationContext context,
+                                               @NotNull StackFrameProxyImpl frame,
+                                               @NotNull Location location,
+                                               @NotNull String expression);
 }

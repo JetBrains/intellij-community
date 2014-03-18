@@ -15,11 +15,14 @@
  */
 package com.intellij.find.impl;
 
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Multiset;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
 import com.intellij.find.ngrams.TrigramIndex;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -65,6 +68,7 @@ import java.util.regex.Pattern;
  * @author peter
  */
 class FindInProjectTask {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.FindInProjectTask");
   private static final int FILES_SIZE_LIMIT = 70 * 1024 * 1024; // megabytes.
   private static final int SINGLE_FILE_SIZE_LIMIT = 5 * 1024 * 1024; // megabytes.
   private final FindModel myFindModel;
@@ -123,10 +127,15 @@ class FindInProjectTask {
 
       myProgress.setIndeterminate(true);
       myProgress.setText("Scanning non-indexed files...");
-      final Collection<PsiFile> otherFiles = collectFilesInScope(filesForFastWordSearch);
+      boolean skipIndexed = canRelyOnIndices();
+      final Collection<PsiFile> otherFiles = collectFilesInScope(filesForFastWordSearch, skipIndexed);
       myProgress.setIndeterminate(false);
 
+      long start = System.currentTimeMillis();
       searchInFiles(consumer, processPresentation, otherFiles);
+      if (skipIndexed && otherFiles.size() > 1000) {
+        logStats(otherFiles, start);
+      }
     }
     catch (ProcessCanceledException e) {
       // fine
@@ -139,6 +148,32 @@ class FindInProjectTask {
     if (!myProgress.isCanceled()) {
       myProgress.setText(FindBundle.message("find.progress.search.completed"));
     }
+  }
+
+  private static void logStats(Collection<PsiFile> otherFiles, long start) {
+    long time = System.currentTimeMillis() - start;
+
+    final Multiset<String> stats = HashMultiset.create();
+    for (PsiFile file : otherFiles) {
+      stats.add(StringUtil.notNullize(file.getViewProvider().getVirtualFile().getExtension()).toLowerCase());
+    }
+
+    List<String> extensions = ContainerUtil.newArrayList(stats.elementSet());
+    Collections.sort(extensions, new Comparator<String>() {
+      @Override
+      public int compare(String o1, String o2) {
+        return stats.count(o2) - stats.count(o1);
+      }
+    });
+
+    String message = "Search in " + otherFiles.size() + " files with unknown types took " + time + "ms.\n" +
+                     "Mapping their extensions to an existing file type (e.g. Plain Text) might speed up the search.\n" +
+                     "Most frequent non-indexed file extensions: ";
+    for (int i = 0; i < Math.min(10, extensions.size()); i++) {
+      String extension = extensions.get(i);
+      message += extension + "(" + stats.count(extension) + ") ";
+    }
+    LOG.info(message);
   }
 
   private void searchInFiles(Processor<UsageInfo> consumer, FindUsagesProcessPresentation processPresentation, Collection<PsiFile> psiFiles) {
@@ -185,11 +220,9 @@ class FindInProjectTask {
   }
 
   @NotNull
-  private Collection<PsiFile> collectFilesInScope(@NotNull final Set<PsiFile> alreadySearched) {
+  private Collection<PsiFile> collectFilesInScope(@NotNull final Set<PsiFile> alreadySearched, final boolean skipIndexed) {
     SearchScope customScope = myFindModel.getCustomScope();
     final GlobalSearchScope globalCustomScope = toGlobal(customScope);
-
-    final boolean skipIndexed = canRelyOnIndices();
 
     class EnumContentIterator implements ContentIterator {
       final Set<PsiFile> myFiles = new LinkedHashSet<PsiFile>();

@@ -26,7 +26,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
@@ -43,6 +42,7 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -564,13 +564,50 @@ public abstract class DebuggerUtils {
 
   public abstract PsiClass chooseClassDialog(String title, Project project);
 
+  /**
+   * Don't use directly, will be private in IDEA 14.
+   * @deprecated to remove in IDEA 15
+   */
+  @Deprecated
   public static boolean supportsJVMDebugging(FileType type) {
     return type instanceof LanguageFileType && ((LanguageFileType)type).isJVMDebuggingSupported();
   }
 
-  public static boolean supportsJVMDebugging(PsiFile file) {
-    final JVMDebugProvider[] providers = Extensions.getExtensions(JVMDebugProvider.EP_NAME);
-    for (JVMDebugProvider provider : providers) {
+  /**
+   * @deprecated Use {@link #isBreakpointAware(com.intellij.psi.PsiFile)}
+   * to remove in IDEA 15
+   */
+  @Deprecated
+  public static boolean supportsJVMDebugging(@NotNull PsiFile file) {
+    return isBreakpointAware(file);
+  }
+
+  /**
+   * IDEA-122113
+   * Will be removed when Java debugger will be moved to XDebugger API
+   */
+  public static boolean isDebugActionAware(@NotNull PsiFile file) {
+    return isDebugAware(file, false);
+  }
+
+  public static boolean isBreakpointAware(@NotNull PsiFile file) {
+    return isDebugAware(file, true);
+  }
+
+  @SuppressWarnings("deprecation")
+  private static boolean isDebugAware(@NotNull PsiFile file, boolean breakpointAware) {
+    FileType fileType = file.getFileType();
+    if (supportsJVMDebugging(fileType)) {
+      return true;
+    }
+
+    for (JavaDebugAware provider : JavaDebugAware.EP_NAME.getExtensions()) {
+      if (breakpointAware ? provider.isBreakpointAware(file) : provider.isActionAware(file)) {
+        return true;
+      }
+    }
+
+    for (JVMDebugProvider provider : JVMDebugProvider.EP_NAME.getExtensions()) {
       if (provider.supportsJVMDebugging(file)) {
         return true;
       }

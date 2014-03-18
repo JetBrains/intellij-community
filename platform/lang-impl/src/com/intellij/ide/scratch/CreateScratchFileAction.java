@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.scratch;
 
+import com.intellij.lang.DependentLanguage;
+import com.intellij.lang.InjectableLanguage;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -23,17 +25,17 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.ComboboxSpeedSearch;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,85 +47,86 @@ import java.util.Set;
  * @author ignatov
  */
 public class CreateScratchFileAction extends AnAction implements DumbAware {
-  private static final Set<String> FORBIDDEN_LANGUAGES = ContainerUtil.newHashSet("<Generic>", "$XSLT");
+  public static final int MAX_VISIBLE_SIZE = 20;
 
   public CreateScratchFileAction() {
     super("Create Scratch File...", "New Scratch File", null);
   }
 
   @Override
+  public void update(AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null && Registry.is("ide.scratch.enabled"));
+  }
+
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) return;
-
-    MyDialog dialog = new MyDialog(project);
-    dialog.setResizable(false);
-    if (dialog.showAndGet()) {
-      Language language = dialog.getType();
-      VirtualFile file = ScratchpadManager.getInstance(project).createScratchFile(language);
-      if (file == null) return;
-      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file);
-      FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-    }
-  }
-
-  private static class MyDialog extends DialogWrapper {
-    @Nullable private Project myProject;
-    @NotNull  private JComboBox myComboBox;
-
-    protected MyDialog(@Nullable Project project) {
-      super(project);
-      myProject = project;
-      setTitle("Specify the Language");
-      init();
-    }
-
-    @Nullable
-    @Override
-    protected JComponent createCenterPanel() {
-      JPanel panel = new JPanel(new BorderLayout());
-      myComboBox = createCombo(getLanguages());
-      panel.add(myComboBox, BorderLayout.CENTER);
-      return panel;
-    }
-
-    @NotNull
-    public Language getType() {
-      return ((Language)myComboBox.getSelectedItem());
-    }
-
-    @NotNull
-    private JComboBox createCombo(@NotNull List<Language> languages) {
-      JComboBox jComboBox = new ComboBox(new CollectionComboBoxModel(languages));
-      jComboBox.setRenderer(new ListCellRendererWrapper<Language>() {
+    List<Language> languages = getLanguages();
+    if (languages.isEmpty()) return;
+    BaseListPopupStep<Language> step =
+      new BaseListPopupStep<Language>("Specify the language", languages) {
+        @NotNull
         @Override
-        public void customize(JList list, Language lang, int index, boolean selected, boolean hasFocus) {
-          if (lang != null) {
-            setText(lang.getDisplayName());
-            LanguageFileType associatedLanguage = lang.getAssociatedFileType();
-            if (associatedLanguage != null) setIcon(associatedLanguage.getIcon());
-          }
+        public String getTextFor(Language value) {
+          return value.getDisplayName();
         }
-      });
-      new ComboboxSpeedSearch(jComboBox) {
+
         @Override
-        protected String getElementText(Object element) {
-          return element instanceof Language ? ((Language)element).getDisplayName() : null;
+        public String getIndexedString(Language value) {
+          return value.getDisplayName();
+        }
+
+        @Override
+        public boolean isSpeedSearchEnabled() {
+          return true;
+        }
+
+        @Override
+        public PopupStep onChosen(Language selectedValue, boolean finalChoice) {
+          doAction(project, selectedValue);
+          return null;
+        }
+
+        @Override
+        public Icon getIconFor(Language language) {
+          LanguageFileType associatedLanguage = language.getAssociatedFileType();
+          return associatedLanguage != null ? associatedLanguage.getIcon() : null;
         }
       };
-      Language previous = myProject != null ? ScratchpadManager.getInstance(myProject).getLatestLanguage() : null;
-      if (previous != null) {
-        jComboBox.setSelectedItem(previous);
+
+    Language previous = ScratchpadManager.getInstance(project).getLatestLanguage();
+    final String previousName = previous != null ? previous.getDisplayName() : "Plain text";
+
+    if (previousName != null) {
+      int defaultOption = ContainerUtil.indexOf(languages, new Condition<Language>() {
+        @Override
+        public boolean value(Language module) {
+          return module.getDisplayName().equals(previousName);
+        }
+      });
+      if (defaultOption >= 0) {
+        step.setDefaultOptionIndex(defaultOption);
       }
-
-      return jComboBox;
     }
 
-    @Nullable
-    @Override
-    public JComponent getPreferredFocusedComponent() {
-      return myComboBox;
+    ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
+    int nameLen = 0;
+    for (Language language : languages) {
+      nameLen = Math.max(nameLen, language.getDisplayName().length());
     }
+    if (languages.size() > MAX_VISIBLE_SIZE) {
+      Dimension size = new JLabel(StringUtil.repeatSymbol('a', nameLen), EmptyIcon.ICON_16, SwingConstants.LEFT).getMinimumSize();
+      size.height *= MAX_VISIBLE_SIZE;
+      popup.setSize(size);
+    }
+    popup.showCenteredInCurrentWindow(project);
+  }
+
+  public static void doAction(@NotNull Project project, @NotNull Language language) {
+    VirtualFile file = ScratchpadManager.getInstance(project).createScratchFile(language);
+    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file);
+    FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }
 
   @NotNull
@@ -141,8 +144,12 @@ public class CreateScratchFileAction extends AnAction implements DumbAware {
     return ContainerUtil.filter(result, new Condition<Language>() {
       @Override
       public boolean value(Language lang) {
+        if (lang instanceof DependentLanguage || lang instanceof InjectableLanguage) return false;
+        LanguageFileType type = lang.getAssociatedFileType();
+        if (type == null) return false;
         String name = lang.getDisplayName();
-        return !StringUtil.isEmpty(name) && !FORBIDDEN_LANGUAGES.contains(name);
+        if (StringUtil.startsWith(name, "<") || StringUtil.startsWith(name, "[") || StringUtil.isEmpty(name)) return false;
+        return !StringUtil.isEmpty(type.getDefaultExtension());
       }
     });
   }

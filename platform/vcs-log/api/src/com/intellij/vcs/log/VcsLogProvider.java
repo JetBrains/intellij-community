@@ -22,7 +22,7 @@ public interface VcsLogProvider {
    * Reads the given number of the most recent commits from the log.
    */
   @NotNull
-  List<? extends VcsFullCommitDetails> readFirstBlock(@NotNull VirtualFile root, boolean ordered, int commitCount) throws VcsException;
+  List<? extends VcsCommitMetadata> readFirstBlock(@NotNull VirtualFile root, boolean ordered, int commitCount) throws VcsException;
 
   /**
    * <p>Reads the whole history, but only hashes & parents.</p>
@@ -94,5 +94,11 @@ public interface VcsLogProvider {
    */
   @NotNull
   Collection<String> getContainingBranches(@NotNull VirtualFile root, @NotNull Hash commitHash) throws VcsException;
+
+  /**
+   * Return true if the VCS supports some mode in which commits can be received faster, but unordered. <br/>
+   * In this case the VCS Log will order commits manually
+   */
+  boolean supportsFastUnorderedCommits();
 
 }

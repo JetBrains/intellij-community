@@ -53,14 +53,14 @@ public abstract class PythonRemoteInterpreterManager {
   public abstract ProcessHandler startRemoteProcess(@Nullable Project project,
                                                     @NotNull PyRemoteSdkCredentials data,
                                                     @NotNull GeneralCommandLine commandLine,
-                                                    @Nullable
+                                                    @NotNull
                                                     PathMappingSettings mappingSettings)
     throws RemoteSdkException;
 
   public abstract ProcessHandler startRemoteProcessWithPid(@Nullable Project project,
                                                            @NotNull PyRemoteSdkCredentials data,
                                                            @NotNull GeneralCommandLine commandLine,
-                                                           @Nullable
+                                                           @NotNull
                                                            PathMappingSettings mappingSettings)
     throws RemoteSdkException;
 
@@ -126,15 +126,16 @@ public abstract class PythonRemoteInterpreterManager {
     return FileUtil.toSystemIndependentName(path).replace('/', separator);
   }
 
-  public static void addHelpersMapping(@NotNull RemoteSdkCredentials data, @Nullable PathMappingSettings newMappingSettings) {
+  public static void addHelpersMapping(@NotNull RemoteSdkProperties data, @Nullable PathMappingSettings newMappingSettings) {
     if (newMappingSettings == null) {
       newMappingSettings = new PathMappingSettings();
     }
     newMappingSettings.addMapping(PythonHelpersLocator.getHelpersRoot().getPath(), data.getHelpersPath());
   }
 
+  @NotNull
   public abstract PathMappingSettings setupMappings(@Nullable Project project,
-                                                    @NotNull PyRemoteSdkCredentials data,
+                                                    @NotNull PyRemoteSdkAdditionalDataBase data,
                                                     @Nullable PathMappingSettings mappingSettings);
 
   public abstract SdkAdditionalData loadRemoteSdkData(Sdk sdk, Element additional);

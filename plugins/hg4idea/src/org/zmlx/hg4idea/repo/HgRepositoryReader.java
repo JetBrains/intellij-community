@@ -46,7 +46,7 @@ public class HgRepositoryReader {
     //hash + name_or_revision_num; hash + status_character +  name_or_revision_num
 
   @NotNull private final File myHgDir;            // .hg
-  @NotNull private final File myBranchHeadsFile;  // .hg/cache/branch* + part depends on version
+  @NotNull private  File myBranchHeadsFile;  // .hg/cache/branch* + part depends on version
   @NotNull private final File myCacheDir; // .hg/cache (does not exist before first commit)
   @NotNull private final File myCurrentBranch;    // .hg/branch
   @NotNull private final File myBookmarksFile; //.hg/bookmarks
@@ -55,12 +55,14 @@ public class HgRepositoryReader {
   @NotNull private final File myLocalTagsFile;  // .hg/localtags
   @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
   private final boolean myStatusInBranchFile;
+  @NotNull final HgVcs myVcs;
 
   public HgRepositoryReader(@NotNull HgVcs vcs, @NotNull File hgDir) {
     myHgDir = hgDir;
     RepositoryUtil.assertFileExists(myHgDir, ".hg directory not found in " + myHgDir);
-    HgVersion version = vcs.getVersion();
-    myStatusInBranchFile = version.hasBranch2Served();
+    myVcs = vcs;
+    HgVersion version = myVcs.getVersion();
+    myStatusInBranchFile = version.hasBranch2();
     myCacheDir = new File(myHgDir, "cache");
     myBranchHeadsFile = identifyBranchHeadFile(version, myCacheDir);
     myCurrentBranch = new File(myHgDir, "branch");
@@ -77,10 +79,16 @@ public class HgRepositoryReader {
   @NotNull
   private static File identifyBranchHeadFile(@NotNull HgVersion version, @NotNull File parentCacheFile) {
     //before 2.5 only branchheads exist; branchheads-served after mercurial 2.5; branch2-served after 2.9;
-    String branchFileName = version.hasBranch2Served()
-                            ? "branch2-served"
-                            : version.hasBranchHeadsServed() ? "branchheads-served" : "branchheads";
-    return new File(parentCacheFile, branchFileName);
+    // when project is  recently  cloned there are only base file
+    if (version.hasBranch2()) {
+      File file = new File(parentCacheFile, "branch2-served");
+      return file.exists() ? file : new File(parentCacheFile, "branch2-base");
+    }
+    if (version.hasBranchHeadsBaseServed()) {
+      File file = new File(parentCacheFile, "branchheads-served");
+      return file.exists() ? file : new File(parentCacheFile, "branchheads-base");
+    }
+    return new File(parentCacheFile, "branchheads");
   }
 
   /**
@@ -101,6 +109,7 @@ public class HgRepositoryReader {
   }
 
   private boolean isBranchInfoAvailable() {
+    myBranchHeadsFile = identifyBranchHeadFile(myVcs.getVersion(), myCacheDir);
     return !isFresh() && myBranchHeadsFile.exists();
   }
 
@@ -142,8 +151,15 @@ public class HgRepositoryReader {
     return new File(myHgDir, "merge").exists();
   }
 
+  public boolean isRebaseInProgress() {
+    return new File(myHgDir, "rebasestate").exists();
+  }
+
   @NotNull
   public Repository.State readState() {
+    if (isRebaseInProgress()) {
+      return Repository.State.REBASING;
+    }
     return isMergeInProgress() ? Repository.State.MERGING : Repository.State.NORMAL;
   }
 

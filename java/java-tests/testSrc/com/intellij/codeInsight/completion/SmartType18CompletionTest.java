@@ -73,6 +73,14 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testInLambdaPositionSingleParam() throws Exception {
+    doTest();
+  }
+
+  public void testInLambdaPositionNameSubstitution() throws Exception {
+    doTest();
+  }
+
   public void testFilteredMethodReference() throws Exception {
     doTest();
   }
@@ -94,6 +102,11 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     finally {
       helper.setTestHelper(null);
     }
+  }
+
+  public void testDiamondsInsideMethodCall() throws Exception {
+    configureByFile("/" + getTestName(false) + ".java");
+    checkResultByFile("/" + getTestName(false) + "-out.java");
   }
 
   private void doTest() {

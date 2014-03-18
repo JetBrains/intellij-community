@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -78,6 +79,9 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
     public void visitField(@NotNull PsiField field) {
       super.visitField(field);
       if (!field.hasModifierProperty(PsiModifier.PRIVATE)) {
+        return;
+      }
+      if (HighlightUtil.isSerializationImplicitlyUsedField(field)) {
         return;
       }
       final PsiClass containingClass = PsiUtil.getTopLevelClass(field);

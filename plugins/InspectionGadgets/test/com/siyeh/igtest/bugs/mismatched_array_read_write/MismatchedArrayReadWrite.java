@@ -179,3 +179,8 @@ class Toster
     }
   }
 }
+class Ferrari458Spider implements java.io.Serializable {
+  private static final java.io.ObjectStreamField[] serialPersistentFields = {
+    new java.io.ObjectStreamField("b", String.class)
+  };
+}

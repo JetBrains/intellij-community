@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
@@ -30,7 +31,8 @@ import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
-import com.intellij.vcs.log.ui.VcsLogUI;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +56,7 @@ public class VcsLogManager implements Disposable {
 
   private PostponeableLogRefresher myLogRefresher;
   private volatile VcsLogDataHolder myLogDataHolder;
-  private volatile VcsLogUI myUi;
+  private volatile VcsLogUiImpl myUi;
 
   public VcsLogManager(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager,
                        @NotNull VcsLogSettings settings,
@@ -75,11 +77,20 @@ public class VcsLogManager implements Disposable {
     myLogDataHolder.initialize(new PairConsumer<VcsLogDataHolder, DataPack>() {
       @Override
       public void consume(VcsLogDataHolder vcsLogDataHolder, DataPack dataPack) {
-        VcsLogUI logUI = new VcsLogUI(vcsLogDataHolder, myProject, mySettings,
+        VcsLogUiImpl logUI = new VcsLogUiImpl(vcsLogDataHolder, myProject, mySettings,
                                       new VcsLogColorManagerImpl(logProviders.keySet()), myUiProperties, dataPack);
         myLogDataHolder = vcsLogDataHolder;
         myUi = logUI;
         mainPanel.init(logUI.getMainFrame().getMainComponent());
+        final VcsLogGraphTable graphTable = logUI.getTable();
+        if (graphTable.getRowCount() > 0) {
+          IdeFocusManager.getInstance(myProject).requestFocus(graphTable, true).doWhenProcessed(new Runnable() {
+            @Override
+            public void run() {
+              graphTable.setRowSelectionInterval(0, 0);
+            }
+          });
+        }
         myLogRefresher = new PostponeableLogRefresher(myProject, vcsLogDataHolder);
         refreshLogOnVcsEvents(logProviders);
       }
@@ -124,10 +135,10 @@ public class VcsLogManager implements Disposable {
   }
 
   /**
-   * The instance of the {@link VcsLogUI} or null if the log was not initialized yet.
+   * The instance of the {@link com.intellij.vcs.log.ui.VcsLogUiImpl} or null if the log was not initialized yet.
    */
   @Nullable
-  public VcsLogUI getLogUi() {
+  public VcsLogUiImpl getLogUi() {
     return myUi;
   }
 

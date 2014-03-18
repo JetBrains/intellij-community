@@ -24,7 +24,8 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 
 
 /**
@@ -61,9 +62,8 @@ public class SheetMessage {
     myParent = owner;
 
     myWindow.setUndecorated(true);
-   myWindow.setBackground(new JBColor(new Color(0, 0, 0, 0), new Color(0, 0, 0, 0)));
+    myWindow.setBackground(new JBColor(new Color(0, 0, 0, 0), new Color(0, 0, 0, 0)));
     myController = new SheetController(this, title, message, icon, buttons, defaultButton, doNotAskOption, focusedButton);
-
 
     imageHeight = 0;
     registerMoveResizeHandler();
@@ -76,8 +76,8 @@ public class SheetMessage {
     if (restoreFullscreenButton) {
       FullScreenUtilities.setWindowCanFullScreen(myParent, false);
     }
-    myWindow.setVisible(true);
     setPositionRelativeToParent();
+    myWindow.setVisible(true);
   }
 
   private boolean couldBeInFullScreen() {

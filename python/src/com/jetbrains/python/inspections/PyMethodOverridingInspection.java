@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyUtil;
@@ -68,7 +69,7 @@ public class PyMethodOverridingInspection extends PyInspection {
             final String msg = PyBundle.message("INSP.signature.mismatch",
                                                 cls.getName() + "." + name + "()",
                                                 baseClass != null ? baseClass.getName() : "");
-            registerProblem(function.getParameterList(), msg);
+            registerProblem(function.getParameterList(), msg, new PyChangeSignatureQuickFix(true));
           }
         }
       }

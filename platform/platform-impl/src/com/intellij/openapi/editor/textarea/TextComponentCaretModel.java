@@ -187,6 +187,12 @@ public class TextComponentCaretModel implements CaretModel {
     throw new UnsupportedOperationException("Multiple carets are not supported");
   }
 
+  @NotNull
+  @Override
+  public List<CaretState> getCaretsAndSelections() {
+    throw new UnsupportedOperationException("Multiple carets are not supported");
+  }
+
   @Override
   public void runForEachCaret(@NotNull CaretAction action) {
     action.perform(myCaret);

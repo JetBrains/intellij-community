@@ -1,6 +1,7 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NotNullFunction;
@@ -8,6 +9,7 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -52,15 +54,25 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
 
   @NotNull
   @Override
-  public VcsFullCommitDetails createFullDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long time, @NotNull VirtualFile root,
+  public VcsCommitMetadata createCommitMetadata(@NotNull Hash hash, @NotNull List<Hash> parents, long time, @NotNull VirtualFile root,
                                                 @NotNull String subject, @NotNull String authorName, @NotNull String authorEmail,
                                                 @NotNull String message, @NotNull String committerName,
-                                                @NotNull String committerEmail, long authorTime, @NotNull List<Change> changes,
-                                                @NotNull ContentRevisionFactory contentRevisionFactory) {
+                                                @NotNull String committerEmail, long authorTime) {
     VcsUser author = createUser(authorName, authorEmail);
     VcsUser committer = createUser(committerName, committerEmail);
-    return new VcsFullCommitDetailsImpl(hash, parents, time, root, subject, author, message, committer, authorTime,
-                                        changes, contentRevisionFactory);
+    return new VcsCommitMetadataImpl(hash, parents, time, root, subject, author, message, committer, authorTime);
+  }
+
+  @NotNull
+  @Override
+  public VcsFullCommitDetails createFullDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long time, VirtualFile root,
+                                                @NotNull String subject, @NotNull String authorName, @NotNull String authorEmail,
+                                                @NotNull String message, @NotNull String committerName, @NotNull String committerEmail,
+                                                long authorTime,
+                                                @NotNull ThrowableComputable<Collection<Change>, ? extends Exception> changesGetter) {
+    VcsUser author = createUser(authorName, authorEmail);
+    VcsUser committer = createUser(committerName, committerEmail);
+    return new VcsChangesLazilyParsedDetails(hash, parents, time, root, subject, author, message, committer, authorTime, changesGetter);
   }
 
   @NotNull
@@ -85,7 +97,7 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
           LOG.error("The log data holder should have been initialized at this point");
           return -1;
         }
-        return dataHolder.putHash(hash);
+        return dataHolder.getCommitIndex(hash);
       }
     }, commitHash, name, type, root);
   }

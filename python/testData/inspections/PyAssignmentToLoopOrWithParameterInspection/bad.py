@@ -60,3 +60,17 @@ class Foo(object):
         for self.data in [1,2,3]:
             for <weak_warning descr="Variable 'self.data' already declared in 'for' loop or 'with' statement above">self.data</weak_warning> in [1,2,3]:
                 pass
+
+for elt in range(10):
+    print elt
+else:
+    for elt in range(10):
+        for <weak_warning descr="Variable 'elt' already declared in 'for' loop or 'with' statement above">elt</weak_warning>  in range(10):
+            pass
+
+for elt in range(10):
+    for <weak_warning descr="Variable 'elt' already declared in 'for' loop or 'with' statement above">elt</weak_warning>  in range(10):
+        pass
+else:
+    for elt in range(10):
+        pass

@@ -305,7 +305,7 @@ public class ModelMergerImpl implements ModelMerger {
     if (method == null) {
       if (ourPrimaryKeyMethods.containsKey(aClass)) return null;
 
-      for (final Method method1 : aClass.getMethods()) {
+      for (final Method method1 : ReflectionUtil.getClassPublicMethods(aClass)) {
         if ((method = findPrimaryKeyAnnotatedMethod(method1, aClass)) != null) {
           break;
         }

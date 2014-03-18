@@ -54,6 +54,10 @@ import java.util.concurrent.LinkedBlockingQueue;
  * A handler for git commands
  */
 public abstract class GitHandler {
+
+  protected static final Logger LOG = Logger.getInstance(GitHandler.class);
+  protected static final Logger OUTPUT_LOG = Logger.getInstance("#output." + GitHandler.class.getName());
+
   protected final Project myProject;
   protected final GitCommand myCommand;
 
@@ -61,7 +65,6 @@ public abstract class GitHandler {
   private final List<VcsException> myErrors = Collections.synchronizedList(new ArrayList<VcsException>());
   private final List<String> myLastOutput = Collections.synchronizedList(new ArrayList<String>());
   private final int LAST_OUTPUT_SIZE = 5;
-  protected static final Logger LOG = Logger.getInstance(GitHandler.class.getName());
   final GeneralCommandLine myCommandLine;
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   Process myProcess;
@@ -126,6 +129,7 @@ public abstract class GitHandler {
     if (command.name().length() > 0) {
       myCommandLine.addParameter(command.name());
     }
+    myStdoutSuppressed = true;
   }
 
   /**
@@ -590,8 +594,10 @@ public abstract class GitHandler {
   public void setSilent(final boolean silent) {
     checkNotStarted();
     mySilent = silent;
-    setStderrSuppressed(silent);
-    setStdoutSuppressed(silent);
+    if (silent) {
+      setStderrSuppressed(true);
+      setStdoutSuppressed(true);
+    }
   }
 
   /**

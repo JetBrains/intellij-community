@@ -31,6 +31,8 @@ public class VcsNotifier {
     "Vcs Important Messages", NotificationDisplayType.STICKY_BALLOON, true);
   private static final NotificationGroup MINOR_NOTIFICATION = new NotificationGroup(
     "Vcs Minor Notifications", NotificationDisplayType.BALLOON, true);
+  private static final NotificationGroup SILENT_NOTIFICATION = new NotificationGroup(
+    "Vcs Silent Notifications", NotificationDisplayType.NONE, true);
 
   private final @NotNull Project myProject;
 
@@ -54,11 +56,6 @@ public class VcsNotifier {
     }
     // if both title and message were empty, then it is a problem in the calling code => Notifications engine assertion will notify.
     return notificationGroup.createNotification(title, message, type, listener);
-  }
-
-  public void notify(@NotNull Notification notification) {
-    //todo should be replaced; used only for GithubNotifications
-    notification.notify(myProject);
   }
 
   @NotNull
@@ -91,12 +88,17 @@ public class VcsNotifier {
 
   @NotNull
   public Notification notifySuccess(@NotNull String title, @NotNull String message) {
-    return notify(NOTIFICATION_GROUP_ID, title, message, NotificationType.INFORMATION, null);
+    return notifySuccess(title, message, null);
   }
 
   @NotNull
   public Notification notifySuccess(@NotNull String title, @NotNull String message, @Nullable NotificationListener listener) {
     return notify(NOTIFICATION_GROUP_ID, title, message, NotificationType.INFORMATION, listener);
+  }
+
+  @NotNull
+  public Notification notifyImportantInfo(@NotNull String title, @NotNull String message) {
+    return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.INFORMATION, null);
   }
 
   @NotNull
@@ -106,12 +108,17 @@ public class VcsNotifier {
 
   @NotNull
   public Notification notifyInfo(@NotNull String message) {
-    return notify(NOTIFICATION_GROUP_ID, "", message, NotificationType.INFORMATION, null);
+    return notifyInfo("", message);
   }
 
   @NotNull
-  public Notification notifyMinorWarning(@NotNull String title, @NotNull String message, @Nullable NotificationListener listener) {
-    return notify(MINOR_NOTIFICATION, title, message, NotificationType.WARNING, listener);
+  public Notification notifyInfo(@NotNull String title, @NotNull String message) {
+    return notifyInfo(title, message, null);
+  }
+
+  @NotNull
+  public Notification notifyInfo(@NotNull String title, @NotNull String message, @Nullable NotificationListener listener) {
+    return notify(NOTIFICATION_GROUP_ID, title, message, NotificationType.INFORMATION, listener);
   }
 
   @NotNull
@@ -120,8 +127,23 @@ public class VcsNotifier {
   }
 
   @NotNull
+  public Notification notifyMinorWarning(@NotNull String title, @NotNull String message, @Nullable NotificationListener listener) {
+    return notify(MINOR_NOTIFICATION, title, message, NotificationType.WARNING, listener);
+  }
+
+  @NotNull
   public Notification notifyWarning(@NotNull String title, @NotNull String message) {
-    return notify(NOTIFICATION_GROUP_ID, title, message, NotificationType.WARNING, null);
+    return notifyWarning(title, message, null);
+  }
+
+  @NotNull
+  public Notification notifyWarning(@NotNull String title, @NotNull String message, @Nullable NotificationListener listener) {
+    return notify(NOTIFICATION_GROUP_ID, title, message, NotificationType.WARNING, listener);
+  }
+
+  @NotNull
+  public Notification notifyImportantWarning(@NotNull String title, @NotNull String message) {
+    return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.WARNING, null);
   }
 
   @NotNull
@@ -137,5 +159,9 @@ public class VcsNotifier {
   @NotNull
   public Notification notifyMinorInfo(@NotNull String title, @NotNull String message, @Nullable NotificationListener listener) {
     return notify(MINOR_NOTIFICATION, title, message, NotificationType.INFORMATION, listener);
+  }
+
+  public Notification logInfo(@NotNull String title, @NotNull String message) {
+    return notify(SILENT_NOTIFICATION, title, message, NotificationType.INFORMATION, null);
   }
 }

@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogUserFilter;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
@@ -52,7 +52,9 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
   protected ActionGroup createActionGroup() {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(createAllAction());
-    group.add(createPredefinedValueAction(Collections.singleton(ME)));
+    if (!myDataHolder.getCurrentUser().isEmpty()) {
+      group.add(createPredefinedValueAction(Collections.singleton(ME)));
+    }
     group.addAll(createRecentItemsActionGroup());
     group.add(createSelectMultipleValuesAction());
     return group;
@@ -102,16 +104,20 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
     @NotNull
     @Override
     public Collection<String> getUserNames(@NotNull final VirtualFile root) {
-      return ContainerUtil.map(myUsers, new Function<String, String>() {
+      return ContainerUtil.mapNotNull(myUsers, new Function<String, String>() {
         @Override
         public String fun(String user) {
-          return ME.equals(user) ? myData.get(root).getName() : user;
+          if (ME.equals(user)) {
+            VcsUser vcsUser = myData.get(root);
+            return vcsUser == null ? null : vcsUser.getName();
+          }
+          return user;
         }
       });
     }
 
     @Override
-    public boolean matches(@NotNull final VcsFullCommitDetails commit) {
+    public boolean matches(@NotNull final VcsCommitMetadata commit) {
       return ContainerUtil.exists(getUserNames(commit.getRoot()), new Condition<String>() {
         @Override
         public boolean value(String user) {

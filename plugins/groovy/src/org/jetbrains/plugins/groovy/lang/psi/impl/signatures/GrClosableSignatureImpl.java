@@ -28,7 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignatureVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 
@@ -56,9 +55,14 @@ class GrClosableSignatureImpl implements GrClosureSignature {
     return ContainerUtil.map(parameters, new Function<GrParameter, GrClosureParameter>() {
       @Override
       public GrClosureParameter fun(final GrParameter parameter) {
-        return new GrClosureParameterImpl(parameter);
+        return createClosureParameter(parameter);
       }
     }, new GrClosureParameter[parameters.length]);
+  }
+
+  @NotNull
+  protected GrClosureParameter createClosureParameter(@NotNull GrParameter parameter) {
+    return new GrClosureParameterImpl(parameter);
   }
 
   @Override
@@ -95,43 +99,7 @@ class GrClosableSignatureImpl implements GrClosureSignature {
   }
 
   @Override
-  public void accept(GrSignatureVisitor visitor) {
+  public void accept(@NotNull GrSignatureVisitor visitor) {
     visitor.visitClosureSignature(this);
-  }
-
-  private static class GrClosureParameterImpl implements GrClosureParameter {
-    private final GrParameter myParameter;
-
-    public GrClosureParameterImpl(GrParameter parameter) {
-      myParameter = parameter;
-    }
-
-    @Nullable
-    @Override
-    public PsiType getType() {
-      return myParameter.getType();
-    }
-
-    @Override
-    public boolean isOptional() {
-      return myParameter.isOptional();
-    }
-
-    @Nullable
-    @Override
-    public GrExpression getDefaultInitializer() {
-      return myParameter.getInitializerGroovy();
-    }
-
-    @Override
-    public boolean isValid() {
-      return myParameter.isValid();
-    }
-
-    @Nullable
-    @Override
-    public String getName() {
-      return myParameter.getName();
-    }
   }
 }

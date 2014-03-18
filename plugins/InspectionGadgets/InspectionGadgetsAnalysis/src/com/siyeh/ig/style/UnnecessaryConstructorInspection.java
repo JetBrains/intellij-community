@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,6 +110,9 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
         return;
       }
       final PsiMethod constructor = constructors[0];
+      if (!constructor.isPhysical()) {
+        return;
+      }
       if (!constructor.hasModifierProperty(PsiModifier.PRIVATE) &&
           aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;

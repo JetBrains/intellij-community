@@ -38,7 +38,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 
 public final class NettyUtil {
-  public static final int DEFAULT_CONNECT_ATTEMPT_COUNT = 8;
+  public static final int DEFAULT_CONNECT_ATTEMPT_COUNT = 20;
   public static final int MIN_START_TIME = 100;
 
   public static void log(Throwable throwable, Logger log) {
@@ -68,10 +68,10 @@ public final class NettyUtil {
         catch (IOException e) {
           if (++attemptCount < maxAttemptCount) {
             //noinspection BusyWait
-            Thread.sleep(attemptCount * 100);
+            Thread.sleep(attemptCount * MIN_START_TIME);
           }
           else {
-            asyncResult.reject("cannot connect");
+            asyncResult.reject("Cannot connect");
             return null;
           }
         }
@@ -82,7 +82,7 @@ public final class NettyUtil {
       return channel;
     }
     catch (Throwable e) {
-      asyncResult.reject("cannot connect: " + e.getMessage());
+      asyncResult.reject("Cannot connect: " + e.getMessage());
       return null;
     }
   }

@@ -33,6 +33,7 @@ import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.WebModuleTypeBase;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -56,6 +57,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.SingleSelectionModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -170,7 +172,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
       }
     };
     myFrameworksPanel = new AddSupportForFrameworksPanel(Collections.<FrameworkSupportInModuleProvider>emptyList(), model, true);
-    Disposer.register(wizard.getDisposable(), myFrameworksPanel);
+    Disposer.register(this, myFrameworksPanel);
     myFrameworksPanelPlaceholder.add(myFrameworksPanel.getMainPanel());
 
     myConfigurationUpdater = new ModuleBuilder.ModuleConfigurationUpdater() {
@@ -262,6 +264,16 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
       MultiMap<String, ProjectTemplate> localTemplates = loadLocalTemplates();
       for (TemplatesGroup group : myTemplatesMap.keySet()) {
         myTemplatesMap.putValues(group, localTemplates.get(group.getId()));
+      }
+    }
+
+    // remove Static Web group in IDEA Community if no specific templates found (IDEA-120593)
+    if (PlatformUtils.isIdeaCommunity()) {
+      for (TemplatesGroup group : myTemplatesMap.keySet()) {
+        if (WebModuleTypeBase.WEB_MODULE.equals(group.getId()) && myTemplatesMap.get(group).isEmpty()) {
+          myTemplatesMap.remove(group);
+          break;
+        }
       }
     }
 
@@ -443,7 +455,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements Disposable {
         @Override
         public boolean value(ProjectTemplate template) {
           if (!(template instanceof ArchivedProjectTemplate)) return true;
-          List<String> frameworks = ((ArchivedProjectTemplate)template).getFeaturedFrameworks();
+          List<String> frameworks = ((ArchivedProjectTemplate)template).getFrameworks();
           return frameworks.containsAll(selectedFrameworks);
         }
       });

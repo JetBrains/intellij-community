@@ -234,9 +234,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   public static boolean endsWithIgnoreCase(@NonNls @NotNull String str, @NonNls @NotNull String suffix) {
-    final int stringLength = str.length();
-    final int suffixLength = suffix.length();
-    return stringLength >= suffixLength && str.regionMatches(true, stringLength - suffixLength, suffix, 0, suffixLength);
+    return StringUtilRt.endsWithIgnoreCase(str, suffix);
   }
 
   public static boolean startsWithIgnoreCase(@NonNls @NotNull String str, @NonNls @NotNull String prefix) {
@@ -1649,6 +1647,19 @@ public class StringUtil extends StringUtilRt {
     return -1;
   }
 
+  public static boolean contains(@NotNull CharSequence sequence, @NotNull CharSequence infix) {
+    return indexOf(sequence, infix) >= 0;
+  }
+  
+  public static int indexOf(@NotNull CharSequence sequence, @NotNull CharSequence infix) {
+    for (int i = 0; i < sequence.length() - infix.length(); i++) {
+      if (startsWith(sequence, i, infix)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
   public static int indexOf(@NotNull CharSequence s, char c, int start, int end, boolean caseSensitive) {
     for (int i = start; i < end; i++) {
       if (charsMatch(s.charAt(i), c, !caseSensitive)) return i;
@@ -1706,10 +1717,7 @@ public class StringUtil extends StringUtilRt {
    * <code>-1</code> otherwise
    */
   public static int lastIndexOf(@NotNull CharSequence s, char c, int start, int end) {
-    for (int i = end - 1; i >= start; i--) {
-      if (s.charAt(i) == c) return i;
-    }
-    return -1;
+    return StringUtilRt.lastIndexOf(s, c, start, end);
   }
 
   @NotNull

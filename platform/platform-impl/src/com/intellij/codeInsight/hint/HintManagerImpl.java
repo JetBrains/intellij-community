@@ -131,7 +131,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     myEditorFocusListener = new FocusAdapter() {
       @Override
       public void focusLost(final FocusEvent e) {
-        if (UIUtil.isFocusProxy(e.getOppositeComponent())) return;
+        //if (UIUtil.isFocusProxy(e.getOppositeComponent())) return;
         myHideAlarm.addRequest(new Runnable() {
           @Override
           public void run() {

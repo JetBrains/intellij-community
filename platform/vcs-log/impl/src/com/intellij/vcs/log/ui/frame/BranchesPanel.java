@@ -22,7 +22,7 @@ import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogRefreshListener;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.impl.VcsLogUtil;
-import com.intellij.vcs.log.ui.VcsLogUI;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.render.RefPainter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,14 +46,14 @@ import static com.intellij.vcs.log.graph.render.PrintParameters.HEIGHT_CELL;
 public class BranchesPanel extends JPanel {
 
   private final VcsLogDataHolder myDataHolder;
-  private final VcsLogUI myUI;
+  private final VcsLogUiImpl myUI;
 
   private List<RefGroup> myRefGroups;
   private final RefPainter myRefPainter;
 
   private Map<Integer, RefGroup> myRefPositions = ContainerUtil.newHashMap();
 
-  public BranchesPanel(@NotNull VcsLogDataHolder dataHolder, @NotNull VcsLogUI UI, @NotNull RefsModel initialRefsModel) {
+  public BranchesPanel(@NotNull VcsLogDataHolder dataHolder, @NotNull VcsLogUiImpl UI, @NotNull RefsModel initialRefsModel) {
     myDataHolder = dataHolder;
     myUI = UI;
     myRefGroups = getRefsToDisplayOnPanel(initialRefsModel);
@@ -162,14 +162,14 @@ public class BranchesPanel extends JPanel {
 
     private final JBPopup myPopup;
     private final JBList myList;
-    private final VcsLogUI myUi;
+    private final VcsLogUiImpl myUi;
     private final RefPainter myRefPainter;
 
     private final SingleRefComponent myRendererComponent;
 
     private final ListCellRenderer myCellRenderer;
 
-    RefPopupComponent(RefGroup group, VcsLogUI ui, RefPainter refPainter) {
+    RefPopupComponent(RefGroup group, VcsLogUiImpl ui, RefPainter refPainter) {
       super(new BorderLayout());
       myUi = ui;
       myRefPainter = refPainter;

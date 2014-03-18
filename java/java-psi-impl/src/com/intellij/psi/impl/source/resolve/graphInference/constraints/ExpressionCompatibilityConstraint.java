@@ -129,11 +129,11 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
           if (method != null) {
             final PsiExpression[] args = argumentList.getExpressions();
             final PsiParameter[] parameters = method.getParameterList().getParameters();
-            callSession.initExpressionConstraints(parameters, args, myExpression, method);
+            callSession.initExpressionConstraints(parameters, args, myExpression, method, resolveResult instanceof MethodCandidateInfo && ((MethodCandidateInfo)resolveResult).isVarargs());
           }
           final boolean accepted = callSession.repeatInferencePhases(true);
           if (!accepted) {
-            //todo return false;
+            return false;
           }
           callSession.registerConstraints(method != null && !PsiUtil.isRawSubstitutor(method, siteSubstitutor) ? siteSubstitutor.substitute(returnType) : returnType, substitutor.substitute(returnType));
           if (callSession.repeatInferencePhases(true)) {
@@ -147,6 +147,8 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
               }
             }
             session.liftBounds(inferenceVariables);
+          } else {
+            return false;
           }
           final PsiType capturedReturnType = myExpression instanceof PsiMethodCallExpression
                                              ? PsiMethodCallExpressionImpl.captureReturnType((PsiMethodCallExpression)myExpression, method, returnType, substitutor)

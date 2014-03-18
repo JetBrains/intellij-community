@@ -27,6 +27,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.ui.EditorTextField;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
@@ -58,6 +60,11 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
                                     ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
         final PsiFile file = parameters.getPosition().getContainingFile();
+        if (file instanceof PsiPlainTextFile &&
+            parameters.getEditor().getComponent().getParent() instanceof EditorTextField) {
+          return;
+        }
+
         final int offset = parameters.getOffset();
         final List<TemplateImpl> templates = listApplicableTemplates(file, offset);
         Editor editor = parameters.getEditor();

@@ -156,7 +156,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     if (other == getProxy()) return;
     assert other.getDomElementType().equals(myType) : "Can't copy from " + other.getDomElementType() + " to " + myType;
 
-    if (!DomUtil.hasXml(other)) {
+    if (other.getXmlElement() == null) {
       undefine();
       return;
     }

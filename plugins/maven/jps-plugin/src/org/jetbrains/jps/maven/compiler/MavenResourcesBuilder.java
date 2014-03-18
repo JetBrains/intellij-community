@@ -19,8 +19,7 @@ import org.jetbrains.jps.maven.model.impl.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -34,7 +33,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
   }
 
   @Override
-  public void build(@NotNull MavenResourcesTarget target, @NotNull final DirtyFilesHolder<MavenResourceRootDescriptor, MavenResourcesTarget> holder, @NotNull final BuildOutputConsumer outputConsumer, @NotNull final CompileContext context) throws ProjectBuildException, IOException {
+  public void build(@NotNull final MavenResourcesTarget target, @NotNull final DirtyFilesHolder<MavenResourceRootDescriptor, MavenResourcesTarget> holder, @NotNull final BuildOutputConsumer outputConsumer, @NotNull final CompileContext context) throws ProjectBuildException, IOException {
     final BuildDataPaths dataPaths = context.getProjectDescriptor().dataManager.getDataPaths();
     final MavenProjectConfiguration projectConfig = JpsMavenExtensionService.getInstance().getMavenProjectConfiguration(dataPaths);
     final MavenModuleResourceConfiguration config = target.getModuleResourcesConfiguration(dataPaths);
@@ -42,21 +41,63 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
       return;
     }
 
-    final MavenResourceFileProcessor fileProcessor = new MavenResourceFileProcessor(projectConfig, target.getModule().getProject(), config);
+    final Map<MavenResourceRootDescriptor, List<File>> files = new HashMap<MavenResourceRootDescriptor, List<File>>();
+
     holder.processDirtyFiles(new FileProcessor<MavenResourceRootDescriptor, MavenResourcesTarget>() {
 
       @Override
-      public boolean apply(MavenResourcesTarget target, File file, MavenResourceRootDescriptor rd) throws IOException {
-        final String relPath = FileUtil.getRelativePath(rd.getRootFile(), file);
+      public boolean apply(MavenResourcesTarget t, File file, MavenResourceRootDescriptor rd) throws IOException {
+        assert target == t;
+
+        List<File> fileList = files.get(rd);
+        if (fileList == null) {
+          fileList = new ArrayList<File>();
+          files.put(rd, fileList);
+        }
+
+        fileList.add(file);
+        return true;
+      }
+    });
+
+    MavenResourceRootDescriptor[] roots = files.keySet().toArray(new MavenResourceRootDescriptor[files.keySet().size()]);
+    Arrays.sort(roots, new Comparator<MavenResourceRootDescriptor>() {
+      @Override
+      public int compare(MavenResourceRootDescriptor r1, MavenResourceRootDescriptor r2) {
+        int res = r1.getIndexInPom() - r2.getIndexInPom();
+
+        if (r1.isOverwrite()) {
+          assert r2.isOverwrite(); // 'overwrite' parameters is common for all roots in module.
+
+          return res;
+        }
+
+        if (r1.getConfiguration().isFiltered && !r2.getConfiguration().isFiltered) return 1;
+        if (!r1.getConfiguration().isFiltered && r2.getConfiguration().isFiltered) return -1;
+
+        if (!r1.getConfiguration().isFiltered) {
+          res = -res;
+        }
+
+        return res;
+      }
+    });
+
+    MavenResourceFileProcessor fileProcessor = new MavenResourceFileProcessor(projectConfig, target.getModule().getProject(), config);
+
+    for (MavenResourceRootDescriptor rd : roots) {
+      for (File file : files.get(rd)) {
+
+        String relPath = FileUtil.getRelativePath(rd.getRootFile(), file);
         if (relPath == null) {
-          return true;
+          continue;
         }
         final File outputDir = MavenResourcesTarget.getOutputDir(target.getModuleOutputDir(), rd.getConfiguration());
         if (outputDir == null) {
-          return true;
+          continue;
         }
-        final File outputFile = new File(outputDir, relPath);
-        final String sourcePath = file.getPath();
+        File outputFile = new File(outputDir, relPath);
+        String sourcePath = file.getPath();
         try {
           context.processMessage(new ProgressMessage("Copying resources... [" + target.getModule().getName() + "]"));
 
@@ -67,15 +108,17 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
           context.processMessage(
             new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, "Resource was not copied: " + e.getMessage(), sourcePath));
         }
-        return !context.getCancelStatus().isCanceled();
+
+        if (context.getCancelStatus().isCanceled()) {
+          return;
+        }
       }
-    });
+    }
 
     context.checkCanceled();
 
     context.processMessage(new ProgressMessage(""));
   }
-
 
   @NotNull
   public String getPresentableName() {

@@ -218,7 +218,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
   private static Properties loadPropertiesAndFilters(CompileContext context, MavenProject mavenProject) {
     Properties properties = new Properties();
 
-    for (String each : mavenProject.getFilters()) {
+    for (String each : mavenProject.getFilterPropertiesFiles()) {
       try {
         FileInputStream in = new FileInputStream(each);
         try {

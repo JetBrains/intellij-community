@@ -19,6 +19,7 @@ import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.GraphFacade;
 import com.intellij.vcs.log.graph.PaintInfo;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,9 +27,9 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
 
   @NotNull private GraphFacade myGraphFacade;
 
-  public GraphCommitCellRender(@NotNull VcsLogColorManager colorManager,
-                               @NotNull VcsLogDataHolder dataHolder, @NotNull GraphFacade graphFacade) {
-    super(colorManager, dataHolder);
+  public GraphCommitCellRender(@NotNull VcsLogColorManager colorManager, @NotNull VcsLogDataHolder dataHolder,
+                               @NotNull GraphFacade graphFacade, @NotNull VcsLogGraphTable table) {
+    super(colorManager, dataHolder, table);
     myGraphFacade = graphFacade;
   }
 

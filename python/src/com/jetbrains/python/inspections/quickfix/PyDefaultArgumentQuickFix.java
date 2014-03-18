@@ -52,39 +52,38 @@ public class PyDefaultArgumentQuickFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement defaultValue = descriptor.getPsiElement();
-    PsiElement param = PsiTreeUtil.getParentOfType(defaultValue, PyNamedParameter.class);
+    PyNamedParameter param = PsiTreeUtil.getParentOfType(defaultValue, PyNamedParameter.class);
     PyFunction function = PsiTreeUtil.getParentOfType(defaultValue, PyFunction.class);
-    String defName = PsiTreeUtil.getParentOfType(defaultValue, PyNamedParameter.class).getName();
+    assert param != null;
+    String defName = param.getName();
     if (function != null) {
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
       PyStatementList list = function.getStatementList();
-      if (list != null) {
-        PyParameterList paramList = function.getParameterList();
+      PyParameterList paramList = function.getParameterList();
 
-        StringBuilder str = new StringBuilder("def foo(");
-        int size = paramList.getParameters().length;
-        for (int i = 0; i != size; ++i) {
-          PyParameter p = paramList.getParameters()[i];
-          if (p == param)
-            str.append(defName).append("=None");
-          else
-            str.append(p.getText());
-          if (i != size-1)
-            str.append(", ");
-        }
-        str.append("):\n\tpass");
-        PyIfStatement ifStatement = elementGenerator.createFromText(LanguageLevel.forElement(function), PyIfStatement.class,
-                                                  "if not " + defName + ": " + defName + " = " + defaultValue.getText());
-
-        PyStatement firstStatement = list.getStatements()[0];
-        PyStringLiteralExpression docString = function.getDocStringExpression();
-        if (docString != null)
-          list.addAfter(ifStatement, firstStatement);
+      StringBuilder str = new StringBuilder("def foo(");
+      int size = paramList.getParameters().length;
+      for (int i = 0; i != size; ++i) {
+        PyParameter p = paramList.getParameters()[i];
+        if (p == param)
+          str.append(defName).append("=None");
         else
-          list.addBefore(ifStatement, firstStatement);
-        paramList.replace(elementGenerator.createFromText(LanguageLevel.forElement(defaultValue),
-                                                                   PyFunction.class, str.toString()).getParameterList());
+          str.append(p.getText());
+        if (i != size-1)
+          str.append(", ");
       }
+      str.append("):\n\tpass");
+      PyIfStatement ifStatement = elementGenerator.createFromText(LanguageLevel.forElement(function), PyIfStatement.class,
+                                                "if not " + defName + ": " + defName + " = " + defaultValue.getText());
+
+      PyStatement firstStatement = list.getStatements()[0];
+      PyStringLiteralExpression docString = function.getDocStringExpression();
+      if (docString != null)
+        list.addAfter(ifStatement, firstStatement);
+      else
+        list.addBefore(ifStatement, firstStatement);
+      paramList.replace(elementGenerator.createFromText(LanguageLevel.forElement(defaultValue),
+                                                                 PyFunction.class, str.toString()).getParameterList());
     }
   }
 }

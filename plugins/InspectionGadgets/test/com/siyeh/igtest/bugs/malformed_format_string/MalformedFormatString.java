@@ -38,4 +38,13 @@ public class MalformedFormatString {
             // Do some logging.
         }
     }
+
+    void shouldWarn() {
+        String.format("%1$c %1$d", 10L);
+    }
+
+    void shouldNotWarn() {
+        String.format("%c", 0x10300);
+        String charAsInt = String.format("%1$d %1$c", 10);  // int followed by char should be ok too.
+    }
 }

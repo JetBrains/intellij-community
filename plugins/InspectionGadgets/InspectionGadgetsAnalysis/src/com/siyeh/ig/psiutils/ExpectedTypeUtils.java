@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,6 +155,10 @@ public class ExpectedTypeUtils {
     @Override
     public void visitPolyadicExpression(@NotNull PsiPolyadicExpression polyadicExpression) {
       final PsiExpression[] operands = polyadicExpression.getOperands();
+      if (operands.length < 2) {
+        expectedType = null;
+        return;
+      }
       for (PsiExpression operand : operands) {
         if (operand == null || operand.getType() == null) {
           expectedType = null;
@@ -175,9 +179,6 @@ public class ExpectedTypeUtils {
         if (TypeConversionUtil.isPrimitiveAndNotNull(wrappedExpressionType)) {
           expectedType = wrappedExpressionType;
         }
-        else if (operands.length > 2) {
-          expectedType = PsiPrimitiveType.getUnboxedType(wrappedExpressionType);
-        }
         else if (operands[0] == wrappedExpression) {
           if (TypeConversionUtil.isPrimitiveAndNotNull(operands[1].getType())) {
             expectedType = PsiPrimitiveType.getUnboxedType(wrappedExpressionType);
@@ -186,13 +187,16 @@ public class ExpectedTypeUtils {
             expectedType = TypeUtils.getObjectType(wrappedExpression);
           }
         }
-        else {
+        else if (operands[1] == wrappedExpression) {
          if (TypeConversionUtil.isPrimitiveAndNotNull(operands[0].getType())) {
             expectedType = PsiPrimitiveType.getUnboxedType(wrappedExpressionType);
          }
           else {
            expectedType = TypeUtils.getObjectType(wrappedExpression);
          }
+        }
+        else {
+          expectedType = PsiPrimitiveType.getUnboxedType(wrappedExpressionType);
         }
       }
       else if (ComparisonUtils.isComparisonOperation(tokenType)) {

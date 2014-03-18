@@ -79,8 +79,8 @@ public abstract class CloudGitProjectStructureDetectorBase<DC extends CloudDeplo
   }
 
   private void detectApplicationRoot(@NotNull File dir, @NotNull List<DetectedProjectRoot> result) {
-    VirtualFile contentRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
-    if (contentRoot == null) {
+    VirtualFile repositoryRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+    if (repositoryRoot == null) {
       return;
     }
 
@@ -91,7 +91,7 @@ public abstract class CloudGitProjectStructureDetectorBase<DC extends CloudDeplo
 
     Project project = ProjectManager.getInstance().getDefaultProject();
     GitRepository repository
-      = GitRepositoryImpl.getLightInstance(contentRoot, project, ServiceManager.getService(project, GitPlatformFacade.class), project);
+      = GitRepositoryImpl.getLightInstance(repositoryRoot, project, ServiceManager.getService(project, GitPlatformFacade.class), project);
     repository.update();
 
     List<String> applicationNames = myDeploymentDetector.collectApplicationNames(repository);
@@ -99,7 +99,7 @@ public abstract class CloudGitProjectStructureDetectorBase<DC extends CloudDeplo
       return;
     }
 
-    result.add(new CloudGitProjectRoot(myId, myJavaSourceRootTypeName, dir, applicationNames.get(0)));
+    result.add(new CloudGitProjectRoot(myId, myJavaSourceRootTypeName, dir, repositoryRoot, applicationNames.get(0)));
   }
 
   private DirectoryProcessingResult detectJavaRoots(@NotNull File dir,

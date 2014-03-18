@@ -119,7 +119,7 @@ public class ShortenToStaticImportProcessor implements TemplateOptionalProcessor
   private static class SingleMemberStaticImporter implements StaticImporter {
     @Override
     public boolean canPerform(@NotNull PsiElement element) {
-      return AddSingleMemberStaticImportAction.getStaticImportClass(element, true) != null;
+      return AddSingleMemberStaticImportAction.getStaticImportClass(element) != null;
     }
 
     @Override

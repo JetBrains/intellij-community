@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -179,8 +178,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     document = FileDocumentManager.getInstance().getDocument(viewProvider.getVirtualFile());
     if (document != null) {
       if (document.getTextLength() != file.getTextLength()) {
-        throw new AssertionError("Modified PSI with no document: " + file + "; physical=" + viewProvider.isPhysical() +
-                                 "; BFD=" + BinaryFileTypeDecompilers.INSTANCE.forFileType(file.getFileType()));
+        String message = "Modified PSI with no document: " + file + "; physical=" + viewProvider.isPhysical();
+        if (document.getTextLength() + file.getTextLength() < 8096) {
+          message += "\n=== document ===\n" + document.getText() + "\n=== PSI ===\n" + file.getText();
+        }
+        throw new AssertionError(message);
       }
 
       if (!viewProvider.isPhysical()) {

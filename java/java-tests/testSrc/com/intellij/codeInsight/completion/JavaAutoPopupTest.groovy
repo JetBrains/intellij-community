@@ -1179,34 +1179,34 @@ class Foo {{
   }
 
   private doTestMulticaret(final String textBefore, final String toType, final String textAfter) {
-    EditorTestUtil.enableMultipleCarets()
-    try {
-      myFixture.configureByText "a.java", textBefore
-      type 'toStr'
-      assert lookup
-      type toType
-      myFixture.checkResult textAfter
-    }
-    finally {
-      EditorTestUtil.disableMultipleCarets()
-    }
-  }
-
-  private doTestBlockSelection(final String textBefore, final String toType, final String textAfter) {
     myFixture.configureByText "a.java", textBefore
-    edt {
-      def caret = myFixture.editor.offsetToLogicalPosition(myFixture.editor.caretModel.offset)
-      myFixture.editor.selectionModel.setBlockSelection(caret, new LogicalPosition(caret.line + 1, caret.column + 1))
-    }
     type 'toStr'
     assert lookup
     type toType
     myFixture.checkResult textAfter
-    def start = myFixture.editor.selectionModel.blockStart
-    def end = myFixture.editor.selectionModel.blockEnd
-    assert start.line == end.line - 1
-    assert start.column == end.column
-    assert end == myFixture.editor.caretModel.logicalPosition
+  }
+
+  private doTestBlockSelection(final String textBefore, final String toType, final String textAfter) {
+    EditorTestUtil.disableMultipleCarets()
+    try {
+      myFixture.configureByText "a.java", textBefore
+      edt {
+        def caret = myFixture.editor.offsetToLogicalPosition(myFixture.editor.caretModel.offset)
+        myFixture.editor.selectionModel.setBlockSelection(caret, new LogicalPosition(caret.line + 1, caret.column + 1))
+      }
+      type 'toStr'
+      assert lookup
+      type toType
+      myFixture.checkResult textAfter
+      def start = myFixture.editor.selectionModel.blockStart
+      def end = myFixture.editor.selectionModel.blockEnd
+      assert start.line == end.line - 1
+      assert start.column == end.column
+      assert end == myFixture.editor.caretModel.logicalPosition
+    }
+    finally {
+      EditorTestUtil.enableMultipleCarets()
+    }
   }
 
   public void "test two non-imported classes when space selects first autopopup item"() {

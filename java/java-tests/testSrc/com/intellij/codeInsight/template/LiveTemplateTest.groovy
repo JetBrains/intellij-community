@@ -35,6 +35,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NotNull
 
 import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE
@@ -80,6 +81,7 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     addTemplate(template, testRootDisposable)
 
     manager.startTemplate(editor, (char)'\t');
+    UIUtil.dispatchAllInvocationEvents()
     checkResultByText(expected);
   }
   
@@ -110,6 +112,7 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     addTemplate(template, testRootDisposable)
 
     startTemplate(templateName, templateGroup)
+    UIUtil.dispatchAllInvocationEvents()
     if (firstDefaultValue.empty) myFixture.type("TestValue1")
     myFixture.type("\t")
     if (secondDefaultValue.empty) myFixture.type("TestValue2")
@@ -137,9 +140,8 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     final TemplateManager manager = TemplateManager.getInstance(getProject());
     final Template template = manager.createTemplate("empty", "user", '$VAR$');
     template.addVariable("VAR", "", "", false);
-    final Editor editor = getEditor();
 
-    manager.startTemplate(editor, template);
+    startTemplate(template);
     checkResultByText("");
 
   }
@@ -150,9 +152,8 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     final Template template = manager.createTemplate("empty", "user", '$VAR$$END$');
     template.addVariable("VAR", "bar", "bar", true);
     template.setToReformat(true);
-    final Editor editor = getEditor();
 
-    manager.startTemplate(editor, template);
+    startTemplate(template);
     myFixture.type("foo");
     checkResultByText("foo");
   }
@@ -168,7 +169,7 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
                                                                 '  $END$\n' +
                                                                 'foo()');
     template.setToReformat(true);
-    manager.startTemplate(getEditor(), template);
+    startTemplate(template);
     checkResultByText("class C {\n" +
                       "  bar() {\n" +
                       "      foo()\n" +
@@ -196,7 +197,7 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
                                                                     "frame.pack();");
     template.setToShortenLongNames(false);
     template.setToReformat(true);
-    manager.startTemplate(getEditor(), template);
+    startTemplate(template);
     checkResult();
   }
 
@@ -210,7 +211,7 @@ class Foo {
     final TemplateManager manager = TemplateManager.getInstance(getProject());
     final Template template = manager.createTemplate("frm", "user", '$VAR$');
     template.addVariable('VAR', new MacroCallNode(new CompleteMacro()), new EmptyNode(), true)
-    manager.startTemplate(getEditor(), template);
+    startTemplate(template);
     myFixture.type('fo\n')
     myFixture.checkResult '''
 class Foo {
@@ -231,7 +232,7 @@ class Foo {
     final TemplateManager manager = TemplateManager.getInstance(getProject());
     final Template template = manager.createTemplate("frm", "user", '$VAR$');
     template.addVariable('VAR', new MacroCallNode(new CompleteMacro()), new EmptyNode(), true)
-    manager.startTemplate(getEditor(), template);
+    startTemplate(template);
     myFixture.type('fo\n')
     myFixture.checkResult '''
 class Foo {
@@ -253,7 +254,7 @@ class Foo {
     final TemplateManager manager = TemplateManager.getInstance(getProject());
     final Template template = manager.createTemplate("frm", "user", '$VAR$');
     template.addVariable('VAR', new MacroCallNode(new ClassNameCompleteMacro()), new EmptyNode(), true)
-    manager.startTemplate(getEditor(), template);
+    startTemplate(template);
     assert !state.finished
     assert 'Bar' in myFixture.lookupElementStrings
   }
@@ -278,7 +279,12 @@ class Foo {
   }
 
   def startTemplate(String name, String group) {
-    TemplateManager.getInstance(getProject()).startTemplate(getEditor(), TemplateSettings.getInstance().getTemplate(name, group));
+    startTemplate(TemplateSettings.getInstance().getTemplate(name, group));
+  }
+
+  def startTemplate(Template template) {
+    TemplateManager.getInstance(getProject()).startTemplate(getEditor(), template)
+    UIUtil.dispatchAllInvocationEvents()
   }
 
   private static <T extends TemplateContextType> T contextType(Class<T> clazz) {
@@ -533,7 +539,7 @@ class Foo {
     template.addVariable("V3", "", "", true);
     final Editor editor = getEditor();
 
-    writeCommand { manager.startTemplate(editor, template) }
+    writeCommand { startTemplate(template) }
 
     final TemplateState state = getState();
 
@@ -575,7 +581,7 @@ class Foo {
     template.addVariable("V1", "", "", true);
     template.addVariable("V2", "", '"239"', true);
 
-    writeCommand { manager.startTemplate(editor, template) }
+    writeCommand { startTemplate(template) }
 
     myFixture.checkResult '<caret> var = 239;'
 
@@ -659,7 +665,7 @@ class Foo {
     template.addVariable('T', new MacroCallNode(new MethodReturnTypeMacro()), new EmptyNode(), false)
     template.toReformat = true
     
-    manager.startTemplate(getEditor(), template);
+    startTemplate(template);
     assert myFixture.editor.document.text.contains('List<Map.Entry<String, Integer>> result;')
   }
 
@@ -705,7 +711,7 @@ class Foo {
     final Template template = manager.createTemplate("xxx", "user", 'foo $ARG$ bar $END$ goo $SELECTION$ after');
     template.addVariable("ARG", "", "", true);
     
-    manager.startTemplate(editor, template);
+    startTemplate(template);
     myFixture.type('arg')
     state.nextTab()
     assert !state
@@ -731,7 +737,7 @@ class Foo {
     final Template template = manager.createTemplate("xxx", "user", 'foo.Bar.someMethod($END$)');
     template.setValue(USE_STATIC_IMPORT_IF_POSSIBLE, true);
 
-    manager.startTemplate(editor, template);
+    startTemplate(template);
     myFixture.checkResult """
 import static foo.Bar.someMethod;
 
@@ -754,7 +760,7 @@ class Foo {
     template.addVariable('B', macroCallNode, false)
 
     myFixture.configureByText "a.txt", "<caret>"
-    manager.startTemplate(editor, template);
+    startTemplate(template);
     myFixture.type('-foo-bar_goo-')
     state.nextTab()
     assert !state
@@ -779,7 +785,7 @@ class Foo {
     final Template template = manager.createTemplate("xxx", "user", 'foo.Bar.someMethod($END$)');
     template.setValue(USE_STATIC_IMPORT_IF_POSSIBLE, true);
 
-    manager.startTemplate(editor, template);
+    startTemplate(template);
     myFixture.checkResult """import static foo.Bar.someMethod;
 
 class Foo {

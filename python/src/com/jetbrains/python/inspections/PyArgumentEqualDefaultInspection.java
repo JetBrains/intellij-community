@@ -73,11 +73,11 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
       if (list == null) {
         return;
       }
-      Callable func = node.resolveCalleeFunction(resolveWithoutImplicits());
+      Callable func = node.resolveCalleeFunction(getResolveContext());
       if (func != null && hasSpecialCasedDefaults(func, node)) {
         return;
       }
-      CallArgumentsMapping result = list.analyzeCall(resolveWithoutImplicits());
+      CallArgumentsMapping result = list.analyzeCall(getResolveContext());
       checkArguments(result, node.getArguments());
     }
 
@@ -141,10 +141,10 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
       }
       else {
         PsiReference keyRef = key instanceof PyReferenceExpression 
-                              ? ((PyReferenceExpression) key).getReference(resolveWithoutImplicits())
+                              ? ((PyReferenceExpression) key).getReference(getResolveContext())
                               : key.getReference();
         PsiReference defRef = defaultValue instanceof PyReferenceExpression
-                              ? ((PyReferenceExpression) defaultValue).getReference(resolveWithoutImplicits())
+                              ? ((PyReferenceExpression) defaultValue).getReference(getResolveContext())
                               : defaultValue.getReference();
         if (keyRef != null && defRef != null) {
           PsiElement keyResolve = keyRef.resolve();

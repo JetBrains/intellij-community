@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.List;
 
-import static com.intellij.psi.PsiAnnotation.TargetType;
 import static com.intellij.util.BitUtil.isSet;
 
 /**
@@ -110,7 +109,7 @@ public class TypeInfo {
     for (StubElement child : modifierList.getChildrenStubs()) {
       if (!(child instanceof PsiAnnotationStub)) continue;
       PsiAnnotationStub annotationStub = (PsiAnnotationStub)child;
-      if (PsiImplUtil.findApplicableTarget(annotationStub.getPsiElement(), TargetType.TYPE_USE) == TargetType.TYPE_USE) {
+      if (PsiImplUtil.isTypeAnnotation(annotationStub.getPsiElement())) {
         annotationStubs.add(annotationStub);
       }
     }

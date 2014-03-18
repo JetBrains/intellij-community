@@ -19,50 +19,22 @@ import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * <p>The {@link Hash} implementation which stores a hash in a byte array thus saving some memory.</p>
- * <p>
- *   In addition to that, it hash a static cache which lets avoid creating multiple HashImpl objects for the same hash value:
- *   <code>
- *     if (inputStr_1 == inputStr_2) {
- *       Hash.build(inputStr_1) == Hash.build(inputStr_2)
- *     }
- *   </code>
- * </p>
- *
- * @author erokhins
  */
 public class HashImpl implements Hash {
 
   private static final int SHORT_HASH_LENGTH = 7;
-  private static final int CAPABILITY = 5000;
-  private static final Map<Hash, Hash> ourCache = new HashMap<Hash, Hash>(CAPABILITY);
 
   @NotNull
-  private final byte[] data;
-  private final int hashCode;
-
-  private static void clearMap() {
-    if (ourCache.size() >= CAPABILITY - 5) {
-      ourCache.clear();
-    }
-  }
+  private final byte[] myData;
+  private final int myHashCode;
 
   @NotNull
   public static Hash build(@NotNull String inputStr) {
-    clearMap();
     byte[] data = buildData(inputStr);
-    Hash newHash = new HashImpl(data);
-    if (ourCache.containsKey(newHash)) {
-      return ourCache.get(newHash);
-    }
-    else {
-      ourCache.put(newHash, newHash);
-    }
-    return newHash;
+    return new HashImpl(data);
   }
 
   @NotNull
@@ -89,22 +61,22 @@ public class HashImpl implements Hash {
   }
 
   private HashImpl(@NotNull byte[] hash) {
-    this.data = hash;
-    this.hashCode = Arrays.hashCode(hash);
+    myData = hash;
+    myHashCode = Arrays.hashCode(hash);
   }
 
   @NotNull
   @Override
   public String asString() {
-    assert data.length > 0 : "bad length Hash.data";
-    byte even = data[0];
+    assert myData.length > 0 : "bad length Hash.data";
+    byte even = myData[0];
     StringBuilder sb = new StringBuilder();
-    for (int i = 1; i < data.length; i++) {
-      int k1 = (data[i] + 128) / 16;
-      int k2 = (data[i] + 128) % 16;
+    for (int i = 1; i < myData.length; i++) {
+      int k1 = (myData[i] + 128) / 16;
+      int k2 = (myData[i] + 128) % 16;
       char c1 = Character.forDigit(k1, 16);
       char c2 = Character.forDigit(k2, 16);
-      if (i == data.length - 1 && even == 1) {
+      if (i == myData.length - 1 && even == 1) {
         sb.append(c2);
       }
       else {
@@ -119,13 +91,15 @@ public class HashImpl implements Hash {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     HashImpl that = (HashImpl)o;
-    return (hashCode == that.hashCode && asString().equals(that.asString()));
+    return myHashCode == that.myHashCode && Arrays.equals(myData, that.myData);
   }
 
+  @Override
   public int hashCode() {
-    return hashCode;
+    return myHashCode;
   }
 
+  @Override
   public String toString() {
     return asString();
   }

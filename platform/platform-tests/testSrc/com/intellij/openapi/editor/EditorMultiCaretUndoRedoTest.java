@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
-import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestFileType;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,13 +36,11 @@ public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
 
   public void setUp() throws Exception {
     super.setUp();
-    EditorTestUtil.enableMultipleCarets();
     mySavedCurrentEditorProvider = getUndoManager().getEditorProvider();
   }
 
   public void tearDown() throws Exception {
     getUndoManager().setEditorProvider(mySavedCurrentEditorProvider);
-    EditorTestUtil.disableMultipleCarets();
     super.tearDown();
   }
 
@@ -100,6 +97,15 @@ public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
     verifyCaretsAndSelections(0, 2, 0, 0, 0, 2);
   }
 
+  public void testPrimaryCaretPositionAfterUndo() throws Exception {
+    init("line1\n" +
+         "line2");
+    mouse().alt().clickAt(1, 1).dragTo(0, 0).release();
+    type(' ');
+    undo();
+    assertEquals(new LogicalPosition(0, 0), myEditor.getCaretModel().getPrimaryCaret().getLogicalPosition());
+  }
+
   private void checkResult(final String text) {
     CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
       @Override
@@ -127,7 +133,7 @@ public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
 
   private void init(String text) throws IOException {
     init(text, TestFileType.TEXT);
-    EditorTestUtil.setEditorVisibleSize(myEditor, 1000, 1000);
+    setEditorVisibleSize(1000, 1000);
     getUndoManager().setEditorProvider(new CurrentEditorProvider() {
       @Override
       public FileEditor getCurrentEditor() {

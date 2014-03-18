@@ -1,11 +1,11 @@
 class Test {
     Wrapper foo() {
-    return new Wrapper("");
-  }
+        return new Wrapper("");
+    }
 
-  void bar() {
-    String s = foo().getValue();
-  }
+    void bar() {
+        String s = foo().getValue();
+    }
 
     public class Wrapper {
         private final String value;
@@ -14,10 +14,8 @@ class Test {
             this.value = value;
         }
 
-
         public String getValue() {
             return value;
         }
-
     }
 }

@@ -50,13 +50,23 @@ public abstract class MavenImporter {
   }
 
   public static List<MavenImporter> getSuitableImporters(MavenProject p) {
-    final List<MavenImporter> result = new ArrayList<MavenImporter>();
-    final Set<ModuleType> moduleTypes = new THashSet<ModuleType>();
+    List<MavenImporter> result = null;
+    Set<ModuleType> moduleTypes = null;
+
     for (MavenImporter importer : EXTENSION_POINT_NAME.getExtensions()) {
       if (importer.isApplicable(p)) {
+        if (result == null) {
+          result = new ArrayList<MavenImporter>();
+          moduleTypes = new THashSet<ModuleType>();
+        }
+
         result.add(importer);
         moduleTypes.add(importer.getModuleType());
       }
+    }
+
+    if (result == null) {
+      return Collections.emptyList();
     }
 
     if (moduleTypes.size() <= 1) {
@@ -67,8 +77,9 @@ public abstract class MavenImporter {
     // Now we select one module type and return only those importers that are ok with it.
     // If possible - return at least one importer that explicitly supports packaging of the given maven project.
     ModuleType moduleType = result.get(0).getModuleType();
+    List<String> supportedPackagings = new ArrayList<String>();
     for (MavenImporter importer : result) {
-      final List<String> supportedPackagings = new ArrayList<String>();
+      supportedPackagings.clear();
       importer.getSupportedPackagings(supportedPackagings);
       if (supportedPackagings.contains(p.getPackaging())) {
         moduleType = importer.getModuleType();

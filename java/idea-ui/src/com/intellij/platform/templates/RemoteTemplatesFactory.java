@@ -16,9 +16,7 @@
 package com.intellij.platform.templates;
 
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.ide.util.projectWizard.WizardInputField;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -56,7 +54,6 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
   private static final String URL = "http://download.jetbrains.com/idea/project_templates/";
 
-  public static final String INPUT_FIELD = "input-field";
   public static final String TEMPLATE = "template";
   public static final String INPUT_DEFAULT = "default";
   public static final Function<Element, String> ELEMENT_STRING_FUNCTION = new Function<Element, String>() {
@@ -139,47 +136,12 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
         final ModuleType moduleType = ModuleTypeManager.getInstance().findByID(type);
 
-        final List<WizardInputField> inputFields = getFields(element, ns);
         final String path = element.getChildText("path", ns);
         final String description = element.getChildTextTrim("description", ns);
         String name = element.getChildTextTrim("name", ns);
-        final List<String> frameworks = getFrameworks(element);
-        return new ArchivedProjectTemplate(name, element.getChildTextTrim("category")) {
-          @Override
-          protected ModuleType getModuleType() {
-            return moduleType;
-          }
-
-          @NotNull
-          @Override
-          public List<WizardInputField> getInputFields() {
-            return inputFields;
-          }
-
-          @NotNull
-          @Override
-          public List<String> getFeaturedFrameworks() {
-            return frameworks;
-          }
-
-          @Override
-          public ZipInputStream getStream() throws IOException {
-            final HttpURLConnection connection = getConnection(path);
-            return new ZipInputStream(connection.getInputStream()) {
-              @Override
-              public void close() throws IOException {
-                super.close();
-                connection.disconnect();
-              }
-            };
-          }
-
-          @Nullable
-          @Override
-          public String getDescription() {
-            return description;
-          }
-        };
+        RemoteProjectTemplate template = new RemoteProjectTemplate(name, element, moduleType, path, description);
+        template.populateFromElement(element, ns);
+        return template;
       }
     });
   }
@@ -187,17 +149,6 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   public static List<String> getFrameworks(Element element) {
     List<Element> frameworks = element.getChildren("framework");
     return ContainerUtil.map(frameworks, ELEMENT_STRING_FUNCTION);
-  }
-
-  static List<WizardInputField> getFields(Element templateElement, final Namespace ns) {
-    //noinspection unchecked
-    return ContainerUtil.mapNotNull(templateElement.getChildren(INPUT_FIELD, ns), new Function<Element, WizardInputField>() {
-      @Override
-      public WizardInputField fun(Element element) {
-        ProjectTemplateParameterFactory factory = WizardInputField.getFactoryById(element.getText());
-        return factory == null ? null : factory.createField(element.getAttributeValue(INPUT_DEFAULT));
-      }
-    });
   }
 
   private static boolean checkRequiredPlugins(Element element, Namespace ns) {
@@ -220,4 +171,43 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   }
 
   private final static Logger LOG = Logger.getInstance(RemoteTemplatesFactory.class);
+
+  private static class RemoteProjectTemplate extends ArchivedProjectTemplate {
+    private final ModuleType myModuleType;
+    private final String myPath;
+    private final String myDescription;
+
+    public RemoteProjectTemplate(String name,
+                                 Element element,
+                                 ModuleType moduleType,
+                                 String path, String description) {
+      super(name, element.getChildTextTrim("category"));
+      myModuleType = moduleType;
+      myPath = path;
+      myDescription = description;
+    }
+
+    @Override
+    protected ModuleType getModuleType() {
+      return myModuleType;
+    }
+
+    @Override
+    public ZipInputStream getStream() throws IOException {
+      final HttpURLConnection connection = getConnection(myPath);
+      return new ZipInputStream(connection.getInputStream()) {
+        @Override
+        public void close() throws IOException {
+          super.close();
+          connection.disconnect();
+        }
+      };
+    }
+
+    @Nullable
+    @Override
+    public String getDescription() {
+      return myDescription;
+    }
+  }
 }

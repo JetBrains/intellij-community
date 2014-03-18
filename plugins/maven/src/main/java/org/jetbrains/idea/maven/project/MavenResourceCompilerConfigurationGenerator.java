@@ -135,6 +135,11 @@ public class MavenResourceCompilerConfigurationGenerator {
         resourceConfig.escapeWindowsPaths = Boolean.parseBoolean(escapeWindowsPaths);
       }
 
+      String overwrite = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "overwrite");
+      if (overwrite != null) {
+        resourceConfig.overwrite = Boolean.parseBoolean(overwrite);
+      }
+
       projectConfig.moduleConfigurations.put(module.getName(), resourceConfig);
     }
 
@@ -168,7 +173,7 @@ public class MavenResourceCompilerConfigurationGenerator {
   private Properties getFilteringProperties(MavenProject mavenProject) {
     final Properties properties = new Properties();
 
-    for (String each : mavenProject.getFilters()) {
+    for (String each : mavenProject.getFilterPropertiesFiles()) {
       try {
         FileInputStream in = new FileInputStream(each);
         try {
@@ -229,8 +234,10 @@ public class MavenResourceCompilerConfigurationGenerator {
     Element warCfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-war-plugin");
     if (warCfg == null) return;
 
+    boolean filterWebXml = Boolean.parseBoolean(warCfg.getChildTextTrim("filteringDeploymentDescriptors"));
     Element webResources = warCfg.getChild("webResources");
-    if (webResources == null) return;
+
+    if (webResources == null && !filterWebXml) return;
 
     String webArtifactName = MavenUtil.getArtifactName("war", module, true);
 
@@ -245,40 +252,51 @@ public class MavenResourceCompilerConfigurationGenerator {
       LOG.error("MavenArtifactResourceConfiguration already exists.");
     }
 
-    for (Element resource : webResources.getChildren("resource")) {
+    if (webResources != null) {
+      for (Element resource : webResources.getChildren("resource")) {
+        ResourceRootConfiguration r = new ResourceRootConfiguration();
+        String directory = resource.getChildTextTrim("directory");
+        if (StringUtil.isEmptyOrSpaces(directory)) continue;
+
+        if (!FileUtil.isAbsolute(directory)) {
+          directory = mavenProject.getDirectory() + '/' + directory;
+        }
+
+        r.directory = directory;
+        r.isFiltered = Boolean.parseBoolean(resource.getChildTextTrim("filtering"));
+
+        r.targetPath = resource.getChildTextTrim("targetPath");
+
+        Element includes = resource.getChild("includes");
+        if (includes != null) {
+          for (Element include : includes.getChildren("include")) {
+            String includeText = include.getTextTrim();
+            if (!includeText.isEmpty()) {
+              r.includes.add(includeText);
+            }
+          }
+        }
+
+        Element excludes = resource.getChild("excludes");
+        if (excludes != null) {
+          for (Element exclude : excludes.getChildren("exclude")) {
+            String excludeText = exclude.getTextTrim();
+            if (!excludeText.isEmpty()) {
+              r.excludes.add(excludeText);
+            }
+          }
+        }
+
+        artifactResourceCfg.webResources.add(r);
+      }
+    }
+
+    if (filterWebXml) {
       ResourceRootConfiguration r = new ResourceRootConfiguration();
-      String directory = resource.getChildTextTrim("directory");
-      if (StringUtil.isEmptyOrSpaces(directory)) continue;
-
-      if (!FileUtil.isAbsolute(directory)) {
-        directory = mavenProject.getDirectory() + '/' + directory;
-      }
-
-      r.directory = directory;
-      r.isFiltered = Boolean.parseBoolean(resource.getChildTextTrim("filtering"));
-
-      r.targetPath = resource.getChildTextTrim("targetPath");
-
-      Element includes = resource.getChild("includes");
-      if (includes != null) {
-        for (Element include : includes.getChildren("include")) {
-          String includeText = include.getTextTrim();
-          if (!includeText.isEmpty()) {
-            r.includes.add(includeText);
-          }
-        }
-      }
-
-      Element excludes = resource.getChild("excludes");
-      if (excludes != null) {
-        for (Element exclude : excludes.getChildren("exclude")) {
-          String excludeText = exclude.getTextTrim();
-          if (!excludeText.isEmpty()) {
-            r.excludes.add(excludeText);
-          }
-        }
-      }
-
+      r.directory = mavenProject.getDirectory() + "/src/main/webapp";
+      r.includes = Collections.singleton("WEB-INF/web.xml");
+      r.isFiltered = true;
+      r.targetPath = "";
       artifactResourceCfg.webResources.add(r);
     }
   }

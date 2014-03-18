@@ -35,7 +35,7 @@ public class SmartType17CompletionTest extends LightFixtureCompletionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_LATEST;
+    return JAVA_1_7;
   }
 
   public void testDiamondCollapsed() throws Exception {

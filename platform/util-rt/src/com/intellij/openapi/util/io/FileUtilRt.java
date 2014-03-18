@@ -74,6 +74,13 @@ public class FileUtilRt {
     return fileName.substring(index + 1);
   }
 
+  @NotNull
+  public static CharSequence getExtension(@NotNull CharSequence fileName) {
+    int index = StringUtilRt.lastIndexOf(fileName, '.', 0, fileName.length());
+    if (index < 0) return "";
+    return fileName.subSequence(index + 1, fileName.length());
+  }
+
   public static boolean extensionEquals(@NotNull String fileName, @NotNull String extension) {
     int extLen = extension.length();
     if (extLen == 0) {

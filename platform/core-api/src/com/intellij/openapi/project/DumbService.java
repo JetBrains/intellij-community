@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public abstract class DumbService {
    */
   public abstract boolean isDumb();
 
-  public static boolean isDumb(Project project) {
+  public static boolean isDumb(@NotNull Project project) {
     return getInstance(project).isDumb();
   }
 
@@ -63,7 +63,7 @@ public abstract class DumbService {
    * Executes the runnable immediately if not in dumb mode, or on AWT Event Dispatch thread when the dumb mode ends.
    * @param runnable runnable to run
    */
-  public abstract void runWhenSmart(Runnable runnable);
+  public abstract void runWhenSmart(@NotNull Runnable runnable);
 
   /**
    * Pause the current thread until dumb mode ends and then continue execution.
@@ -75,7 +75,7 @@ public abstract class DumbService {
   /**
    * Pause the current thread until dumb mode ends, and then run the read action. Index is guaranteed to be available inside that read action.
    */
-  public <T> T runReadActionInSmartMode(final Computable<T> r) {
+  public <T> T runReadActionInSmartMode(@NotNull final Computable<T> r) {
     final Ref<T> result = new Ref<T>();
     runReadActionInSmartMode(new Runnable() {
       @Override
@@ -105,7 +105,7 @@ public abstract class DumbService {
   /**
    * Pause the current thread until dumb mode ends, and then run the read action. Index is guaranteed to be available inside that read action.
    */
-  public void runReadActionInSmartMode(final Runnable r) {
+  public void runReadActionInSmartMode(@NotNull final Runnable r) {
     while (true) {
       waitForSmartMode();
       boolean success = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
@@ -130,7 +130,7 @@ public abstract class DumbService {
    * 
    * @see #runReadActionInSmartMode(Runnable) 
    */
-  public void repeatUntilPassesInSmartMode(final Runnable r) {
+  public void repeatUntilPassesInSmartMode(@NotNull final Runnable r) {
     while (true) {
       waitForSmartMode();
       try {
@@ -156,7 +156,7 @@ public abstract class DumbService {
     });
   }
 
-  public void smartInvokeLater(@NotNull final Runnable runnable, ModalityState modalityState) {
+  public void smartInvokeLater(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -207,7 +207,7 @@ public abstract class DumbService {
     });
   }
 
-  public abstract void showDumbModeNotification(String message);
+  public abstract void showDumbModeNotification(@NotNull String message);
 
   public abstract Project getProject();
 

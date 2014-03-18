@@ -8,6 +8,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -53,7 +54,10 @@ public class StartBrowserPanel {
             @Override
             public void consume(DataContext context) {
               Project project = CommonDataKeys.PROJECT.getData(context);
-              assert project != null;
+              if (project == null) {
+                // IDEA-118202
+                project = ProjectManager.getInstance().getDefaultProject();
+              }
               setupUrlField(myUrlField, project);
             }
           });
@@ -115,7 +119,7 @@ public class StartBrowserPanel {
   }
 
   @Nullable
-  private static Url virtualFileToUrl(VirtualFile file, Project project) {
+  private static Url virtualFileToUrl(@NotNull VirtualFile file, @NotNull Project project) {
     PsiFile psiFile;
     AccessToken token = ReadAction.start();
     try {
@@ -146,13 +150,16 @@ public class StartBrowserPanel {
     };
     descriptor.setTitle(XmlBundle.message("javascript.debugger.settings.choose.file.title"));
     descriptor.setDescription(XmlBundle.message("javascript.debugger.settings.choose.file.subtitle"));
-    //descriptor.setShowFileSystemRoots(false);
     descriptor.setRoots(ProjectRootManager.getInstance(project).getContentRoots());
 
     field.addBrowseFolderListener(new TextBrowseFolderListener(descriptor, project) {
       @NotNull
       @Override
       protected String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
+        if (chosenFile.isDirectory()) {
+          return chosenFile.getPath();
+        }
+
         Url url = virtualFileToUrl(chosenFile, project);
         return url == null ? chosenFile.getUrl() : url.toDecodedForm();
       }

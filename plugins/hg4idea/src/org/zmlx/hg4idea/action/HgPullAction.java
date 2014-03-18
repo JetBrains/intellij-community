@@ -51,8 +51,6 @@ public class HgPullAction extends HgAbstractGlobalAction {
       project, dialog.getRepository()
     );
     command.setSource(dialog.getSource());
-    command.setRebase(false);
-    command.setUpdate(false);
 
     command.execute();
   }

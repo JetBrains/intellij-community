@@ -26,8 +26,4 @@ public interface VcsLogBranchFilter extends VcsLogFilter {
 
   @NotNull
   Collection<String> getBranchNames();
-
-  @NotNull
-  Collection<Integer> getMatchingHeads();
-
 }

@@ -37,6 +37,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actionSystem.EditorAction;
+import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.editor.actions.SplitLineAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -68,6 +73,7 @@ import com.jetbrains.python.console.completion.PydevConsoleElement;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.debugger.PySourcePosition;
+import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.ProcessRunner;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -160,6 +166,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
     actions.add(backspaceHandlingAction);
     actions.add(interruptAction);
+
+    actions.add(createSplitLineAction());
 
     AnAction showVarsAction = new ShowVarsAction();
     toolbarActions.add(showVarsAction);
@@ -307,7 +315,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
   private Process createRemoteConsoleProcess(PythonRemoteInterpreterManager manager, String[] command, Map<String, String> env)
     throws ExecutionException {
-    RemoteSdkCredentials data = (RemoteSdkCredentials)mySdk.getSdkAdditionalData();
+    PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
     assert data != null;
 
     GeneralCommandLine commandLine = new GeneralCommandLine(command);
@@ -325,18 +333,20 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     commandLine.getParametersList().set(3, "0");
 
     myCommandLine = commandLine.getCommandLineString();
-
-    RemoteSshProcess remoteProcess =
-      manager.createRemoteProcess(getProject(), data, commandLine, true);
-
-
-    Pair<Integer, Integer> remotePorts = getRemotePortsFromProcess(remoteProcess);
-
-    remoteProcess.addLocalTunnel(myPorts[0], data.getHost(), remotePorts.first);
-    remoteProcess.addRemoteTunnel(remotePorts.second, "localhost", myPorts[1]);
-
-
+    
     try {
+      RemoteSdkCredentials remoteCredentials = data.getRemoteSdkCredentials();
+      
+      RemoteSshProcess remoteProcess =
+        manager.createRemoteProcess(getProject(), remoteCredentials, commandLine, true);
+
+
+      Pair<Integer, Integer> remotePorts = getRemotePortsFromProcess(remoteProcess);
+
+      remoteProcess.addLocalTunnel(myPorts[0], remoteCredentials.getHost(), remotePorts.first);
+      remoteProcess.addRemoteTunnel(remotePorts.second, "localhost", myPorts[1]);
+
+      
       myPydevConsoleCommunication = new PydevConsoleCommunication(getProject(), myPorts[0], remoteProcess, myPorts[1]);
       return remoteProcess;
     }
@@ -572,6 +582,40 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     };
     stopAction.copyFrom(generalStopAction);
     return stopAction;
+  }
+
+  protected AnAction createSplitLineAction() {
+
+    class ConsoleSplitLineAction extends EditorAction {
+
+      private static final String CONSOLE_SPLIT_LINE_ACTION_ID = "Console.SplitLine";
+
+      public ConsoleSplitLineAction() {
+        super(new EditorWriteActionHandler() {
+
+          private final SplitLineAction mySplitLineAction = new SplitLineAction();
+
+          @Override
+          public boolean isEnabled(Editor editor, DataContext dataContext) {
+            return mySplitLineAction.getHandler().isEnabled(editor, dataContext);
+          }
+
+          @Override
+          public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+            ((EditorWriteActionHandler)mySplitLineAction.getHandler()).executeWriteAction(editor, caret, dataContext);
+            editor.getCaretModel().getCurrentCaret().moveCaretRelatively(0, 1, false, true);
+          }
+        });
+      }
+
+      public void setup() {
+        EmptyAction.setupAction(this, CONSOLE_SPLIT_LINE_ACTION_ID, null);
+      }
+    }
+
+    ConsoleSplitLineAction action = new ConsoleSplitLineAction();
+    action.setup();
+    return action;
   }
 
   private void closeCommunication() {

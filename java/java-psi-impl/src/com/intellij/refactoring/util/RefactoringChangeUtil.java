@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +45,31 @@ public class RefactoringChangeUtil {
     return PsiKeyword.SUPER.equals(name);
   }
 
+  public static PsiType getTypeByExpression(PsiExpression expr) {
+    PsiType type = expr.getType();
+    if (type == null) {
+      if (expr instanceof PsiArrayInitializerExpression) {
+        PsiExpression[] initializers = ((PsiArrayInitializerExpression)expr).getInitializers();
+        if (initializers.length > 0) {
+          PsiType initType = getTypeByExpression(initializers[0]);
+          if (initType == null) return null;
+          return initType.createArrayType();
+        }
+      }
+
+      if (expr instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand(expr)) {
+        return getTypeByExpression(((PsiAssignmentExpression)expr.getParent()).getRExpression());
+      }
+      return null;
+    }
+    PsiClass refClass = PsiUtil.resolveClassInType(type);
+    if (refClass instanceof PsiAnonymousClass) {
+      type = ((PsiAnonymousClass)refClass).getBaseClassType();
+    }
+
+    return GenericsUtil.getVariableTypeByExpressionType(type);
+  }
+  
   public static PsiReferenceExpression qualifyReference(@NotNull PsiReferenceExpression referenceExpression,
                                                         @NotNull PsiMember member,
                                                         @Nullable final PsiClass qualifyingClass) throws IncorrectOperationException {

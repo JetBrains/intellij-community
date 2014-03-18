@@ -13,12 +13,12 @@ class SortedOp<T> implements StatefulOp<T, T> {
     }
 }
 
-class Usage<T> {
-    public <E, S extends BaseStream<E>> S pipeline(IntermediateOp<T, E> newOp) { return null; }
-    public <R> R pipeline(TerminalOp<T, R> terminal) { return null;}
+class Usage<Ts> {
+    public <E, S extends BaseStream<E>> S pipeline(IntermediateOp<Ts, E> newOp) { return null; }
+    public <R> R pipeline(TerminalOp<Ts, R> terminal) { return null;}
 
 
-    public Stream<T> sorted(Comparator<? super T> comparator) {
+    public Stream<Ts> sorted(Comparator<? super Ts> comparator) {
         return pipeline(new SortedOp<>(comparator));
     }
 }

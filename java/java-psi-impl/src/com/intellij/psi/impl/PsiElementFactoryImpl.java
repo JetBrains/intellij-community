@@ -165,7 +165,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     final PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
     final PsiClass refClass = resolveResult.getElement();
     assert refClass != null : type;
-    return new LightClassReference(myManager, type.getCanonicalText(), refClass, resolveResult.getSubstitutor());
+    return new LightClassReference(myManager, type.getCanonicalText(true), refClass, resolveResult.getSubstitutor());
   }
 
   @NotNull
@@ -186,7 +186,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       builder.append(" extends ");
       for (PsiClassType type : superTypes) {
         if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) continue;
-        builder.append(type.getCanonicalText()).append('&');
+        builder.append(type.getCanonicalText(true)).append('&');
       }
 
       builder.delete(builder.length() - 1, builder.length());
@@ -208,7 +208,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       throw new IncorrectOperationException("Cannot create field with type \"null\".");
     }
 
-    @NonNls final String text = "class _Dummy_ { private " + type.getCanonicalText() + " " + name + "; }";
+    @NonNls final String text = "class _Dummy_ { private " + type.getCanonicalText(true) + " " + name + "; }";
     final PsiJavaFile aFile = createDummyJavaFile(text);
     final PsiClass[] classes = aFile.getClasses();
     if (classes.length < 1) {
@@ -232,7 +232,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       throw new IncorrectOperationException("Cannot create method with type \"null\".");
     }
 
-    final String canonicalText = returnType.getCanonicalText();
+    final String canonicalText = returnType.getCanonicalText(true);
     final PsiJavaFile aFile = createDummyJavaFile("class _Dummy_ { public " + canonicalText + " " + name + "() {} }");
     final PsiClass[] classes = aFile.getClasses();
     if (classes.length < 1) {
@@ -282,7 +282,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       throw new IncorrectOperationException("Cannot create parameter with type \"null\".");
     }
 
-    final String text = type.getCanonicalText() + " " + name;
+    final String text = type.getCanonicalText(true) + " " + name;
     PsiParameter parameter = createParameterFromText(text, null);
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myManager.getProject());
     PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL,
@@ -294,7 +294,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   @Override
   public PsiParameter createParameter(@NotNull @NonNls String name, PsiType type, PsiElement context) throws IncorrectOperationException {
-    final PsiMethod psiMethod = createMethodFromText("void f(" + type.getCanonicalText() + " " + name + ") {}", context);
+    final PsiMethod psiMethod = createMethodFromText("void f(" + type.getCanonicalText(true) + " " + name + ") {}", context);
     final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
     return parameters[0];
   }
@@ -480,7 +480,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     builder.append("void method(");
     for (int i = 0; i < names.length; i++) {
       if (i > 0) builder.append(", ");
-      builder.append(types[i].getCanonicalText()).append(' ').append(names[i]);
+      builder.append(types[i].getCanonicalText(true)).append(' ').append(names[i]);
     }
     builder.append(");");
     return createMethodFromText(builder.toString(), null).getParameterList();
@@ -742,7 +742,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       throw new IncorrectOperationException("Unexpected type:" + exceptionType);
     }
 
-    @NonNls final String text = "catch (" + exceptionType.getCanonicalText() +  " " + exceptionName + ") {}";
+    @NonNls final String text = "catch (" + exceptionType.getCanonicalText(true) +  " " + exceptionName + ") {}";
     final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, CATCH_SECTION, level(context)), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiCatchSection)) {

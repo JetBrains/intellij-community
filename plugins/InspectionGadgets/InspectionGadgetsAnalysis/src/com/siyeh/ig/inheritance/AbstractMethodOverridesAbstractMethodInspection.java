@@ -217,7 +217,7 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
       if (aClass == null || superClass == null) return false;
       final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
       final PsiType type2 = method2.getReturnType();
-      return Comparing.equal(TypeConversionUtil.erasure(type1), TypeConversionUtil.erasure(substitutor.substitute(type2)));
+      return Comparing.equal(type1, substitutor.substitute(type2));
     }
 
     private boolean isAbstract(PsiMethod method) {

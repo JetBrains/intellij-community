@@ -99,7 +99,7 @@ public abstract class DomUIFactory {
 
   @Nullable
   public static Method findMethod(Class clazz, @NonNls String methodName) {
-    for (Method method : clazz.getMethods()) {
+    for (Method method : ReflectionUtil.getClassPublicMethods(clazz)) {
       if (methodName.equals(method.getName())) {
         return method;
       }

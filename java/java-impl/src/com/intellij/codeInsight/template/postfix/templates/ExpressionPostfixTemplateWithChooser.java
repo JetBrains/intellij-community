@@ -81,7 +81,8 @@ public abstract class ExpressionPostfixTemplateWithChooser extends PostfixTempla
 
   @NotNull
   protected List<PsiExpression> getExpressions(@NotNull PsiElement context, @NotNull Document document, final int offset) {
-    List<PsiExpression> expressions = ContainerUtil.filter(IntroduceVariableBase.collectExpressions(context.getContainingFile(), document, offset - 1, false), 
+    List<PsiExpression> expressions = ContainerUtil.filter(IntroduceVariableBase.collectExpressions(context.getContainingFile(), document, 
+                                                                                                    Math.max(offset - 1, 0), false), 
                                                            new Condition<PsiExpression>() {
                                                              @Override
                                                              public boolean value(PsiExpression expression) {

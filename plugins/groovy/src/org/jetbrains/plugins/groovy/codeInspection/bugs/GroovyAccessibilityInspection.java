@@ -140,7 +140,7 @@ public class GroovyAccessibilityInspection extends BaseInspection {
           fixes.add(new GrModifierFix(refElement, modifier, true, true, new Function<ProblemDescriptor, PsiModifierList>() {
             @Override
             public PsiModifierList fun(ProblemDescriptor descriptor) {
-              final PsiElement element = descriptor.getPsiElement();
+              PsiElement element = descriptor.getPsiElement().getParent();
               assert element instanceof GrReferenceElement : element;
               final PsiElement resolved = ((GrReferenceElement)element).resolve();
               assert resolved instanceof PsiModifierListOwner : resolved;

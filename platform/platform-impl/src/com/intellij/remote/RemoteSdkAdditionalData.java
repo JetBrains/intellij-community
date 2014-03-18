@@ -40,4 +40,8 @@ public interface RemoteSdkAdditionalData<T extends RemoteSdkCredentials>
   void setSshCredentials(@NotNull RemoteCredentialsHolder credentials);
 
   void setDeploymentConnectionType(@NotNull WebDeploymentCredentialsHolder credentials);
+
+  CredentialsType getRemoteConnectionType();
+
+  void switchOnConnectionType(RemoteSdkConnectionAcceptor acceptor);
 }

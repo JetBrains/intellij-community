@@ -30,9 +30,11 @@ import com.intellij.remoteServer.util.CloudAccountSelectionEditor;
 import com.intellij.remoteServer.util.CloudBundle;
 import com.intellij.remoteServer.util.CloudDeploymentNameConfiguration;
 import com.intellij.util.containers.MultiMap;
+import git4idea.actions.GitInit;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -91,15 +93,16 @@ public class CloudGitChooseAccountStep<DC extends CloudDeploymentNameConfigurati
 
     List<ModuleDescriptor> modules = new ArrayList<ModuleDescriptor>();
     for (Map.Entry<CloudGitProjectRoot, Collection<DetectedSourceRoot>> project2sourceRootsEntry : project2sourceRoots.entrySet()) {
-      CloudGitProjectRoot projectRoot = project2sourceRootsEntry.getKey();
-      ModuleDescriptor moduleDescriptor
-        = new ModuleDescriptor(projectRoot.getDirectory(), StdModuleTypes.JAVA, project2sourceRootsEntry.getValue());
+      final CloudGitProjectRoot projectRoot = project2sourceRootsEntry.getKey();
+      final File directory = projectRoot.getDirectory();
+      ModuleDescriptor moduleDescriptor = new ModuleDescriptor(directory, StdModuleTypes.JAVA, project2sourceRootsEntry.getValue());
       final String applicationName = projectRoot.getApplicationName();
       moduleDescriptor.addConfigurationUpdater(new ModuleBuilder.ModuleConfigurationUpdater() {
 
         @Override
         public void update(@NotNull Module module, @NotNull ModifiableRootModel rootModel) {
           createRunConfiguration(module, applicationName);
+          GitInit.refreshAndConfigureVcsMappings(module.getProject(), projectRoot.getRepositoryRoot(), directory.getAbsolutePath());
         }
       });
       modules.add(moduleDescriptor);
