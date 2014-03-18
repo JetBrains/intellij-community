@@ -16,18 +16,25 @@
 package com.intellij.ui.messages;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import org.jdesktop.swingx.graphics.GraphicsUtilities;
 import org.jdesktop.swingx.graphics.ShadowRenderer;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Created by Denis Fokin
@@ -59,7 +66,7 @@ public class SheetController {
   int SHEET_NC_HEIGHT = SHEET_HEIGHT + SHADOW_BORDER ;
 
 
-  private Icon myIcon = AllIcons.Logo_welcomeScreen;
+  private Icon myIcon = UIUtil.getInformationIcon();
 
   private String myResult;
   private JPanel mySheetPanel;
@@ -155,6 +162,14 @@ public class SheetController {
     return mySheetPanel;
   }
 
+  private final static int TOP_SHEET_PADDING = 15;
+  private final static int GAP_BETWEEN_TITLE_AND_MESSAGE = 10;
+  private final static int GAP_BETWEEN_MESSAGE_AND_BUTTONS = 10;
+  private final static int BUTTONS_PLUS_CHECKBOX = 70;
+
+  private final static int LEFT_SHEET_PADDING = 35;
+  private final static int LEFT_SHEET_OFFSET = 120;
+
 
   private JPanel createSheetPanel(String title, String message, JButton[] buttons) {
     JPanel sheetPanel = new JPanel() {
@@ -230,16 +245,15 @@ public class SheetController {
 
     messageTextPane.repaint();
 
-
-    SHEET_HEIGHT = 20 + headerLabel.getPreferredSize().height + 10 + messageArea.height + 10 + 70;
-
+    SHEET_HEIGHT = TOP_SHEET_PADDING + headerLabel.getPreferredSize().height + GAP_BETWEEN_TITLE_AND_MESSAGE + messageArea.height
+                   + GAP_BETWEEN_MESSAGE_AND_BUTTONS + BUTTONS_PLUS_CHECKBOX;
 
     ico.setOpaque(false);
     ico.setSize(new Dimension(AllIcons.Logo_welcomeScreen.getIconWidth(), AllIcons.Logo_welcomeScreen.getIconHeight()));
-    ico.setLocation(40, 20);
+    ico.setLocation(LEFT_SHEET_PADDING, TOP_SHEET_PADDING);
     sheetPanel.add(ico);
-    headerLabel.setLocation(140, 20);
-    messageTextPane.setLocation(140, 20 + headerLabel.getPreferredSize().height + 10);
+    headerLabel.setLocation(LEFT_SHEET_OFFSET, TOP_SHEET_PADDING);
+    messageTextPane.setLocation(LEFT_SHEET_OFFSET, TOP_SHEET_PADDING + headerLabel.getPreferredSize().height + GAP_BETWEEN_TITLE_AND_MESSAGE);
     layoutWithAbsoluteLayout(buttons, sheetPanel);
 
     sheetPanel.setFocusCycleRoot(true);
@@ -289,7 +303,7 @@ public class SheetController {
 
   private void layoutButtons(final JButton[] buttons, JPanel panel) {
 
-    int buttonsWidth = 15 * 2;
+    int buttonsWidth = 15;
 
     for (JButton button : buttons) {
       panel.add(button);
@@ -299,13 +313,13 @@ public class SheetController {
 
     SHEET_WIDTH = Math.max(buttonsWidth, SHEET_WIDTH);
 
-    int buttonShift = 15;
+    int buttonShift = 0;
 
     for (JButton button : buttons) {
       Dimension size = button.getPreferredSize();
       buttonShift += size.width;
       button.setBounds(SHEET_WIDTH - buttonShift,
-                       SHEET_HEIGHT - 45,
+                       SHEET_HEIGHT - 40,
                        size.width, size.height);
       buttonShift += 10;
     }
@@ -321,7 +335,7 @@ public class SheetController {
     });
     doNotAskCheckBox.repaint();
     doNotAskCheckBox.setSize(doNotAskCheckBox.getPreferredSize());
-    doNotAskCheckBox.setLocation(120, SHEET_HEIGHT - 70);
+    doNotAskCheckBox.setLocation(LEFT_SHEET_OFFSET, SHEET_HEIGHT - BUTTONS_PLUS_CHECKBOX);
   }
 
   /**
