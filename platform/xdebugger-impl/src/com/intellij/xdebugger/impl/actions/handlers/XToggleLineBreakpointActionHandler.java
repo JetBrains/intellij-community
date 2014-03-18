@@ -45,16 +45,15 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
   }
 
   public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {
-    XSourcePosition position = XDebuggerUtilImpl.getCaretPosition(project, event.getDataContext());
-    if (position == null) return false;
-
     XLineBreakpointType<?>[] breakpointTypes = XDebuggerUtil.getInstance().getLineBreakpointTypes();
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
-    for (XLineBreakpointType<?> breakpointType : breakpointTypes) {
-      final VirtualFile file = position.getFile();
-      final int line = position.getLine();
-      if (breakpointType.canPutAt(file, line, project) || breakpointManager.findBreakpointAtLine(breakpointType, file, line) != null) {
-        return true;
+    for (XSourcePosition position : XDebuggerUtilImpl.getAllCaretsPositions(project, event.getDataContext())) {
+      for (XLineBreakpointType<?> breakpointType : breakpointTypes) {
+        final VirtualFile file = position.getFile();
+        final int line = position.getLine();
+        if (breakpointType.canPutAt(file, line, project) || breakpointManager.findBreakpointAtLine(breakpointType, file, line) != null) {
+          return true;
+        }
       }
     }
     return false;
