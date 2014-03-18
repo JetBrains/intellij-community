@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.impl.gson.GsonUtil;
 import com.intellij.tasks.impl.httpclient.NewBaseRepositoryImpl;
 import com.intellij.tasks.redmine.model.RedmineIssue;
@@ -13,6 +14,8 @@ import com.intellij.tasks.redmine.model.RedmineResponseWrapper;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
@@ -92,7 +95,18 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
   @Override
   public void testConnection() throws Exception {
-    getIssues("", 0, 1, true);
+    // Strangely, but Redmine doesn't return 401 or 403 error if client sent wrong credentials and instead
+    // merely returns empty array of issues with status code of 200. This means that we should attempt to fetch
+    // something more specific than issues to test connection and configuration.
+    HttpResponse response = getHttpClient().execute(new HttpGet(getRestApiUrl("users", "current.json")));
+    //TaskUtil.prettyFormatResponseToLog(LOG, response);
+    int code = response.getStatusLine().getStatusCode();
+    if (code != HttpStatus.SC_OK) {
+      if (code == HttpStatus.SC_UNAUTHORIZED) {
+        throw new Exception(TaskBundle.message("failure.login"));
+      }
+      throw new Exception(TaskBundle.message("failure.http.error", code, response.getStatusLine().getReasonPhrase()));
+    }
   }
 
   @Override
