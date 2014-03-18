@@ -53,6 +53,10 @@ public class MavenProjectConfiguration {
   @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, entryTagName = "artifact", keyAttributeName = "name")
   public Map<String, MavenWebArtifactConfiguration> webArtifactConfigs = new THashMap<String, MavenWebArtifactConfiguration>();
 
+  @Tag("ejb-client-artifact-cfg")
+  @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, entryTagName = "artifact", keyAttributeName = "name")
+  public Map<String, MavenEjbClientConfiguration> ejbClientArtifactConfigs = new THashMap<String, MavenEjbClientConfiguration>();
+
   @Nullable
   public MavenModuleResourceConfiguration findProject(MavenIdBean id) {
     return getModuleConfigurationMap().get(id);
