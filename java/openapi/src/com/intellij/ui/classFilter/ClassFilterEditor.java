@@ -249,7 +249,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     }
 
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-      return isEnabled() && (columnIndex == CHECK_MARK);
+      return isEnabled();
     }
 
     public void removeRow(final int idx) {
