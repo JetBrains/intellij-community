@@ -18,28 +18,16 @@ package org.jetbrains.plugins.github.test;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.TestVcsNotifier;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.VfsTestUtil;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import git4idea.DialogManager;
-import git4idea.GitUtil;
 import git4idea.commands.GitHttpAuthService;
 import git4idea.commands.GitHttpAuthenticator;
 import git4idea.config.GitConfigUtil;
-import git4idea.config.GitVcsSettings;
 import git4idea.remote.GitHttpAuthTestService;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import git4idea.test.GitExecutor;
-import git4idea.test.GitTestUtil;
-import git4idea.test.TestDialogManager;
+import git4idea.test.GitPlatformTest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.util.GithubAuthData;
@@ -64,33 +52,18 @@ import static org.junit.Assume.assumeNotNull;
  * </p>
  *
  */
-public abstract class GithubTest extends UsefulTestCase {
+public abstract class GithubTest extends GitPlatformTest {
 
-  @NotNull protected Project myProject;
-  @NotNull protected VirtualFile myProjectRoot;
   @Nullable protected GitRepository myRepository;
-  @NotNull protected GitRepositoryManager myGitRepositoryManager;
 
-  @NotNull protected GitVcsSettings myGitSettings;
   @NotNull protected GithubSettings myGitHubSettings;
   @NotNull private GitHttpAuthTestService myHttpAuthService;
-
-  @NotNull protected TestDialogManager myDialogManager;
-  @NotNull protected TestVcsNotifier myVcsNotifier;
-
-  @NotNull private IdeaProjectTestFixture myProjectFixture;
 
   @NotNull protected GithubAuthData myAuth;
   @NotNull protected String myHost;
   @NotNull protected String myLogin1;
   @NotNull protected String myLogin2;
   @NotNull protected String myPassword;
-
-  @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors", "UnusedDeclaration"})
-  protected GithubTest() {
-    PlatformTestCase.initPlatformLangPrefix();
-    GitTestUtil.setDefaultBuiltInServerPort();
-  }
 
   protected void createProjectFiles() {
     VfsTestUtil.createFile(myProjectRoot, "file.txt", "file.txt content");
@@ -187,21 +160,6 @@ public abstract class GithubTest extends UsefulTestCase {
 
     super.setUp();
 
-    try {
-      myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName(true)).getFixture();
-      myProjectFixture.setUp();
-    }
-    catch (Exception e) {
-      super.tearDown();
-      throw e;
-    }
-
-    myProject = myProjectFixture.getProject();
-    myProjectRoot = myProject.getBaseDir();
-
-    myGitSettings = GitVcsSettings.getInstance(myProject);
-    myGitSettings.getAppSettings().setPathToGit(GitExecutor.PathHolder.GIT_EXECUTABLE);
-
     myHost = host;
     myLogin1 = login1;
     myLogin2 = login2;
@@ -211,11 +169,8 @@ public abstract class GithubTest extends UsefulTestCase {
     myGitHubSettings = GithubSettings.getInstance();
     myGitHubSettings.setAuthData(myAuth, false);
 
-    myDialogManager = (TestDialogManager)ServiceManager.getService(DialogManager.class);
-    myVcsNotifier = (TestVcsNotifier)ServiceManager.getService(myProject, VcsNotifier.class);
     myHttpAuthService = (GitHttpAuthTestService)ServiceManager.getService(GitHttpAuthService.class);
 
-    myGitRepositoryManager = GitUtil.getRepositoryManager(myProject);
 
     try {
       beforeTest();
@@ -238,10 +193,6 @@ public abstract class GithubTest extends UsefulTestCase {
     }
     finally {
       myHttpAuthService.cleanup();
-      myDialogManager.cleanup();
-      myVcsNotifier.cleanup();
-
-      myProjectFixture.tearDown();
       super.tearDown();
     }
   }
