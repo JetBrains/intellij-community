@@ -79,6 +79,25 @@ public class IOUtil {
     }
   }
 
+  private static final ThreadLocal<SoftReference<byte[]>> ourReadWriteBuffersCache = new ThreadLocal<SoftReference<byte[]>>();
+
+  public static void writeUTF(@NotNull DataOutput storage, @NotNull final String value) throws IOException {
+    writeUTFFast(getThreadLocalOrCreateReadWriteUTFBuffer(), storage, value);
+  }
+
+  public static String readUTF(@NotNull DataInput storage) throws IOException {
+    return readUTFFast(getThreadLocalOrCreateReadWriteUTFBuffer(), storage);
+  }
+
+  private static byte[] getThreadLocalOrCreateReadWriteUTFBuffer() {
+    byte[] buffer = SoftReference.dereference(ourReadWriteBuffersCache.get());
+    if (buffer == null) {
+      buffer = allocReadWriteUTFBuffer();
+      ourReadWriteBuffersCache.set(new SoftReference<byte[]>(buffer));
+    }
+    return buffer;
+  }
+
   @NotNull
   public static byte[] allocReadWriteUTFBuffer() {
     return new byte[STRING_LENGTH_THRESHOLD + STRING_HEADER_SIZE];
