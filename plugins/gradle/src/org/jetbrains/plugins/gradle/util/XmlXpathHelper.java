@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.util;
 
-import com.sun.javafx.beans.annotations.NonNull;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
@@ -44,7 +43,7 @@ public class XmlXpathHelper {
    * @param namespaceAware whether the parser is namespace aware
    * @throws XmlParserException
    */
-  public XmlXpathHelper(@NonNull String xml, boolean namespaceAware) throws XmlParserException {
+  public XmlXpathHelper(String xml, boolean namespaceAware) throws XmlParserException {
     xpath = XPathFactory.newInstance().newXPath();
     try {
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -58,7 +57,7 @@ public class XmlXpathHelper {
     }
   }
 
-  public XmlXpathHelper(@NonNull String xml) throws XmlParserException {
+  public XmlXpathHelper(String xml) throws XmlParserException {
     this(xml, false);
   }
 
