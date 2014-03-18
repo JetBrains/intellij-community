@@ -49,9 +49,9 @@ public class MavenProjectConfiguration {
   @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, entryTagName = "maven-module", keyAttributeName = "name")
   public Map<String, MavenModuleResourceConfiguration> moduleConfigurations = new THashMap<String, MavenModuleResourceConfiguration>();
 
-  @Tag("web-resources")
+  @Tag("web-artifact-cfg")
   @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, entryTagName = "artifact", keyAttributeName = "name")
-  public Map<String, MavenArtifactResourceConfiguration> artifactsResources = new THashMap<String, MavenArtifactResourceConfiguration>();
+  public Map<String, MavenWebArtifactConfiguration> webArtifactConfigs = new THashMap<String, MavenWebArtifactConfiguration>();
 
   @Nullable
   public MavenModuleResourceConfiguration findProject(MavenIdBean id) {

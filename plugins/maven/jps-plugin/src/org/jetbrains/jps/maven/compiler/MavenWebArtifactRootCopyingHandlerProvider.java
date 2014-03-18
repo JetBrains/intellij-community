@@ -48,7 +48,7 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
     if (!mavenExtensionService.hasMavenProjectConfiguration(buildDataPaths)) return null;
 
     MavenProjectConfiguration projectConfiguration = mavenExtensionService.getMavenProjectConfiguration(buildDataPaths);
-    MavenArtifactResourceConfiguration artifactResourceConfiguration = projectConfiguration.artifactsResources.get(artifact.getName());
+    MavenWebArtifactConfiguration artifactResourceConfiguration = projectConfiguration.webArtifactConfigs.get(artifact.getName());
     if (artifactResourceConfiguration == null) return null;
 
     ResourceRootConfiguration rootConfiguration = artifactResourceConfiguration.getRootConfiguration(root);
