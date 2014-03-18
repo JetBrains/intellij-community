@@ -244,7 +244,6 @@ public class MavenResourceCompilerConfigurationGenerator {
     MavenWebArtifactConfiguration artifactResourceCfg = projectCfg.webArtifactConfigs.get(webArtifactName);
     if (artifactResourceCfg == null) {
       artifactResourceCfg = new MavenWebArtifactConfiguration();
-      artifactResourceCfg.webArtifactName = webArtifactName;
       artifactResourceCfg.moduleName = module.getName();
       projectCfg.webArtifactConfigs.put(webArtifactName, artifactResourceCfg);
     }
