@@ -136,7 +136,7 @@ public class GrReassignedLocalVarsChecker {
     return RecursionManager.doPreventingRecursion(var, false, new NullableComputable<PsiType>() {
       @Override
       public PsiType compute() {
-        final Collection<PsiReference> all = ReferencesSearch.search(var).findAll();
+        final Collection<PsiReference> all = ReferencesSearch.search(var, var.getUseScope()).findAll();
         final GrExpression initializer = var.getInitializerGroovy();
 
         if (initializer == null && all.isEmpty()) {
