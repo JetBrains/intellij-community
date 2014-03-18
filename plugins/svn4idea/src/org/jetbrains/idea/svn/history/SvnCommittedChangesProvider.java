@@ -19,12 +19,14 @@ package org.jetbrains.idea.svn.history;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.changes.committed.VcsCommittedListsZipper;
@@ -39,19 +41,26 @@ import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.ConfigureBranchesAction;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.ISVNLogEntryHandler;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.SVNLogClient;
-import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.*;
 
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -59,6 +68,9 @@ import java.util.*;
  * @author yole
  */
 public class SvnCommittedChangesProvider implements CachingCommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> {
+
+  private final static Logger LOG = Logger.getInstance(SvnCommittedChangesProvider.class);
+
   private final Project myProject;
   private final SvnVcs myVcs;
   private final MessageBusConnection myConnection;
@@ -106,7 +118,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   @Nullable
   public RepositoryLocation getLocationFor(final FilePath root) {
     final String url = SvnUtil.getExactLocation(myVcs, root.getIOFile());
-    return url == null ? null : new SvnRepositoryLocation(url);
+    return url == null ? null : new SvnRepositoryLocation(url, root);
   }
 
   public RepositoryLocation getLocationFor(final FilePath root, final String repositoryPath) {
@@ -398,12 +410,56 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     return true;
   }
 
-  public Collection<FilePath> getIncomingFiles(final RepositoryLocation location) {
-    // TODO: Implement this using "svn status -u" or probably use this command in other part of cache logic
-    // TODO: How to map RepositoryLocation to concrete working copy ???
-    // TODO: Seems that another parameter identifying local copy with for which we're detecting if repository location contains
-    // TODO: incoming files.
-    return null;
+  @Nullable
+  public Collection<FilePath> getIncomingFiles(final RepositoryLocation location) throws VcsException {
+    FilePath root = null;
+
+    if (Registry.is("svn.use.incoming.optimization")) {
+      root = ((SvnRepositoryLocation)location).getRoot();
+
+      if (root == null) {
+        LOG.info("Working copy root is not provided for repository location " + location);
+      }
+    }
+
+    return root != null ? getIncomingFiles(root) : null;
+  }
+
+  @NotNull
+  private Collection<FilePath> getIncomingFiles(@NotNull FilePath root) throws SvnBindException {
+    // TODO: "svn diff -r BASE:HEAD --xml --summarize" command is also suitable here and outputs only necessary changed files,
+    // TODO: while "svn status -u" also outputs other files which could be not modified on server. But for svn 1.7 "--xml --summarize"
+    // TODO: could only be used with url targets - so we could not use "svn diff" here now for all cases (we could not use url with
+    // TODO: concrete revision as there could be mixed revision working copy).
+
+    final Set<FilePath> result = ContainerUtil.newHashSet();
+    File rootFile = root.getIOFile();
+
+    try {
+      myVcs.getFactory(rootFile).createStatusClient()
+        .doStatus(rootFile, SVNRevision.UNDEFINED, SVNDepth.INFINITY, true, false, false, false, new ISVNStatusHandler() {
+          @Override
+          public void handleStatus(SVNStatus status) throws SVNException {
+            File file = status.getFile();
+            boolean changedOnServer = isNotNone(status.getRemoteContentsStatus()) ||
+                                      isNotNone(status.getRemoteNodeStatus()) ||
+                                      isNotNone(status.getRemotePropertiesStatus());
+
+            if (file != null && changedOnServer) {
+              result.add(VcsUtil.getFilePath(file, file.isDirectory()));
+            }
+          }
+        }, null);
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
+
+    return result;
+  }
+
+  private static boolean isNotNone(@Nullable SVNStatusType status) {
+    return status != null && !SVNStatusType.STATUS_NONE.equals(status);
   }
 
   public boolean refreshCacheByNumber() {
