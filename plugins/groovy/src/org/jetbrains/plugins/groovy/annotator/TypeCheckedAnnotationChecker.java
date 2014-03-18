@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,9 @@ public class TypeCheckedAnnotationChecker extends CustomAnnotationChecker {
       return false;
     }
 
-    if (!GroovyConfigUtils.GROOVY2_1.equals(GroovyConfigUtils.getInstance().getSDKVersion(annotation))) return false;
+    String sdkVersion = GroovyConfigUtils.getInstance().getSDKVersion(annotation);
+    if (!("2.1".equals(sdkVersion) ||
+          "2.1.0".equals(sdkVersion))) return false;
 
     GrAnnotationNameValuePair[] attributes = annotation.getParameterList().getAttributes();
     Map<PsiElement, String> errorMap = ContainerUtil.newHashMap();
