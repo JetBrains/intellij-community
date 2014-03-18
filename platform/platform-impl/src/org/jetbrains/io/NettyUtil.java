@@ -27,8 +27,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.channel.socket.oio.OioSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.HttpRequestDecoder;
-import io.netty.handler.codec.http.HttpResponseEncoder;
+import io.netty.handler.codec.http.HttpServerCodec;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
@@ -130,7 +129,7 @@ public final class NettyUtil {
     return bootstrap;
   }
 
-  public static void initHttpHandlers(ChannelPipeline pipeline) {
-    pipeline.addLast(new HttpRequestDecoder(), new HttpObjectAggregator(1048576 * 10), new HttpResponseEncoder());
+  public static void addHttpServerCodec(ChannelPipeline pipeline) {
+    pipeline.addLast(new HttpServerCodec(), new HttpObjectAggregator(1048576 * 10));
   }
 }
