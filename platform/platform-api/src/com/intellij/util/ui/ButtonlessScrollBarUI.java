@@ -62,6 +62,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   private final AdjustmentListener myAdjustmentListener;
   private final MouseMotionAdapter myMouseMotionListener;
   private final MouseAdapter myMouseListener;
+  private final AWTEventListener myAWTListener;
 
   public static final int DELAY_FRAMES = 4;
   public static final int FRAMES_COUNT = 10 + DELAY_FRAMES;
@@ -82,7 +83,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     myAdjustmentListener = new AdjustmentListener() {
       @Override
       public void adjustmentValueChanged(AdjustmentEvent e) {
-        resetThumbAnimator();
+        resetRegularThumbAnimator();
         resetMacScrollbarFadeout();
       }
     };
@@ -93,7 +94,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
         boolean inside = isOverThumb(e.getPoint());
         if (inside != myMouseIsOverThumb) {
           myMouseIsOverThumb = inside;
-          resetThumbAnimator();
+          resetRegularThumbAnimator();
         }
       }
     };
@@ -110,11 +111,23 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       public void mouseExited(MouseEvent e) {
         if (myMouseIsOverThumb) {
           myMouseIsOverThumb = false;
-          resetThumbAnimator();
+          resetRegularThumbAnimator();
         }
 
         myMouseOverScrollbar = false;
         resetMacScrollbarFadeout();
+      }
+    };
+
+    myAWTListener = new AWTEventListener() {
+      @Override
+      public void eventDispatched(AWTEvent event) {
+        if (event.getID() == MouseEvent.MOUSE_MOVED) {
+          // user is moving mouse outside of the scrollbar and fade-out hasn't started yet 
+          if (!myMouseOverScrollbar && !isMacScrollbarHidden && myMacScrollbarFadeLevel == 0) {
+            resetMacScrollbarFadeout();
+          }
+        }
       }
     };
   }
@@ -155,7 +168,9 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     return incrButton.getHeight();
   }
 
-  private void resetThumbAnimator() {
+  private void resetRegularThumbAnimator() {
+    if (isMacScrollbar()) return;
+    
     myThumbFadeAnimator.reset();
     if (scrollbar != null && scrollbar.getValueIsAdjusting() || myMouseIsOverThumb || Registry.is("ui.no.bangs.and.whistles")) {
       myThumbFadeAnimator.suspend();
@@ -212,43 +227,24 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   @Override
   protected void installListeners() {
     if (myThumbFadeAnimator == null || myThumbFadeAnimator.isDisposed()) {
-      myThumbFadeAnimator = createAnimator();
+      myThumbFadeAnimator = createRegularThumbAnimator();
     }
     
     if (myMacScrollbarFadeAnimator == null || myMacScrollbarFadeAnimator.isDisposed()) {
-      myMacScrollbarFadeAnimator = new Animator("Mac scrollbar fade animator", 30, 800, false) {
-        @Override
-        protected void paintCycleEnd() {
-          isMacScrollbarHidden = true;
-          myMouseOverScrollbar = false;
-          myMouseOverScrollbarStarted = false;
-
-          if (scrollbar != null) scrollbar.repaint();
-        }
-
-        @Override
-        public void paintNow(int frame, int totalFrames, int cycle) {
-          int delay = (int)(totalFrames / 1.5);
-          int frameAfterDelay = frame - delay;
-          
-          if (frameAfterDelay > 0) {
-            myMacScrollbarFadeLevel = frameAfterDelay / (float)(totalFrames - delay);
-            if (scrollbar != null) scrollbar.repaint();
-          }
-        }
-      };
+      myMacScrollbarFadeAnimator = createMacScrollbarAnimator();
     } 
 
     super.installListeners();
     scrollbar.addAdjustmentListener(myAdjustmentListener);
     scrollbar.addMouseListener(myMouseListener);
     scrollbar.addMouseMotionListener(myMouseMotionListener);
-    
+    Toolkit.getDefaultToolkit().addAWTEventListener(myAWTListener, AWTEvent.MOUSE_MOTION_EVENT_MASK);
+
     resetMacScrollbarFadeout();
   }
 
-  private Animator createAnimator() {
-    return new Animator("Adjustment fadeout", FRAMES_COUNT, FRAMES_COUNT * 50, false) {
+  private Animator createRegularThumbAnimator() {
+    return new Animator("Regular scrollbar thumb animator", FRAMES_COUNT, FRAMES_COUNT * 50, false) {
       @Override
       public void paintNow(int frame, int totalFrames, int cycle) {
         myThumbFadeColorShift = getAnimationColorShift();
@@ -258,6 +254,30 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
         if (scrollbar != null) {
           scrollbar.repaint(((ButtonlessScrollBarUI)scrollbar.getUI()).getThumbBounds());
+        }
+      }
+    };
+  }
+
+  private Animator createMacScrollbarAnimator() {
+    return new Animator("Mac scrollbar fade animator", 30, 1000, false) {
+      @Override
+      protected void paintCycleEnd() {
+        isMacScrollbarHidden = true;
+        myMouseOverScrollbar = false;
+        myMouseOverScrollbarStarted = false;
+
+        if (scrollbar != null) scrollbar.repaint();
+      }
+
+      @Override
+      public void paintNow(int frame, int totalFrames, int cycle) {
+        int delay = (int)(totalFrames / 1.5);
+        int frameAfterDelay = frame - delay;
+
+        if (frameAfterDelay > 0) {
+          myMacScrollbarFadeLevel = frameAfterDelay / (float)(totalFrames - delay);
+          if (scrollbar != null) scrollbar.repaint();
         }
       }
     };
@@ -280,8 +300,11 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       super.uninstallListeners();
     }
     Disposer.dispose(myMacScrollbarFadeAnimator);
-    
+
+    Toolkit.getDefaultToolkit().removeAWTEventListener(myAWTListener);
     scrollbar.removeAdjustmentListener(myAdjustmentListener);
+    scrollbar.removeMouseListener(myMouseListener);
+    scrollbar.removeMouseMotionListener(myMouseMotionListener);
     Disposer.dispose(myThumbFadeAnimator);
   }
 
