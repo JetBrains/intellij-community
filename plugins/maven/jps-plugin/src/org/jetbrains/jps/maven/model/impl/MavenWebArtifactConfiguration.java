@@ -32,9 +32,6 @@ import java.util.Map;
  * @author Sergey Evdokimov
  */
 public class MavenWebArtifactConfiguration {
-  @Tag("web-artifact-name")
-  public String webArtifactName;
-
   @Tag("module-name")
   public String moduleName;
 
