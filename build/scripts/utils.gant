@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -255,11 +255,15 @@ binding.setVariable("platformApiModules", [
   "lvcs-api",
   "projectModel-api",
   "platform-api",
+  "structure-view-api",
   "usageView",
   "vcs-api",
+  "vcs-log-api",
   "xdebugger-api",
+  "xml-analysis-api",
   "xml-openapi",
   "xml-psi-api",
+  "xml-structure-view-api",
 ])
 
 
@@ -276,7 +280,10 @@ binding.setVariable("platformImplementationModules", [
   "lvcs-impl",
   "projectModel-impl",
   "platform-impl",
+  "structure-view-impl",
   "vcs-impl",
+  "vcs-log-graph",
+  "vcs-log-impl",
   "testRunner",
   "smRunner",
   "relaxng",
@@ -284,7 +291,9 @@ binding.setVariable("platformImplementationModules", [
   "spellchecker",
   "xdebugger-impl",
   "xml",
+  "xml-analysis-impl",
   "xml-psi-impl",
+  "xml-structure-view-impl",
 ])
 
 binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
@@ -303,7 +312,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   String executable = args.executable != null ? args.executable : p("component.names.product").toLowerCase()
   String helpId = args.help_id != null ? args.help_id : "IJ"
   String icns = "idea.icns"
-  String helpIcns = "$path/Resources/${helpId}.help/Contents/Resources/Shared/product.icns"
+  String helpIcns = "$path/Resources/${helpId}.help/Resources/Shared/product.icns"
   if (args.icns != null) {
     ant.delete(file: "$path/Resources/idea.icns")
     ant.copy(file: args.icns, todir: "$path/Resources")
@@ -341,6 +350,14 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
 
   String classPath = classPathLibs.collect {"\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
 
+  String archs = """
+    <key>LSArchitecturePriority</key>
+    <array>"""
+  (args.archs != null ? args.archs : ["x86_64", "i386"]).each {
+    archs += "<string>${it}</string>"
+  }
+  archs +="</array>\n"
+  
   String urlSchemes = ""
   if (args.urlSchemes != null) {
     urlSchemes += """
@@ -378,6 +395,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     replacefilter(token: "@@class_path@@", value: classPath)
     replacefilter(token: "@@help_id@@", value: helpId)
     replacefilter(token: "@@url_schemes@@", value: urlSchemes)
+    replacefilter(token: "@@archs@@", value: archs)
   }
 
   if (executable != "idea") {
@@ -391,6 +409,8 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   if (args.inspect_script != null && args.inspect_script != "inspect") {
     ant.move(file: "$path/bin/inspect.sh", tofile: "$path/bin/${args.inspect_script}.sh")
   }
+
+  ant.fixcrlf(srcdir: "$path/bin", includes: "*.sh", eol: "unix")
 })
 
 binding.setVariable("winScripts", { String target, String home, String name, Map args ->
@@ -470,20 +490,26 @@ binding.setVariable("unixScripts", { String target, String home, String name, Ma
 })
 
 binding.setVariable("winVMOptions", { String target, String system_selector, String name, String name64 = null ->
-  def options = isEap() && system_selector != null ? vmOptions32yjp(system_selector) : vmOptions32()
-  ant.echo(file: "$target/bin/${name}.vmoptions", message: options.replace(' ', '\n'))
+  if (name != null) {
+    def options = isEap() && system_selector != null ? vmOptions32yjp(system_selector) : vmOptions32()
+    ant.echo(file: "$target/bin/${name}.vmoptions", message: options.replace(' ', '\n'))
+  }
 
   if (name64 != null) {
-    options = isEap() && system_selector != null ? vmOptions64yjp(system_selector) : vmOptions64()
+    def options = isEap() && system_selector != null ? vmOptions64yjp(system_selector) : vmOptions64()
     ant.echo(file: "$target/bin/${name64}.vmoptions", message: options.replace(' ', '\n'))
   }
 
   ant.fixcrlf(srcdir: "$target/bin", includes: "*.vmoptions", eol: "dos")
 })
 
-binding.setVariable("unixVMOptions", { String target, String name ->
-  ant.echo(file: "$target/bin/${name}.vmoptions", message: "${vmOptions32()} -Dawt.useSystemAAFontSettings=lcd".trim().replace(' ', '\n'))
-  ant.echo(file: "$target/bin/${name}64.vmoptions", message: "${vmOptions64()} -Dawt.useSystemAAFontSettings=lcd".trim().replace(' ', '\n'))
+binding.setVariable("unixVMOptions", { String target, String name, String name64 = (name + "64") ->
+  if (name != null) {
+    ant.echo(file: "$target/bin/${name}.vmoptions", message: "${vmOptions32()} -Dawt.useSystemAAFontSettings=lcd".trim().replace(' ', '\n'))
+  }
+  if (name64 != null) {
+    ant.echo(file: "$target/bin/${name64}.vmoptions", message: "${vmOptions64()} -Dawt.useSystemAAFontSettings=lcd".trim().replace(' ', '\n'))
+  }
   ant.fixcrlf(srcdir: "$target/bin", includes: "*.vmoptions", eol: "unix")
 })
 
@@ -672,9 +698,10 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
     allPaths.each {
       zipfileset(dir: it, prefix: zipRoot) {
         exclude(name: "bin/*.sh")
+        exclude(name: "bin/*.py")
         exclude(name: "bin/fsnotifier")
         exclude(name: "bin/restarter")
-        exclude(name: "Contents/MacOS/*")
+        exclude(name: "MacOS/*")
         extraBins.each {
           exclude(name: it)
         }
@@ -685,9 +712,10 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
     allPaths.each {
       zipfileset(dir: it, filemode: "755", prefix: zipRoot) {
         include(name: "bin/*.sh")
+        include(name: "bin/*.py")
         include(name: "bin/fsnotifier")
         include(name: "bin/restarter")
-        include(name: "Contents/MacOS/*")
+        include(name: "MacOS/*")
         extraBins.each {
           include(name: it)
         }
@@ -698,7 +726,7 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
   }
 })
 
-binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths ->
+binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths, List extraBins = [] ->
   projectBuilder.stage(".tar.gz")
 
   fixIdeaPropertiesEol(paths, "unix")
@@ -708,6 +736,9 @@ binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths -
       tarfileset(dir: it, prefix: tarRoot) {
         exclude(name: "bin/*.sh")
         exclude(name: "bin/fsnotifier*")
+        extraBins.each {
+          exclude(name: it)
+        }
         type(type: "file")
       }
     }
@@ -716,6 +747,9 @@ binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths -
       tarfileset(dir: it, filemode: "755", prefix: tarRoot) {
         include(name: "bin/*.sh")
         include(name: "bin/fsnotifier*")
+        extraBins.each {
+          include(name: it)
+        }
         type(type: "file")
       }
     }
@@ -740,18 +774,15 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
                                           String launcherProperties, String pathsSelector, List resourcePaths ->
   projectBuilder.stage("winLauncher")
 
-  File launcherPropertiesTempFile = null;
   if (pathsSelector != null) {
-    String propertiesContent = new File(launcherProperties).text
-    if (propertiesContent.contains("__PRODUCT_PATHS_SELECTOR__")) {
-      propertiesContent = propertiesContent.replace("__PRODUCT_PATHS_SELECTOR__", pathsSelector)
-      launcherPropertiesTempFile = File.createTempFile("launcher", ".properties")
-      launcherPropertiesTempFile.write(propertiesContent)
-      launcherProperties = launcherPropertiesTempFile.getAbsolutePath()
-    }
+    def paths = getProperty("paths")
+    def launcherPropertiesTemp = "${paths.sandbox}/launcher.properties"
+    copyAndPatchFile(launcherProperties, launcherPropertiesTemp, ["PRODUCT_PATHS_SELECTOR": pathsSelector])
+    launcherProperties = launcherPropertiesTemp
   }
 
   ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true") {
+    sysproperty(key: "java.awt.headless", value: "true")
     arg(value: inputPath)
     arg(value: appInfo)
     arg(value: "$ch/native/WinLauncher/WinLauncher/resource.h")
@@ -769,14 +800,11 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
       }
     }
   }
-
-  if (launcherPropertiesTempFile != null) {
-    launcherPropertiesTempFile.delete()
-  }
 })
 
 binding.setVariable("collectUsedJars", { List modules, List approvedJars, List forbiddenJars, List modulesToBuild ->
   def usedJars = new HashSet();
+
   modules.each {
     def module = findModule(it)
     if (module != null) {
@@ -808,6 +836,7 @@ binding.setVariable("buildModulesAndCollectUsedJars", { List modules, List appro
   def usedJars = collectUsedJars(modules, approvedJars, forbiddenJars, modulesToBuild)
   projectBuilder.cleanOutput()
   projectBuilder.buildModules(modulesToBuild)
+
   return usedJars
 })
 
