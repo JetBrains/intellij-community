@@ -4839,11 +4839,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
-    @Override
-    public boolean isOpaque() {
-      return true;
-    }
-
     /**
      * This is helper method. It returns height of the top (decrease) scroll bar
      * button. Please note, that it's possible to return real height only if scroll bar

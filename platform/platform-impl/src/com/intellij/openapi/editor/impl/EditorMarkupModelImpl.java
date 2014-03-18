@@ -561,7 +561,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     @Override
     protected int getThickness() {
       if (UISettings.getInstance().PRESENTATION_MODE) return super.getThickness();
-      return super.getThickness() + (isMacScrollbar() ? +2 : 7);
+      return super.getThickness() + (isMacScrollbar() ? 2 : 7);
     }
 
     @Override

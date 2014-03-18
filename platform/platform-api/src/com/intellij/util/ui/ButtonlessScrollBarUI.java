@@ -388,8 +388,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   protected void doPaintTrack(Graphics g, JComponent c, Rectangle bounds) {
-    if (isMacScrollbar()) {
-
+    if (isMacScrollbar() && !alwaysShowTrack()) {
       bounds = getMacScrollBarBounds(bounds, false);
       boolean vertical = isVertical();
 
