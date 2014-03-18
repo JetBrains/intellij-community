@@ -4,7 +4,7 @@ Microba controls is a set of JFC (Swing) components.
 
 News
 ----------
-This is the new home of Microba Project. It was previously hosted on SofurceForge.net
+This is the new home of Microba Project. It was previously hosted on SofurceForge.net [here](http://microba.sf.net)
 There is currently a plan to resume supporting the library, so if you are still stuck writing Swing applications, rejoice! :-)
 
 Features
