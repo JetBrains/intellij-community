@@ -85,7 +85,7 @@ public class FieldCanBeLocalInspection extends FieldCanBeLocalInspectionBase {
     private static void groupByCodeBlocks(final Collection<PsiReference> allReferences, Map<PsiCodeBlock, Collection<PsiReference>> refs) {
       for (PsiReference psiReference : allReferences) {
         final PsiElement element = psiReference.getElement();
-        final PsiCodeBlock block = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
+        final PsiCodeBlock block = PsiTreeUtil.getTopmostParentOfType(element, PsiCodeBlock.class);
         LOG.assertTrue(block != null);
         Collection<PsiReference> references = refs.get(block);
         if (references == null) {
