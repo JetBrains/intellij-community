@@ -67,6 +67,10 @@ public class MostSpecificResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testJDK8034223() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(true);
   }
