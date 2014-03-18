@@ -61,21 +61,71 @@ public class JBScrollPane extends JScrollPane {
   }
 
   @Override
-  public void setVerticalScrollBar(JScrollBar sb) {
+  public void setVerticalScrollBar(JScrollBar c) {
     JScrollBar old = getVerticalScrollBar();
-    super.setVerticalScrollBar(sb);
-    if (myLayeredPane != null && old != null && old != sb) {
-      myLayeredPane.remove(old);
-    }
+    super.setVerticalScrollBar(c);
+    transferToLayeredPane(old, c, ScrollPaneConstants.VERTICAL_SCROLLBAR);
   }
 
   @Override
-  public void setHorizontalScrollBar(JScrollBar sb) {
+  public void setHorizontalScrollBar(JScrollBar c) {
     JScrollBar old = getHorizontalScrollBar();
-    super.setHorizontalScrollBar(sb);
-    if (myLayeredPane != null && old != null && old != sb) {
-      myLayeredPane.remove(old);
+    super.setHorizontalScrollBar(c);
+    transferToLayeredPane(old, c, ScrollPaneConstants.HORIZONTAL_SCROLLBAR);
+  }
+
+  @Override
+  public void setColumnHeader(JViewport c) {
+    JViewport old = getColumnHeader();
+    super.setColumnHeader(c);
+    transferToLayeredPane(old, c, ScrollPaneConstants.COLUMN_HEADER);
+  }
+
+  @Override
+  public void setRowHeader(JViewport c) {
+    JViewport old = getRowHeader();
+    super.setRowHeader(c);
+    transferToLayeredPane(old, c, ScrollPaneConstants.ROW_HEADER);
+  }
+
+  @Override
+  public void setViewport(JViewport c) {
+    JViewport old = getViewport();
+    super.setViewport(c);
+    transferToLayeredPane(old, c, ScrollPaneConstants.VIEWPORT);
+  }
+
+  @Override
+  public void setCorner(String key, Component c) {
+    Component old = getCorner(key);
+    super.setCorner(key, c);
+    transferToLayeredPane(old, c, key);
+  }
+
+  private void transferToLayeredPane(Component old, Component c, String key) {
+    JLayeredPane pane = getLayoutPane();
+    LayoutManager layout = getLayout();
+
+    if (old != null && old != c) {
+      pane.remove(old);
+      layout.removeLayoutComponent(old);
     }
+    
+    if (c != null) {
+      if (ScrollPaneConstants.VERTICAL_SCROLLBAR.equals(key) || ScrollPaneConstants.HORIZONTAL_SCROLLBAR.equals(key)) {
+        pane.setLayer(c, JLayeredPane.PALETTE_LAYER);
+      }
+      pane.add(c);
+      layout.addLayoutComponent(key, c);
+    }
+  }
+
+  @NotNull
+  private JLayeredPane getLayoutPane() {
+    if (myLayeredPane == null) {
+      myLayeredPane = new JLayeredPane();
+    }
+    return myLayeredPane;
   }
 
   private void init() {
@@ -83,38 +133,12 @@ public class JBScrollPane extends JScrollPane {
   }
   
   private void init(boolean setupCorners) {
-    myLayeredPane = new JLayeredPane() {
-      @Override
-      public void remove(int index) {
-        Component c = getComponent(index);
-        super.remove(index);
-        JBScrollPane.this.getLayout().removeLayoutComponent(c);
-      }
-
-      @Override
-      public void removeAll() {
-        Component[] components = getComponents();
-        super.removeAll();
-        for (Component each : components) {
-          JBScrollPane.this.getLayout().removeLayoutComponent(each);
-        }
-      }
-    };
-
+    add(getLayoutPane());
+    setLayout(new ScrollPaneLayout());
+ 
     if (setupCorners) {
       setupCorners();
     }
-
-    myLayeredPane.setLayer(verticalScrollBar, JLayeredPane.PALETTE_LAYER);
-    myLayeredPane.setLayer(horizontalScrollBar, JLayeredPane.PALETTE_LAYER);
-
-    for (Component each : getComponents()) {
-      if (each != myLayeredPane) {
-        myLayeredPane.add(each);
-      }
-    }
-    add(myLayeredPane);
-    setLayout(new ScrollPaneLayout());
   }
 
   protected void setupCorners() {
