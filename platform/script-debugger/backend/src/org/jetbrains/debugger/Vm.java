@@ -36,4 +36,7 @@ public interface Vm {
 
   @NotNull
   EvaluateContext getEvaluateContext();
+
+  @NotNull
+  DebugEventListener getDebugListener();
 }

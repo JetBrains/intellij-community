@@ -4,6 +4,11 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class BaseVm implements Vm {
   private EvaluateContext evaluateContext;
+  private final DebugEventListener debugListener;
+
+  protected BaseVm(@NotNull DebugEventListener debugListener) {
+    this.debugListener = debugListener;
+  }
 
   @NotNull
   @Override
@@ -15,4 +20,10 @@ public abstract class BaseVm implements Vm {
   }
 
   protected abstract EvaluateContext computeEvaluateContext();
+
+  @NotNull
+  @Override
+  public final DebugEventListener getDebugListener() {
+    return debugListener;
+  }
 }
