@@ -30,11 +30,11 @@ import java.util.Collection;
 public class MavenResourceFileFilter implements FileFilter {
   private String[] myNormalizedIncludes;
   private String[] myNormalizedExcludes;
-  private ResourceRootConfiguration myConfiguration;
+  private FilePattern myFilePattern;
   private File myRoot;
 
-  public MavenResourceFileFilter(@NotNull File rootFile, @NotNull ResourceRootConfiguration configuration) {
-    myConfiguration = configuration;
+  public MavenResourceFileFilter(@NotNull File rootFile, @NotNull FilePattern filePattern) {
+    myFilePattern = filePattern;
     myRoot = rootFile;
   }
 
@@ -46,15 +46,15 @@ public class MavenResourceFileFilter implements FileFilter {
 
   private boolean isIncluded(String relativePath) {
     if (myNormalizedIncludes == null) {
-      if (myConfiguration.includes.isEmpty()) {
+      if (myFilePattern.includes.isEmpty()) {
         myNormalizedIncludes = new String[]{"**" + File.separatorChar + '*'};
       }
       else {
-        myNormalizedIncludes = normalizePatterns(myConfiguration.includes);
+        myNormalizedIncludes = normalizePatterns(myFilePattern.includes);
       }
     }
     if (myNormalizedExcludes == null) {
-      myNormalizedExcludes = normalizePatterns(myConfiguration.excludes);
+      myNormalizedExcludes = normalizePatterns(myFilePattern.excludes);
     }
     return isIncluded(relativePath, myNormalizedIncludes, myNormalizedExcludes);
   }

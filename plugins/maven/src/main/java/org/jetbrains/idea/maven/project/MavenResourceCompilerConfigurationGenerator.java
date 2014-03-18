@@ -120,6 +120,7 @@ public class MavenResourceCompilerConfigurationGenerator {
       addResources(resourceConfig.testResources, mavenProject.getTestResources());
 
       addWebResources(module, projectConfig, mavenProject);
+      addEjbClientArtifactConfiguration(module, projectConfig, mavenProject);
 
       resourceConfig.filteringExclusions.addAll(MavenProjectsTree.getFilterExclusions(mavenProject));
 
@@ -241,15 +242,14 @@ public class MavenResourceCompilerConfigurationGenerator {
 
     String webArtifactName = MavenUtil.getArtifactName("war", module, true);
 
-    MavenArtifactResourceConfiguration artifactResourceCfg = projectCfg.artifactsResources.get(webArtifactName);
+    MavenWebArtifactConfiguration artifactResourceCfg = projectCfg.webArtifactConfigs.get(webArtifactName);
     if (artifactResourceCfg == null) {
-      artifactResourceCfg = new MavenArtifactResourceConfiguration();
-      artifactResourceCfg.webArtifactName = webArtifactName;
+      artifactResourceCfg = new MavenWebArtifactConfiguration();
       artifactResourceCfg.moduleName = module.getName();
-      projectCfg.artifactsResources.put(webArtifactName, artifactResourceCfg);
+      projectCfg.webArtifactConfigs.put(webArtifactName, artifactResourceCfg);
     }
     else {
-      LOG.error("MavenArtifactResourceConfiguration already exists.");
+      LOG.error("MavenWebArtifactConfiguration already exists.");
     }
 
     if (webResources != null) {
@@ -298,6 +298,42 @@ public class MavenResourceCompilerConfigurationGenerator {
       r.isFiltered = true;
       r.targetPath = "";
       artifactResourceCfg.webResources.add(r);
+    }
+  }
+
+  private void addEjbClientArtifactConfiguration(Module module, MavenProjectConfiguration projectCfg, MavenProject mavenProject) {
+    Element pluginCfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-ejb-plugin");
+
+    if (pluginCfg == null || !Boolean.parseBoolean(pluginCfg.getChildTextTrim("generateClient"))) {
+      return;
+    }
+
+    String ejbClientArtifactName = MavenUtil.getEjbClientArtifactName(module);
+
+    MavenEjbClientConfiguration ejbClientCfg = new MavenEjbClientConfiguration();
+
+    Element includes = pluginCfg.getChild("clientIncludes");
+    if (includes != null) {
+      for (Element include : includes.getChildren("clientInclude")) {
+        String includeText = include.getTextTrim();
+        if (!includeText.isEmpty()) {
+          ejbClientCfg.includes.add(includeText);
+        }
+      }
+    }
+
+    Element excludes = pluginCfg.getChild("clientExcludes");
+    if (excludes != null) {
+      for (Element exclude : excludes.getChildren("clientExclude")) {
+        String excludeText = exclude.getTextTrim();
+        if (!excludeText.isEmpty()) {
+          ejbClientCfg.excludes.add(excludeText);
+        }
+      }
+    }
+
+    if (!ejbClientCfg.isEmpty()) {
+      projectCfg.ejbClientArtifactConfigs.put(ejbClientArtifactName, ejbClientCfg);
     }
   }
 

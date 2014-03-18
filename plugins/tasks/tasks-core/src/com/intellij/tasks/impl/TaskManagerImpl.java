@@ -247,7 +247,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @Override
   public List<Task> getIssues(@Nullable final String query, final boolean forceRequest) {
-    return getIssues(query, 50, 0, forceRequest, true, new EmptyProgressIndicator());
+    return getIssues(query, 0, 50, forceRequest, true, new EmptyProgressIndicator());
   }
 
   @Override
@@ -257,8 +257,23 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
                               boolean forceRequest,
                               final boolean withClosed,
                               @NotNull final ProgressIndicator cancelled) {
-    List<Task> tasks = getIssuesFromRepositories(query, max, since, forceRequest, cancelled);
-    if (tasks == null) return getCachedIssues(withClosed);
+    return getIssues(query, 0, max, forceRequest, withClosed, cancelled);
+  }
+
+  @Override
+  public List<Task> getIssues(@Nullable String query,
+                              int offset,
+                              int limit,
+                              boolean forceRequest,
+                              final boolean withClosed,
+                              @NotNull ProgressIndicator indicator) {
+    long start = System.currentTimeMillis();
+    List<Task> tasks = getIssuesFromRepositories(query, offset, limit, withClosed, forceRequest, indicator);
+    if (tasks != null) {
+      LOG.debug(String.format("Total %s ms to download %d issues", System.currentTimeMillis() - start, tasks.size()));
+    } else {
+      return getCachedIssues(withClosed);
+    }
     myIssueCache.putAll(ContainerUtil.newMapFromValues(tasks.iterator(), KEY_CONVERTOR));
     return ContainerUtil.filter(tasks, new Condition<Task>() {
       @Override
@@ -733,7 +748,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   private void doUpdate(@Nullable Runnable onComplete) {
     try {
-      List<Task> issues = getIssuesFromRepositories(null, myConfig.updateIssuesCount, 0, false, new EmptyProgressIndicator());
+      List<Task> issues = getIssuesFromRepositories(null, 0, myConfig.updateIssuesCount, false, false, new EmptyProgressIndicator());
       if (issues == null) return;
 
       synchronized (myIssueCache) {
@@ -762,8 +777,9 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @Nullable
   private List<Task> getIssuesFromRepositories(@Nullable String request,
-                                               int max,
-                                               long since,
+                                               int offset,
+                                               int limit,
+                                               boolean withClosed,
                                                boolean forceRequest,
                                                @NotNull final ProgressIndicator cancelled) {
     List<Task> issues = null;
@@ -772,7 +788,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         continue;
       }
       try {
-        Task[] tasks = repository.getIssues(request, max, since, cancelled);
+        Task[] tasks = repository.getIssues(request, offset, limit, withClosed);
         myBadRepositories.remove(repository);
         if (issues == null) issues = new ArrayList<Task>(tasks.length);
         if (!repository.isSupported(TaskRepository.NATIVE_SEARCH) && request != null) {

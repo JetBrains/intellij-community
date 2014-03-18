@@ -501,7 +501,6 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       myComp.removeAll();
       myLayeredPane.remove(myComp);
 
-      myForcedBounds = rec;
       createComponent();
     }
 

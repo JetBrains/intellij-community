@@ -1739,14 +1739,14 @@ public class UIUtil {
   public static String getCssFontDeclaration(final Font font, @Nullable Color fgColor, @Nullable Color linkColor, @Nullable String liImg) {
     URL resource = liImg != null ? SystemInfo.class.getResource(liImg) : null;
 
-    @NonNls String fontFamilyAndSize = "font-family:" + font.getFamily() + "; font-size:" + font.getSize() + ";";
+    @NonNls String fontFamilyAndSize = "font-family:'" + font.getFamily() + "'; font-size:" + font.getSize() + "pt;";
     @NonNls @Language("HTML")
-    String body = "body, div, td, p {" + fontFamilyAndSize + " " + (fgColor != null ? "color:" + ColorUtil.toHex(fgColor) : "") + "}";
+    String body = "body, div, td, p {" + fontFamilyAndSize + " " + (fgColor != null ? "color:#" + ColorUtil.toHex(fgColor)+";" : "") + "}\n";
     if (resource != null) {
-      body += "ul {list-style-image: " + resource.toExternalForm() + "}";
+      body += "ul {list-style-image:url('" + resource.toExternalForm() + "');}\n";
     }
-    @NonNls String link = linkColor != null ? "a {" + fontFamilyAndSize + " color:" + ColorUtil.toHex(linkColor) + "}" : "";
-    return "<style> " + body + " " + link + "</style>";
+    @NonNls String link = linkColor != null ? "a {" + fontFamilyAndSize + " color:#"+ColorUtil.toHex(linkColor) + ";}\n" : "";
+    return "<style>\n" + body + link + "</style>";
   }
 
   public static boolean isWinLafOnVista() {

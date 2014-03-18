@@ -127,7 +127,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     final boolean versionFileExisted = versionFile.exists();
     final File indexRootDir = IndexInfrastructure.getIndexRootDir(indexKey);
     boolean needRebuild = false;
-    if (forceClean || IndexInfrastructure.versionDiffers(versionFile, version)) {
+    if (forceClean || IndexingStamp.versionDiffers(versionFile, version)) {
       final String[] children = indexRootDir.list();
       // rebuild only if there exists what to rebuild
       needRebuild = !forceClean && (versionFileExisted || children != null && children.length > 0);
@@ -135,7 +135,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         LOG.info("Version has changed for stub index " + extension.getKey() + ". The index will be rebuilt.");
       }
       FileUtil.delete(indexRootDir);
-      IndexInfrastructure.rewriteVersion(versionFile, version);
+      IndexingStamp.rewriteVersion(versionFile, version);
     }
 
     for (int attempt = 0; attempt < 2; attempt++) {
@@ -157,7 +157,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         LOG.info(e);
         needRebuild = true;
         FileUtil.delete(indexRootDir);
-        IndexInfrastructure.rewriteVersion(versionFile, version);
+        IndexingStamp.rewriteVersion(versionFile, version);
       }
     }
     return needRebuild;

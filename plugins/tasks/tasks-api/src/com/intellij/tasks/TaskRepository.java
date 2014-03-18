@@ -32,9 +32,9 @@ import java.util.concurrent.Callable;
  * This class describes bug-tracking server.
  * Do not forget to mark your implementation with {@link Tag} annotation to make it persistent.
  *
+ * @author Dmitry Avdeev
  * @see TaskRepositoryType
  * @see com.intellij.tasks.impl.BaseRepository
- * @author Dmitry Avdeev
  */
 @Tag("server")
 public abstract class TaskRepository {
@@ -48,7 +48,7 @@ public abstract class TaskRepository {
    * Supporting this feature means that server implements some kind of issues filtering.
    * It may be special query language like the one used in YouTrack or mere plain
    * text search.
-   * <p>
+   * <p/>
    * If server supports this feature it MUST return tasks already filtered according
    * to {@code query} parameter from {@link #getIssues}} method, otherwise they will
    * be filtered internally in {@link TaskManager#getIssues}.
@@ -77,6 +77,9 @@ public abstract class TaskRepository {
     myShared = shared;
   }
 
+  /**
+   * @return name of this repository, that will be shown in settings
+   */
   public String getPresentableName() {
     return StringUtil.isEmpty(getUrl()) ? "<undefined>" : getUrl();
   }
@@ -86,8 +89,8 @@ public abstract class TaskRepository {
   }
 
   /**
-   * @deprecated
    * @see #createCancellableConnection()
+   * @deprecated
    */
   public void testConnection() throws Exception {
   }
@@ -95,6 +98,7 @@ public abstract class TaskRepository {
   /**
    * Returns an object that can test connection.
    * {@link com.intellij.openapi.vcs.impl.CancellableRunnable#cancel()} should cancel the process.
+   *
    * @return null if not supported
    */
   @Nullable
@@ -111,13 +115,48 @@ public abstract class TaskRepository {
    * @param since last updated timestamp. If 0, all issues should be returned.
    * @return found issues
    * @throws Exception
+   * @deprecated To be removed in IDEA 14. Use {@link #getIssues(String, int, int, boolean)} instead.
    */
-  public abstract Task[] getIssues(@Nullable String query, int max, long since) throws Exception;
+  @Deprecated
+  public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
+    throw new AssertionError("Should not be called");
+  }
 
+  /**
+   * @deprecated To be removed in IDEA 14. Use {@link #getIssues(String, int, int, boolean, ProgressIndicator)} instead.
+   */
+  @Deprecated
   public Task[] getIssues(@Nullable String query, int max, long since, @NotNull ProgressIndicator cancelled) throws Exception {
     return getIssues(query, max, since);
   }
 
+  /**
+   * Retrieve tasks from server using its own pagination capabilities and also filtering out closed issues.
+   * <p/>
+   * Previously used approach with filtering tasks on client side leads to non-filled up popup in "Open Task" action and, as result,
+   * missing tasks and various issues with caching.
+   *
+   * @param query      arbitrary search query, possibly provided by user for search. It may utilize server specific query language.
+   * @param offset     index of the first issue to return
+   * @param limit      maximum number of issues returned by server in this request (or number of issues per page in some interpretations)
+   * @param withClosed whether to include closed (e.g. fixed/resolved) issues to response
+   * @return found tasks
+   * @throws Exception
+   */
+  public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed) throws Exception {
+    return getIssues(query, offset + limit, 0);
+  }
+
+  public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed, @NotNull ProgressIndicator cancelled)
+    throws Exception {
+    return getIssues(query, offset + limit, 0, cancelled);
+  }
+
+  /**
+   * @param id task ID. Don't forget to define {@link #extractId(String)}, if your server uses not <tt>PROJECT-123</tt> format for task IDs.
+   * @return found task or {@code null} otherwise
+   * @throws Exception
+   */
   @Nullable
   public abstract Task findTask(String id) throws Exception;
 
@@ -163,7 +202,11 @@ public abstract class TaskRepository {
     if (!Comparing.equal(myType, that.myType)) return false;
     if (isShared() != that.isShared()) return false;
     if (getUrl() != null ? !getUrl().equals(that.getUrl()) : that.getUrl() != null) return false;
-    if (getCommitMessageFormat() != null ? !getCommitMessageFormat().equals(that.getCommitMessageFormat()) : that.getCommitMessageFormat() != null) return false;
+    if (getCommitMessageFormat() != null
+        ? !getCommitMessageFormat().equals(that.getCommitMessageFormat())
+        : that.getCommitMessageFormat() != null) {
+      return false;
+    }
     return isShouldFormatCommitMessage() == that.isShouldFormatCommitMessage();
   }
 
