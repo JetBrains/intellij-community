@@ -51,6 +51,10 @@ public class FindMethodDuplicatesTest extends FindMethodDuplicatesBaseTest{
     doTest();
   }
 
+  public void testSkipNonRelatedCalls() throws Exception {
+    doTest(false);
+  }
+
   public void testMappingAny2ParameterPrimitiveLvalue() throws Exception {
     doTest(false);
   }
