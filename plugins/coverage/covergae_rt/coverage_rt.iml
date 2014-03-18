@@ -11,7 +11,7 @@
     <orderEntry type="module" module-name="junit_rt" />
     <orderEntry type="library" name="TestNG" level="project" />
     <orderEntry type="module-library">
-      <library>
+      <library name="Coverage">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../../coverage-common/lib/coverage-agent.jar!/" />
         </CLASSES>
