@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,7 +133,7 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
     return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiMethod[]>() {
       @Override
       public Result<PsiMethod[]> compute() {
-        PsiMethod[] defMethods = new PsiMethod[3];
+        PsiMethod[] defMethods = new PsiMethod[4];
         final PsiManagerEx manager = getManager();
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
         defMethods[0] = new LightMethodBuilder(manager, GROOVY_LANGUAGE, "values")
@@ -151,6 +151,14 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
           .setMethodReturnType(factory.createType(GrEnumTypeDefinitionImpl.this))
           .setContainingClass(GrEnumTypeDefinitionImpl.this)
           .addModifier(PsiModifier.PUBLIC);
+
+        defMethods[3] = new LightMethodBuilder(manager, GROOVY_LANGUAGE, "valueOf")
+          .setMethodReturnType(factory.createType(GrEnumTypeDefinitionImpl.this))
+          .setContainingClass(GrEnumTypeDefinitionImpl.this)
+          .addParameter("name", CommonClassNames.JAVA_LANG_STRING)
+          .addModifier(PsiModifier.PUBLIC)
+          .addModifier(PsiModifier.STATIC);
+
         return Result.create(defMethods, GrEnumTypeDefinitionImpl.this);
       }
     });
