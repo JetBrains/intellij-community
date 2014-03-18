@@ -18,27 +18,16 @@ import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import git4idea.test.GitLightTest
-import org.junit.After
-import org.junit.Before
-import org.junit.Ignore
-import org.junit.Test
+import git4idea.test.GitPlatformTest
 
 import static com.intellij.openapi.vcs.Executor.cd
 import static git4idea.test.GitExecutor.git
-import static org.junit.Assert.assertFalse
-import static org.junit.Assert.assertTrue
-/**
- *
- * @author Kirill Likhodedov
- */
-@Ignore
-class GitCrlfProblemsDetectorTest extends GitLightTest {
+
+class GitCrlfProblemsDetectorTest extends GitPlatformTest {
 
   private String myOldGlobalAutoCrlfValue
   private String myOldSystemAutoCrlfValue
 
-  @Before
   public void setUp() {
     super.setUp();
     cd myProjectRoot
@@ -51,10 +40,9 @@ class GitCrlfProblemsDetectorTest extends GitLightTest {
     myOldSystemAutoCrlfValue = git ("config --system core.autocrlf")
     git ("config --system --unset core.autocrlf")
 
-    createRepository(myProjectRoot)
+    createRepository(myProjectRoot.getPath())
   }
 
-  @After
   public void tearDown() {
     if (!StringUtil.isEmptyOrSpaces(myOldGlobalAutoCrlfValue)) {
       git ("config --global core.autocrlf " + myOldGlobalAutoCrlfValue);
@@ -65,66 +53,56 @@ class GitCrlfProblemsDetectorTest extends GitLightTest {
     super.tearDown();
   }
 
-  @Test
-  void "autocrlf is true = warning"() {
+  void "test autocrlf is true = warning"() {
     git ("config core.autocrlf true")
     assertFalse "No warning should be done if core.autocrlf is true", detect("temp").shouldWarn()
   }
 
-  @Test
-  void "autocrlf is input = no warning"() {
+  void "test autocrlf is input = no warning"() {
     git ("config core.autocrlf input")
     assertFalse "No warning should be done if core.autocrlf is input", detect("temp").shouldWarn()
   }
 
-  @Test
-  void "no files with CRLF = no warning"() {
+  void "test no files with CRLF = no warning"() {
     createFile("temp", "Unix file\nNice separators\nOnly LF\n")
     assertFalse "No warning should be done if all files are LFs", detect("temp").shouldWarn()
   }
 
-  @Test
-  void "file with CRLF, no attrs, autocrlf is false = warning"() {
+  void "test file with CRLF, no attrs, autocrlf is false = warning"() {
     createCrlfFile("win")
     assertFalse "Warning should be done for a CRLF file with core.autocrlf = false", detect("temp").shouldWarn()
   }
 
-  @Test
-  void "file with CRLF, but text is set = no warning"() {
+  void "test file with CRLF, but text is set = no warning"() {
     gitattributes("*       text=auto")
     createCrlfFile("win")
     assertFalse "No warning should be done if the file has a text attribute", detect("win").shouldWarn()
   }
 
-  @Test
-  void "file with CRLF, but crlf is set = no warning"() {
+  void "test file with CRLF, but crlf is set = no warning"() {
     gitattributes("win       crlf")
     createCrlfFile("win")
     assertFalse "No warning should be done if the file has a crlf attribute", detect("win").shouldWarn()
   }
 
-  @Test
-  void "file with CRLF, but crlf is explicitly unset = no warning"() {
+  void "test file with CRLF, but crlf is explicitly unset = no warning"() {
     gitattributes("win       -crlf")
     createCrlfFile("win")
     assertFalse "No warning should be done if the file has an explicitly unset crlf attribute", detect("win").shouldWarn()
   }
 
-  @Test
-  void "file with CRLF, but crlf is set to input = no warning"() {
+  void "test file with CRLF, but crlf is set to input = no warning"() {
     gitattributes("wi*       crlf=input")
     createCrlfFile("win")
     assertFalse "No warning should be done if the file has a crlf attribute", detect("win").shouldWarn()
   }
 
-  @Test
-  void "file with CRLF, nothing is set = warning"() {
+  void "test file with CRLF, nothing is set = warning"() {
     createCrlfFile("win")
     assertTrue "Warning should be done if the file has CRLFs inside, and no explicit attributes", detect("win").shouldWarn()
   }
 
-  @Test
-  void "various files with various attributes, one doesn't match = warning"() {
+  void "test various files with various attributes, one doesn't match = warning"() {
     gitattributes """
 win1 text crlf diff
 win2 -text
@@ -146,7 +124,7 @@ win6 crlf=input
     assertTrue "Warning should be done, since one of the files has CRLFs and no related attributes",
            GitCrlfProblemsDetector.detect(myProject, myPlatformFacade, myGit,
                                           ["unix", "win1", "win2", "win3", "src/win4", "src/win5", "src/win6", "src/win7"]
-                                                  .collect { it -> MockVirtualFile.fromPath(it, myProjectRoot) as VirtualFile})
+                                                  .collect { it -> MockVirtualFile.fromPath(it, myProjectRoot.path) as VirtualFile})
                    .shouldWarn()
   }
 
@@ -178,7 +156,7 @@ win6 crlf=input
 
   private String createFile(String relPath) {
     List<String> split = StringUtil.split(relPath, "/")
-    File parent = new File(myProjectRoot)
+    File parent = new File(myProjectRoot.path)
     for (Iterator<String> it = split.iterator(); it.hasNext(); ) {
       String item = it.next()
       File file = new File(parent, item)

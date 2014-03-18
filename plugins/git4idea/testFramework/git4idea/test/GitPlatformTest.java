@@ -25,10 +25,15 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import git4idea.DialogManager;
+import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
+import git4idea.commands.Git;
 import git4idea.config.GitVcsSettings;
+import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
+
+import static git4idea.test.GitExecutor.*;
 
 public abstract class GitPlatformTest extends UsefulTestCase {
 
@@ -36,6 +41,8 @@ public abstract class GitPlatformTest extends UsefulTestCase {
   @NotNull protected VirtualFile myProjectRoot;
   @NotNull protected GitRepositoryManager myGitRepositoryManager;
   @NotNull protected GitVcsSettings myGitSettings;
+  @NotNull protected GitPlatformFacade myPlatformFacade;
+  @NotNull protected Git myGit;
 
   @NotNull protected TestDialogManager myDialogManager;
   @NotNull protected TestVcsNotifier myVcsNotifier;
@@ -65,13 +72,14 @@ public abstract class GitPlatformTest extends UsefulTestCase {
     myProjectRoot = myProject.getBaseDir();
 
     myGitSettings = GitVcsSettings.getInstance(myProject);
-    myGitSettings.getAppSettings().setPathToGit(GitExecutor.GIT_EXECUTABLE);
+    myGitSettings.getAppSettings().setPathToGit(GIT_EXECUTABLE);
 
     myDialogManager = (TestDialogManager)ServiceManager.getService(DialogManager.class);
     myVcsNotifier = (TestVcsNotifier)ServiceManager.getService(myProject, VcsNotifier.class);
 
     myGitRepositoryManager = GitUtil.getRepositoryManager(myProject);
-
+    myPlatformFacade = ServiceManager.getService(myProject, GitPlatformFacade.class);
+    myGit = ServiceManager.getService(myProject, Git.class);
   }
 
   @Override
@@ -85,4 +93,22 @@ public abstract class GitPlatformTest extends UsefulTestCase {
       super.tearDown();
     }
   }
+
+  @NotNull
+  protected GitRepository createRepository(@NotNull String rootDir) {
+    return GitTestUtil.createRepository(myProject, rootDir);
+  }
+
+  /**
+   * Clones the given source repository into a bare parent.git and adds the remote origin.
+   */
+  protected void prepareRemoteRepo(@NotNull GitRepository source) {
+    final String target = "parent.git";
+    final String targetName = "origin";
+    cd(myProjectRoot);
+    git("clone --bare '%s' %s", source.getRoot().getPath(), target);
+    cd(source);
+    git("remote add %s '%s'", targetName, myProjectRoot + "/" + target);
+  }
+
 }

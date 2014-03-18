@@ -14,49 +14,38 @@
  * limitations under the License.
  */
 package git4idea.repo
-
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.application.PluginPathManager
 import git4idea.GitLocalBranch
-import git4idea.test.GitLightTest
-import org.junit.After
-import org.junit.Before
-import org.junit.Ignore
-import org.junit.Test
+import git4idea.test.GitPlatformTest
 
+import static com.intellij.openapi.vcs.Executor.cd
+import static com.intellij.openapi.vcs.Executor.cp
+import static git4idea.test.GitExecutor.git
 import static git4idea.test.GitScenarios.commit
 import static git4idea.test.GitScenarios.conflict
-import static junit.framework.Assert.assertEquals
-import static junit.framework.Assert.assertNull
 /**
  * {@link GitRepositoryReaderTest} reads information from the pre-created .git directory from a real project.
  * This one, on the other hand, operates on a live Git repository, putting it to various situations and checking the results.
- *
- * @author Kirill Likhodedov
  */
-@Ignore
-class GitRepositoryReaderNewTest extends GitLightTest {
+public class GitRepositoryReaderNewTest extends GitPlatformTest {
 
   GitRepository myRepository
 
   @Override
-  @Before
   public void setUp() {
     super.setUp();
-    myRepository = createRepository(myProjectRoot)
+    myRepository = createRepository(myProjectRoot.getPath())
   }
 
 
   @Override
-  @After
   public void tearDown() {
     super.tearDown();
   }
 
-
-  @Test
   // inspired by IDEA-93806
-  void "rebase with conflicts while being on detached HEAD"() {
+  void "test rebase with conflicts while being on detached HEAD"() {
     conflict(myRepository, "feature")
     2.times { commit(myRepository) }
     git("checkout HEAD^")
@@ -70,7 +59,6 @@ class GitRepositoryReaderNewTest extends GitLightTest {
     assertEquals "State value is incorrect", Repository.State.REBASING, state
   }
 
-  @Test
   void "test large packed-refs"() {
     File pluginRoot = new File(PluginPathManager.getPluginHomePath("git4idea"));
     File dataDir = new File(new File(pluginRoot, "testData"), "repo");
@@ -82,6 +70,5 @@ class GitRepositoryReaderNewTest extends GitLightTest {
     def reader = new GitRepositoryReader(gitDir)
     reader.readBranches(Collections.emptyList())
   }
-
 
 }
