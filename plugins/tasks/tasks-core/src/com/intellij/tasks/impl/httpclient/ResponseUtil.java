@@ -3,14 +3,22 @@ package com.intellij.tasks.impl.httpclient;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.tasks.impl.TaskUtil;
+import org.apache.commons.httpclient.HeaderElement;
+import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.NameValuePair;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ResponseHandler;
+import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
@@ -21,8 +29,9 @@ import java.util.List;
  */
 public class ResponseUtil {
   public static final Logger LOG = Logger.getInstance(ResponseUtil.class);
-  // TODO: in JDK7 see StandardCharsets
-  public final static Charset DEFAULT_CHARSET = Charset.forName(CharsetToolkit.UTF8);
+
+  public static final String DEFAULT_CHARSET_NAME = CharsetToolkit.UTF8;
+  public final static Charset DEFAULT_CHARSET = Charset.forName(DEFAULT_CHARSET_NAME);
 
   /**
    * Utility class
@@ -30,14 +39,48 @@ public class ResponseUtil {
   private ResponseUtil() {
   }
 
-  public static Reader getResponseContentAsReader(HttpResponse response) throws IOException {
+  public static Reader getResponseContentAsReader(@NotNull HttpResponse response) throws IOException {
     Header header = response.getEntity().getContentEncoding();
     Charset charset = header == null ? DEFAULT_CHARSET : Charset.forName(header.getValue());
     return new InputStreamReader(response.getEntity().getContent(), charset);
   }
 
-  public static String getResponseContentAsString(HttpResponse response) throws IOException {
+  public static String getResponseContentAsString(@NotNull HttpResponse response) throws IOException {
     return EntityUtils.toString(response.getEntity(), DEFAULT_CHARSET);
+  }
+
+  public static String getResponseContentAsString(@NotNull HttpMethod response) throws IOException {
+    //if (!response.hasBeenUsed()) {
+    //  return "";
+    //}
+    org.apache.commons.httpclient.Header header = response.getResponseHeader(HTTP.CONTENT_TYPE);
+    if (header != null && header.getValue().contains("charset")) {
+      // ISO-8859-1 if charset wasn't specified in response
+      return StringUtil.notNullize(response.getResponseBodyAsString());
+    }
+    else {
+      InputStream stream = response.getResponseBodyAsStream();
+      return stream == null ? "" : StreamUtil.readText(stream, DEFAULT_CHARSET_NAME);
+    }
+  }
+
+  public static Reader getResponseContentAsReader(@NotNull HttpMethod response) throws IOException {
+    //if (!response.hasBeenUsed()) {
+    //  return new StringReader("");
+    //}
+    InputStream stream = response.getResponseBodyAsStream();
+    String charsetName = null;
+    org.apache.commons.httpclient.Header header = response.getResponseHeader(HTTP.CONTENT_TYPE);
+    if (header != null) {
+      // find out encoding
+      for (HeaderElement part : header.getElements()) {
+        NameValuePair pair = part.getParameterByName("charset");
+        if (pair != null) {
+          charsetName = pair.getValue();
+        }
+      }
+    }
+    return new InputStreamReader(stream, charsetName == null ? DEFAULT_CHARSET_NAME : charsetName);
   }
 
 

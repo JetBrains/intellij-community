@@ -28,11 +28,17 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskState;
+import com.intellij.tasks.impl.httpclient.ResponseUtil;
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.HttpMethod;
+import org.apache.http.HttpResponse;
+import org.apache.http.protocol.HTTP;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -238,6 +244,50 @@ public class TaskUtil {
       }
       catch (JsonSyntaxException e) {
         logger.debug("Malformed JSON\n" + json);
+      }
+    }
+  }
+
+  public static void prettyFormatResponseToLog(@NotNull Logger logger, @NotNull HttpMethod response) {
+    if (logger.isDebugEnabled() && response.hasBeenUsed()) {
+      try {
+        String content = ResponseUtil.getResponseContentAsString(response);
+        Header header = response.getRequestHeader(HTTP.CONTENT_TYPE);
+        String contentType = header == null ? "text/plain" : header.getElements()[0].getName().toLowerCase();
+        if (contentType.contains("xml")) {
+          prettyFormatXmlToLog(logger, content);
+        }
+        else if (contentType.contains("json")) {
+          prettyFormatJsonToLog(logger, content);
+        }
+        else {
+          logger.debug(content);
+        }
+      }
+      catch (IOException e) {
+        logger.error(e);
+      }
+    }
+  }
+
+  public static void prettyFormatResponseToLog(@NotNull Logger logger, @NotNull HttpResponse response) {
+    if (logger.isDebugEnabled()) {
+      try {
+        String content = ResponseUtil.getResponseContentAsString(response);
+        org.apache.http.Header header = response.getEntity().getContentType();
+        String contentType = header == null ? "text/plain" : header.getElements()[0].getName().toLowerCase();
+        if (contentType.contains("xml")) {
+          prettyFormatXmlToLog(logger, content);
+        }
+        else if (contentType.contains("json")) {
+          prettyFormatJsonToLog(logger, content);
+        }
+        else {
+          logger.debug(content);
+        }
+      }
+      catch (IOException e) {
+        logger.error(e);
       }
     }
   }
