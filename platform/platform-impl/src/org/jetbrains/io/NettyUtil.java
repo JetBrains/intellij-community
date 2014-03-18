@@ -28,7 +28,6 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.channel.socket.oio.OioSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
-import io.netty.handler.codec.http.HttpRequestEncoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -72,7 +71,7 @@ public final class NettyUtil {
             Thread.sleep(attemptCount * MIN_START_TIME);
           }
           else {
-            asyncResult.reject("cannot connect");
+            asyncResult.reject("Cannot connect");
             return null;
           }
         }
@@ -83,7 +82,7 @@ public final class NettyUtil {
       return channel;
     }
     catch (Throwable e) {
-      asyncResult.reject("cannot connect: " + e.getMessage());
+      asyncResult.reject("Cannot connect: " + e.getMessage());
       return null;
     }
   }
@@ -132,6 +131,6 @@ public final class NettyUtil {
   }
 
   public static void initHttpHandlers(ChannelPipeline pipeline) {
-    pipeline.addLast(new HttpRequestDecoder(), new HttpObjectAggregator(1048576 * 10), new HttpResponseEncoder(), new HttpRequestEncoder());
+    pipeline.addLast(new HttpRequestDecoder(), new HttpObjectAggregator(1048576 * 10), new HttpResponseEncoder());
   }
 }
