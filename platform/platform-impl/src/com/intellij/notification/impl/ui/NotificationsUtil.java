@@ -70,32 +70,26 @@ public class NotificationsUtil {
   }
 
   public static Icon getIcon(@NotNull final Notification notification) {
-    final Icon icon = notification.getIcon();
-    if (icon != null) {
-      return icon;
+    Icon icon = notification.getIcon();
+
+    if (icon == null) {
+      icon = getMessageType(notification).getDefaultIcon();
     }
 
+    return icon;
+  }
+
+  public static MessageType getMessageType(@NotNull Notification notification) {
     switch (notification.getType()) {
-      case ERROR:
-        return MessageType.ERROR.getDefaultIcon();
-      case WARNING:
-        return MessageType.WARNING.getDefaultIcon();
+      case WARNING: return MessageType.WARNING;
+      case ERROR: return MessageType.ERROR;
       case INFORMATION:
-      default:
-        return MessageType.INFO.getDefaultIcon();
+      default: return MessageType.INFO;
     }
   }
 
   public static Color getBackground(@NotNull final Notification notification) {
-    switch (notification.getType()) {
-      case ERROR:
-        return MessageType.ERROR.getPopupBackground();
-      case WARNING:
-        return MessageType.WARNING.getPopupBackground();
-      case INFORMATION:
-      default:
-        return MessageType.INFO.getPopupBackground();
-    }
+    return getMessageType(notification).getPopupBackground();
   }
 
   public static Color getBorderColor(Notification notification) {
