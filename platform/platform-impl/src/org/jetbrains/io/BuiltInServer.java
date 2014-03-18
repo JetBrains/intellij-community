@@ -80,7 +80,7 @@ public class BuiltInServer implements Disposable {
         @Override
         protected void initChannel(Channel channel) throws Exception {
           channel.pipeline().addLast(channelRegistrar);
-          NettyUtil.initHttpHandlers(channel.pipeline());
+          NettyUtil.addHttpServerCodec(channel.pipeline());
           channel.pipeline().addLast(handler, ChannelExceptionHandler.getInstance());
         }
       });
