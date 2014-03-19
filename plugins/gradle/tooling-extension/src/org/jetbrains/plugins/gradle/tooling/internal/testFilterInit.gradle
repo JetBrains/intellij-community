@@ -144,7 +144,7 @@ def logConfigurationError(aTitle, aMessage, boolean openSettings) {
 }
 
 String escapeCdata(String s) {
-  return "<![CDATA[" + s.replaceAll("]]>", "]]]]><![CDATA[>")+ "]]>";
+  return "<![CDATA[" + s?.replaceAll("]]>", "]]]]><![CDATA[>")+ "]]>";
 }
 def getStackTrace(Throwable t) {
   if(!t) return ''
