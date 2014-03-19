@@ -23,7 +23,7 @@ public class MantisIntegrationTest extends TaskManagerTestCase {
     assertTrue(mantisRepository.getProjects().size() >= 2);
     final MantisProject mantisProject = mantisRepository.getProjects().get(1);
     assertEquals(mantisProject.getName(), "Mantis 1.2 project 1");
-    mantisRepository.setProject(mantisProject);
+    mantisRepository.setCurrentProject(mantisProject);
 
     assertTrue(mantisProject.getFilters().size() >= 2);
     MantisFilter mantisFilter = null;
@@ -33,7 +33,7 @@ public class MantisIntegrationTest extends TaskManagerTestCase {
       }
     }
     assertNotNull(mantisFilter);
-    mantisRepository.setFilter(mantisFilter);
+    mantisRepository.setCurrentFilter(mantisFilter);
 
     final Task[] issues = mantisRepository.getIssues("", 1, 0);
     assertTrue(issues.length >= 1);

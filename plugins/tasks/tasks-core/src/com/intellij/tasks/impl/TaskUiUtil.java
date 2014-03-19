@@ -113,6 +113,10 @@ public class TaskUiUtil {
         if (extra != null) {
           myComboBox.insertItemAt(extra, 0);
         }
+        // ensure that selected ItemEvent will be fired, even if first item of the model
+        // is the same as the next selected
+        myComboBox.setSelectedItem(null);
+
         T selected = getSelectedItem();
         if (selected != null) {
           myComboBox.setSelectedItem(selected);
@@ -124,7 +128,12 @@ public class TaskUiUtil {
       else {
         // Some error occurred
         myComboBox.removeAllItems();
+        handleError();
       }
+    }
+
+    protected void handleError() {
+      // empty
     }
   }
 

@@ -1,10 +1,12 @@
 package com.intellij.tasks.mantis;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * User: evgeny.zakrevsky
  * Date: 9/24/12
  */
-public class MantisFilter {
+public final class MantisFilter implements Comparable<MantisFilter> {
   public final static MantisFilter LAST_TASKS = new MantisFilter(0, "[Last tasks]");
 
   private int id;
@@ -36,12 +38,25 @@ public class MantisFilter {
   }
 
   @Override
-  public boolean equals(final Object obj) {
-    return obj != null && obj instanceof MantisFilter && ((MantisFilter)obj).getId() == getId();
+  public final boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    return id == ((MantisFilter)o).id;
+  }
+
+  @Override
+  public final int hashCode() {
+    return id;
   }
 
   @Override
   public String toString() {
     return getName();
+  }
+
+  @Override
+  public int compareTo(@NotNull MantisFilter o) {
+    return getName().compareTo(o.getName());
   }
 }

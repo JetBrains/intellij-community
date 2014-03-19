@@ -1,15 +1,16 @@
 package com.intellij.tasks.mantis;
 
-import java.util.ArrayList;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
 import java.util.List;
 
 /**
  * User: evgeny.zakrevsky
  * Date: 9/24/12
  */
-public class MantisProject {
+public final class MantisProject {
   public final static MantisProject ALL_PROJECTS = new MantisProject(0, "All Projects");
-  public static final ArrayList<MantisFilter> EMPTY_LIST = new ArrayList<MantisFilter>();
 
   private List<MantisFilter> myFilters;
 
@@ -18,9 +19,10 @@ public class MantisProject {
 
   @SuppressWarnings({"UnusedDeclaration"})
   public MantisProject() {
+    String s = "pass";
   }
 
-  public MantisProject(final int id, final String name) {
+  public MantisProject(int id, @NotNull String name) {
     this.id = id;
     this.name = name;
   }
@@ -33,25 +35,40 @@ public class MantisProject {
     this.id = id;
   }
 
+  @NotNull
   public String getName() {
     return name;
   }
 
-  public void setName(final String name) {
+  public void setName(@NotNull String name) {
     this.name = name;
   }
 
+  @NotNull
   public List<MantisFilter> getFilters() {
-    return myFilters == null ? EMPTY_LIST : myFilters;
+    return myFilters == null ? Collections.<MantisFilter>emptyList() : myFilters;
   }
 
-  public void setFilters(final List<MantisFilter> filters) {
+  public void setFilters(@NotNull List<MantisFilter> filters) {
     myFilters = filters;
   }
 
+
   @Override
-  public boolean equals(final Object obj) {
-    return obj != null && obj instanceof MantisProject && ((MantisProject)obj).getId() == getId();
+  public final boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    MantisProject project = (MantisProject)o;
+
+    if (id != project.id) return false;
+
+    return true;
+  }
+
+  @Override
+  public final int hashCode() {
+    return id;
   }
 
   @Override
