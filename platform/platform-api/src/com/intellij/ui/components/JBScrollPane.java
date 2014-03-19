@@ -60,6 +60,23 @@ public class JBScrollPane extends JScrollPane {
     init();
   }
 
+  public static JScrollPane findScrollPane(Component c) {
+    if (c == null) return null;
+
+    if (!(c instanceof JViewport)) {
+      c = c.getParent();
+      if (!(c instanceof JViewport)) return null;
+    }
+    
+    c = c.getParent();
+    if (c instanceof JLayeredPane) {
+      c = c.getParent();
+    }
+    if (!(c instanceof JBScrollPane)) return null;
+
+    return (JBScrollPane)c;
+  }
+
   @Override
   public void setVerticalScrollBar(JScrollBar c) {
     JScrollBar old = getVerticalScrollBar();

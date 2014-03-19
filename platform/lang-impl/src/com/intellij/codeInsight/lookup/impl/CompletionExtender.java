@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.ui.ListExpandableItemsHandler;
+import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,9 +32,10 @@ public class CompletionExtender extends ListExpandableItemsHandler {
     list.addComponentListener(new ComponentAdapter() {
       @Override
       public void componentShown(ComponentEvent e) {
-        if (myComponent.getParent() != null && myComponent.getParent().getParent() instanceof JScrollPane) {
-          final JScrollBar verticalScrollBar = ((JScrollPane)myComponent.getParent().getParent()).getVerticalScrollBar();
-          final JScrollBar horizontalScrollBar = ((JScrollPane)myComponent.getParent().getParent()).getVerticalScrollBar();
+        JScrollPane scrollPane = JBScrollPane.findScrollPane(myComponent);
+        if (scrollPane != null) {
+          final JScrollBar verticalScrollBar = scrollPane.getVerticalScrollBar();
+          final JScrollBar horizontalScrollBar = scrollPane.getVerticalScrollBar();
           final AdjustmentListener listener = new AdjustmentListener() {
             @Override
             public void adjustmentValueChanged(AdjustmentEvent e) {
