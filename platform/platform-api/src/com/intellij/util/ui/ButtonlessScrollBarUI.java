@@ -252,7 +252,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     scrollbar.addAdjustmentListener(myAdjustmentListener);
     scrollbar.addMouseListener(myMouseListener);
     scrollbar.addMouseMotionListener(myMouseMotionListener);
-    Toolkit.getDefaultToolkit().addAWTEventListener(myAWTListener, AWTEvent.MOUSE_MOTION_EVENT_MASK);
+    //Toolkit.getDefaultToolkit().addAWTEventListener(myAWTListener, AWTEvent.MOUSE_MOTION_EVENT_MASK);
 
     resetMacScrollbarFadeout();
   }
@@ -344,7 +344,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     scrollbar.removeAdjustmentListener(myAdjustmentListener);
     scrollbar.removeMouseListener(myMouseListener);
     scrollbar.removeMouseMotionListener(myMouseMotionListener);
-    Toolkit.getDefaultToolkit().removeAWTEventListener(myAWTListener);
+    //Toolkit.getDefaultToolkit().removeAWTEventListener(myAWTListener);
   }
 
   @Override
