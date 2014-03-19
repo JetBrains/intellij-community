@@ -73,6 +73,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   private String myAd;
   private boolean myShowShadow = true;
+  private boolean myShowBorder = true;
   private boolean myFocusable = true;
   private ActiveComponent myCommandButton;
   private List<Pair<ActionListener, KeyStroke>> myKeyboardActions = Collections.emptyList();
@@ -235,7 +236,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
       myCancelButton, myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,
       myPlaceWithinScreen, myMinSize, myAlpha, null, myInStack, myModalContext, myFocusOwners, myAd, myAdAlignment,
       false, myKeyboardActions, mySettingsButtons, myPinCallback, myMayBeParent,
-      myShowShadow, myCancelOnWindowDeactivation, myKeyEventHandler
+      myShowShadow, myShowBorder, myCancelOnWindowDeactivation, myKeyEventHandler
     );
     if (myUserData != null) {
       popup.setUserData(myUserData);
@@ -342,6 +343,13 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @Override
   public ComponentPopupBuilder setShowShadow(boolean show) {
     myShowShadow = show;
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public ComponentPopupBuilder setShowBorder(boolean show) {
+    myShowBorder = show;
     return this;
   }
 }

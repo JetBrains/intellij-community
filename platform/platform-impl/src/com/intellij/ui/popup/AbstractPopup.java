@@ -199,6 +199,7 @@ public class AbstractPopup implements JBPopup {
                      @Nullable final Processor<JBPopup> pinCallback,
                      boolean mayBeParent,
                      boolean showShadow,
+                     boolean showBorder,
                      boolean cancelOnWindowDeactivation,
                      @Nullable BooleanFunction<KeyEvent> keyEventHandler)
   {
@@ -209,7 +210,7 @@ public class AbstractPopup implements JBPopup {
     myActivityKey = new UiActivity.Focus("Popup:" + this);
     myProject = project;
     myComponent = component;
-    myPopupBorder = PopupBorder.Factory.create(true, showShadow);
+    myPopupBorder = showBorder ? PopupBorder.Factory.create(true, showShadow) : PopupBorder.Factory.createEmpty();
     myShadowed = showShadow;
     myContent = createContentPanel(resizable, myPopupBorder, isToDrawMacCorner() && resizable);
     myMayBeParent = mayBeParent;
