@@ -81,6 +81,9 @@ public class HtmlAttributeValueGetter extends XmlAttributeValueGetter {
       else if("content".equals(name) && "meta".equals(tagName) && getAttribute(tag, "name") == null) {
         return HtmlUtil.CONTENT_TYPES;
       }
+      else if ("accept".equals(name) && "input".equals(tagName)) {
+        return HtmlUtil.CONTENT_TYPES;
+      }
       else if("accept-charset".equals(name) || "charset".equals(name)) {
         Charset[] charSets = CharsetToolkit.getAvailableCharsets();
         String[] names = new String[charSets.length];
