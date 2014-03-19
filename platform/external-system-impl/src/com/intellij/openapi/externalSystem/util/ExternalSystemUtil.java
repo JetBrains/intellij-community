@@ -237,6 +237,7 @@ public class ExternalSystemUtil {
       }
 
       private void processOrphanModules() {
+        if(project.isDisposed()) return;
         if(ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
           LOG.info(String.format(
             "Checking for orphan modules. External paths returned by external system: '%s'", myExternalModulePaths
