@@ -798,6 +798,8 @@ def foo() {
     }
   }
 
+  void testNoLineFeedsInGString() { doTest() }
+
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class)
     boolean oldvalue = customSettings.USE_FLYING_GEESE_BRACES
