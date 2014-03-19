@@ -163,6 +163,7 @@ public class HgPushDialog extends DialogWrapper {
     final Collection<String> branches = repo.getOpenedBranches();
     final Collection<String> bookmarkNames = HgUtil.getNamesWithoutHashes(repo.getBookmarks());
     branchComboBox.setModel(new DefaultComboBoxModel(branches.toArray()));
+    branchComboBox.setSelectedItem(repo.getCurrentBranch());
     myBookmarkComboBox.setModel(new DefaultComboBoxModel(bookmarkNames.toArray()));
   }
 
