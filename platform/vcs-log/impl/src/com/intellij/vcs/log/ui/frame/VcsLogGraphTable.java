@@ -20,7 +20,7 @@ import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.*;
-import com.intellij.vcs.log.graph.render.GraphCommitCell;
+import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.newgraph.render.PositionUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRender;

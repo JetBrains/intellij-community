@@ -22,7 +22,7 @@ import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.LoadMoreStage;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.graph.render.GraphCommitCell;
+import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
