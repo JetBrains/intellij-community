@@ -242,21 +242,21 @@ public class UIUtil {
             return ourRetina.get();
           }
         } else if (SystemInfo.isJavaVersionAtLeast("1.7.0_40") && SystemInfo.isOracleJvm) {
+          try {
             GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
             final GraphicsDevice device = env.getDefaultScreenDevice();
-            try {
-              Field field = device.getClass().getDeclaredField("scale");
-              if (field != null) {
-                field.setAccessible(true);
-                Object scale = field.get(device);
-                if (scale instanceof Integer && ((Integer)scale).intValue() == 2) {
-                  ourRetina.set(true);
-                  return true;
-                }
+            Field field = device.getClass().getDeclaredField("scale");
+            if (field != null) {
+              field.setAccessible(true);
+              Object scale = field.get(device);
+              if (scale instanceof Integer && ((Integer)scale).intValue() == 2) {
+                ourRetina.set(true);
+                return true;
               }
             }
-            catch (Exception ignore) {
-            }
+          }
+          catch (AWTError ignore) {}
+          catch (Exception ignore) {}
         }
         ourRetina.set(false);
       }
