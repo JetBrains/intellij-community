@@ -168,7 +168,7 @@ public class HgPushDialog extends DialogWrapper {
 
   private void updateRepositoryUrlText(String defaultPath) {
     if (defaultPath != null) {
-      myRepositoryURL.setText(defaultPath);
+      myRepositoryURL.setSelectedItem(defaultPath);
       update();
     }
   }
