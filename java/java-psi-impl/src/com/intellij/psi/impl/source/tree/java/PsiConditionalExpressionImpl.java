@@ -18,9 +18,12 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -82,6 +85,14 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
     }
     if (TypeConversionUtil.isNullType(type1) && !(type2 instanceof PsiPrimitiveType)) return type2;
     if (TypeConversionUtil.isNullType(type2) && !(type1 instanceof PsiPrimitiveType)) return type1;
+
+    if (PsiUtil.isLanguageLevel8OrHigher(this) && 
+        PsiPolyExpressionUtil.isPolyExpression(this) && 
+        !MethodCandidateInfo.ourOverloadGuard.currentStack().contains(this.getParent())) {
+      //15.25.3 Reference Conditional Expressions 
+      // The type of a poly reference conditional expression is the same as its target type.
+      return InferenceSession.getTargetType(this);
+    }
 
     if (TypeConversionUtil.isAssignable(type1, type2, false)) return type1;
     if (TypeConversionUtil.isAssignable(type2, type1, false)) return type2;
