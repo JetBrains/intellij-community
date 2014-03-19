@@ -129,6 +129,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   }
 
   private static boolean isCollectCall(PsiStatement body) {
+    final PsiIfStatement ifStatement = extractIfStatement(body);
     final PsiMethodCallExpression methodCallExpression = extractAddCall(body);
     if (methodCallExpression != null) {
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
@@ -145,6 +146,11 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
       if (qualifierClass != null && 
           InheritanceUtil.isInheritor(qualifierClass, false, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+
+        if (ifStatement != null) {
+          final PsiExpression condition = ifStatement.getCondition();
+          if (condition != null && isConditionDependsOnUpdatedCollections(condition, qualifierExpression)) return false;
+        }
 
         final PsiElement resolve = methodExpression.resolve();
         if (resolve instanceof PsiMethod &&
@@ -163,7 +169,51 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
     return false;
   }
-  
+
+  private static boolean isConditionDependsOnUpdatedCollections(PsiExpression condition,
+                                                                PsiExpression qualifierExpression) {
+    final PsiElement collection = qualifierExpression != null
+                                  ? ((PsiReferenceExpression)qualifierExpression).resolve()
+                                  : null;
+    final boolean[] dependsOnCollection = {false};
+    condition.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        super.visitReferenceExpression(expression);
+        if (collection != null && collection == expression.resolve()) {
+          dependsOnCollection[0] = true;
+        }
+      }
+
+      @Override
+      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        super.visitMethodCallExpression(expression);
+        final PsiExpression callQualifier = expression.getMethodExpression().getQualifierExpression();
+        if (collection == callQualifier) {
+          dependsOnCollection[0] = true;
+        }
+
+        if (collection == null && (callQualifier instanceof PsiThisExpression && ((PsiThisExpression)callQualifier).getQualifier() == null || 
+                                   callQualifier instanceof PsiSuperExpression && ((PsiSuperExpression)callQualifier).getQualifier() == null)) {
+          dependsOnCollection[0] = true;
+        }
+      }
+
+      @Override
+      public void visitThisExpression(PsiThisExpression expression) {
+        super.visitThisExpression(expression);
+        if (collection == null && expression.getQualifier() == null && expression.getParent() instanceof PsiExpressionList) {
+          dependsOnCollection[0] = true;
+        }
+      }
+
+      @Override
+      public void visitClass(PsiClass aClass) {}
+    });
+
+    return dependsOnCollection[0];
+  }
+
   private static boolean isTrivial(PsiStatement body, PsiParameter parameter, PsiType iteratedValueType) {
     final PsiIfStatement ifStatement = extractIfStatement(body);
     //stream
