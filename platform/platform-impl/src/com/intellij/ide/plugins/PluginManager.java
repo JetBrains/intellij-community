@@ -23,6 +23,8 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.diagnostic.Logger;
@@ -202,6 +204,13 @@ public class PluginManager extends PluginManagerCore {
   }
 
   public static void handleComponentError(Throwable t, @Nullable String componentClassName, @Nullable ComponentConfig config) {
+    Application app = ApplicationManager.getApplication();
+    if (app != null && app.isUnitTestMode()) {
+      if (t instanceof Error) throw (Error)t;
+      if (t instanceof RuntimeException) throw (RuntimeException)t;
+      throw new RuntimeException(t);
+    }
+
     if (t instanceof StartupAbortedException) {
       throw (StartupAbortedException)t;
     }
