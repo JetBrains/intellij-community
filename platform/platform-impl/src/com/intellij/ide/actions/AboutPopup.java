@@ -24,22 +24,23 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.ClickListener;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.UI;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -49,137 +50,93 @@ import java.util.Properties;
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings("SSBasedInspection")
-public class AboutDialog extends JDialog {
-
-  public AboutDialog(Window owner) {
-    super(owner);
-    init(owner);
-  }
-
-
-  private void init(Window window) {
+public class AboutPopup {
+  public void show(@Nullable Window window) {
     ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
-    JPanel mainPanel = new JPanel(new BorderLayout());
-    mainPanel.setFocusable(true); //doesn't work under Oracle 1.7 if nothing focusable
-    final JComponent closeListenerOwner;
+
+    JPanel panel = new JPanel(new BorderLayout());
     Icon image = IconLoader.getIcon(appInfo.getAboutImageUrl());
-    final InfoSurface infoSurface;
     if (appInfo.showLicenseeInfo()) {
-      infoSurface = new InfoSurface(image);
+      final InfoSurface infoSurface = new InfoSurface(image);
       infoSurface.setPreferredSize(new Dimension(image.getIconWidth(), image.getIconHeight()));
-      mainPanel.add(infoSurface, BorderLayout.NORTH);
+      panel.add(infoSurface, BorderLayout.NORTH);
 
-      closeListenerOwner = infoSurface;
-    }
-    else {
-      infoSurface = null;
-      mainPanel.add(new JLabel(image), BorderLayout.NORTH);
-      closeListenerOwner = mainPanel;
-    }
-    setUndecorated(true);
-    setContentPane(mainPanel);
-    final Ref<Long> showTime = Ref.create(System.currentTimeMillis());
-
-    new DumbAwareAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        if (infoSurface != null) {
+      new DumbAwareAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
           copyInfoToClipboard(infoSurface.getText());
         }
-      }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("meta C", "control C"), mainPanel);
+      }.registerCustomShortcutSet(CustomShortcutSet.fromString("meta C", "control C"), panel);
+    }
+    else {
+      panel.add(new JLabel(image), BorderLayout.NORTH);
+    }
 
-    new DumbAwareAction() {
+    RelativePoint location;
+    if (window != null) {
+      Rectangle r = window.getBounds();
+      location = new RelativePoint(window, new Point((r.width - image.getIconWidth()) / 2, (r.height - image.getIconHeight()) / 2));
+    }
+    else {
+      Rectangle r = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration().getBounds();
+      location = new RelativePoint(new Point((r.width - image.getIconWidth()) / 2, (r.height - image.getIconHeight()) / 2));
+    }
 
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        dispose();
-      }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("ESCAPE"), mainPanel);
-
-    //final long delta = Patches.APPLE_BUG_ID_3716865 ? 100 : 0;
-    final long delta = 500; //reproducible on Windows too
-
-    addWindowFocusListener(new WindowFocusListener() {
-      public void windowGainedFocus(WindowEvent e) {
-      }
-
-      public void windowLostFocus(WindowEvent e) {
-        if (e.getOppositeWindow() == null) return;
-        long eventTime = System.currentTimeMillis();
-        if (eventTime - showTime.get() > delta && e.getOppositeWindow() != e.getWindow()) {
-          dispose();
-        }
-        else {
-          IdeFocusManager.getGlobalInstance().requestFocus(AboutDialog.this, true);
-        }
-      }
-    });
-
-    new ClickListener() {
-      @Override
-      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        dispose();
-        return true;
-      }
-    }.installOn(closeListenerOwner);
-
-    pack();
-
-    setLocationRelativeTo(window);
+    JBPopupFactory.getInstance().createComponentPopupBuilder(panel, panel)
+      .setRequestFocus(true)
+      .setFocusable(true)
+      .setResizable(false)
+      .setMovable(false)
+      .setModalContext(false)
+      .setShowShadow(true)
+      .setShowBorder(false)
+      .setCancelKeyEnabled(true)
+      .setCancelOnClickOutside(true)
+      .setCancelOnOtherWindowOpen(true)
+      .createPopup()
+      .show(location);
   }
 
   private static void copyInfoToClipboard(String text) {
     try {
       CopyPasteManager.getInstance().setContents(new StringSelection(text));
     }
-    catch (Exception ignore) {
-    }
+    catch (Exception ignore) { }
   }
 
   private static class InfoSurface extends JPanel {
-    final Color col;
-    final Color linkCol;
+    private final Color myColor;
+    private final Color myLinkColor;
     private final Icon myImage;
     private Font myFont;
     private Font myBoldFont;
     private final List<AboutBoxLine> myLines = new ArrayList<AboutBoxLine>();
     private StringBuilder myInfo = new StringBuilder();
-
-    private static class Link {
-      private final Rectangle rectangle;
-      private final String url;
-
-      private Link(Rectangle rectangle, String url) {
-        this.rectangle = rectangle;
-        this.url = url;
-      }
-    }
-
+    private final List<Link> myLinks = new ArrayList<Link>();
     private Link myActiveLink;
 
-    private final List<Link> myLinks = new ArrayList<Link>();
-
     public InfoSurface(Icon image) {
+      ApplicationInfoImpl appInfo = (ApplicationInfoImpl)ApplicationInfoEx.getInstanceEx();
+
       myImage = image;
+      //noinspection UseJBColor
+      myColor = Color.white;
+      myLinkColor = appInfo.getAboutLinkColor() != null ? appInfo.getAboutLinkColor() : UI.getColor("link.foreground");
 
       setOpaque(false);
-      col = Color.white;
-      final ApplicationInfoImpl ideInfo = (ApplicationInfoImpl)ApplicationInfoEx.getInstanceEx();
-      linkCol = ideInfo.getAboutLinkColor() != null ? ideInfo.getAboutLinkColor() : UI.getColor("link.foreground");
-      setBackground(col);
-      Calendar cal = ideInfo.getBuildDate();
-      myLines.add(new AboutBoxLine(ideInfo.getFullApplicationName(), true, null));
+      setBackground(myColor);
+
+      Calendar cal = appInfo.getBuildDate();
+      myLines.add(new AboutBoxLine(appInfo.getFullApplicationName(), true, null));
       appendLast();
 
-      String buildInfo = IdeBundle.message("aboutbox.build.number", ideInfo.getBuild().asString());
+      String buildInfo = IdeBundle.message("about.box.build.number", appInfo.getBuild().asString());
       String buildDate = "";
-      if (ideInfo.getBuild().isSnapshot()) {
+      if (appInfo.getBuild().isSnapshot()) {
         buildDate = new SimpleDateFormat("HH:mm, ").format(cal.getTime());
       }
       buildDate += DateFormatUtil.formatAboutDialogDate(cal.getTime());
-      buildInfo += IdeBundle.message("aboutbox.build.date", buildDate);
+      buildInfo += IdeBundle.message("about.box.build.date", buildDate);
       myLines.add(new AboutBoxLine(buildInfo));
       appendLast();
 
@@ -192,23 +149,21 @@ public class AboutDialog extends JDialog {
           myLines.add(new AboutBoxLine(message));
         }
       }
+
       myLines.add(new AboutBoxLine(""));
 
-      final Properties properties = System.getProperties();
-      final String javaVersion = properties.getProperty("java.runtime.version", properties.getProperty("java.version", "unknown"));
-      final String arch = properties.getProperty("os.arch", "");
-      myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.jdk", javaVersion, arch), true, null));
-      appendLast();
-      myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.vm", properties.getProperty("java.vm.name", "unknown"),
-                                                     properties.getProperty("java.vendor", "unknown"))));
+      Properties properties = System.getProperties();
+      String javaVersion = properties.getProperty("java.runtime.version", properties.getProperty("java.version", "unknown"));
+      String arch = properties.getProperty("os.arch", "");
+      myLines.add(new AboutBoxLine(IdeBundle.message("about.box.jre", javaVersion, arch)));
       appendLast();
 
-      /*
-      myLines.add(new AboutBoxLine(""));
-      myLines.add(new AboutBoxLine(info.getCompanyURL(), true, info.getCompanyURL()));
-      */
+      String vmVersion = properties.getProperty("java.vm.name", "unknown");
+      String vmVendor = properties.getProperty("java.vendor", "unknown");
+      myLines.add(new AboutBoxLine(IdeBundle.message("about.box.vm", vmVersion, vmVendor)));
+      appendLast();
 
-      String thirdParty = ideInfo.getThirdPartySoftwareURL();
+      String thirdParty = appInfo.getThirdPartySoftwareURL();
       if (thirdParty != null) {
         myLines.add(new AboutBoxLine(""));
         myLines.add(new AboutBoxLine(""));
@@ -217,19 +172,22 @@ public class AboutDialog extends JDialog {
       }
 
       addMouseListener(new MouseAdapter() {
+        @Override
         public void mousePressed(MouseEvent event) {
           if (myActiveLink != null) {
             event.consume();
-            BrowserUtil.browse(myActiveLink.url);
+            BrowserUtil.browse(myActiveLink.myUrl);
           }
         }
       });
+
       addMouseMotionListener(new MouseMotionAdapter() {
+        @Override
         public void mouseMoved(MouseEvent event) {
           boolean hadLink = (myActiveLink != null);
           myActiveLink = null;
           for (Link link : myLinks) {
-            if (link.rectangle.contains(event.getPoint())) {
+            if (link.myRectangle.contains(event.getPoint())) {
               myActiveLink = link;
               if (!hadLink) {
                 setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -251,6 +209,7 @@ public class AboutDialog extends JDialog {
     @Override
     protected void paintChildren(Graphics g) {
       super.paintChildren(g);
+
       Graphics2D g2 = (Graphics2D)g;
       UIUtil.applyRenderingHints(g);
 
@@ -258,12 +217,13 @@ public class AboutDialog extends JDialog {
       if (SystemInfo.isWindows) {
         labelFont = new Font("Tahoma", Font.PLAIN, 12);
       }
+
       for (int labelSize = 10; labelSize != 6; labelSize -= 1) {
         myLinks.clear();
-        g2.setPaint(col);
+        g2.setPaint(myColor);
         myImage.paintIcon(this, g2, 0, 0);
 
-        g2.setColor(col);
+        g2.setColor(myColor);
         TextRenderer renderer = new TextRenderer(0, 165, 398, 120, g2);
         UIUtil.setupComposite(g2);
         myFont = labelFont.deriveFont(Font.PLAIN, labelSize);
@@ -272,8 +232,7 @@ public class AboutDialog extends JDialog {
           renderer.render(30, 0, myLines);
           break;
         }
-        catch (TextRenderer.OverflowException ignore) {
-        }
+        catch (TextRenderer.OverflowException ignore) { }
       }
 
       ApplicationInfo appInfo = ApplicationInfo.getInstance();
@@ -287,7 +246,7 @@ public class AboutDialog extends JDialog {
       return myInfo.toString();
     }
 
-    public class TextRenderer {
+    private class TextRenderer {
       private final int xBase;
       private final int yBase;
       private final int w;
@@ -301,8 +260,7 @@ public class AboutDialog extends JDialog {
       private int fontHeight;
       private Font font;
 
-      public class OverflowException extends Exception {
-      }
+      public class OverflowException extends Exception { }
 
       public TextRenderer(final int xBase, final int yBase, final int w, final int h, final Graphics2D g2) {
         this.xBase = xBase;
@@ -324,7 +282,7 @@ public class AboutDialog extends JDialog {
           final String s = line.getText();
           setFont(line.isBold() ? myBoldFont : myFont);
           if (line.getUrl() != null) {
-            g2.setColor(linkCol);
+            g2.setColor(myLinkColor);
             FontMetrics metrics = g2.getFontMetrics(font);
             myLinks.add(new Link(new Rectangle(x, yBase + y - fontAscent, metrics.stringWidth(s), fontHeight), line.getUrl()));
           }
@@ -390,45 +348,55 @@ public class AboutDialog extends JDialog {
         fontHeight = fontmetrics.getHeight();
       }
     }
-  }
 
-  private static class AboutBoxLine {
-    private final String myText;
-    private final boolean myBold;
-    private final String myUrl;
-    private boolean myKeepWithNext;
+    private static class AboutBoxLine {
+      private final String myText;
+      private final boolean myBold;
+      private final String myUrl;
+      private boolean myKeepWithNext;
 
-    public AboutBoxLine(final String text, final boolean bold, final String url) {
-      myText = text;
-      myBold = bold;
-      myUrl = url;
+      public AboutBoxLine(final String text, final boolean bold, final String url) {
+        myText = text;
+        myBold = bold;
+        myUrl = url;
+      }
+
+      public AboutBoxLine(final String text) {
+        myText = text;
+        myBold = false;
+        myUrl = null;
+      }
+
+      public String getText() {
+        return myText;
+      }
+
+      public boolean isBold() {
+        return myBold;
+      }
+
+      public String getUrl() {
+        return myUrl;
+      }
+
+      public boolean isKeepWithNext() {
+        return myKeepWithNext;
+      }
+
+      public AboutBoxLine keepWithNext() {
+        myKeepWithNext = true;
+        return this;
+      }
     }
 
-    public AboutBoxLine(final String text) {
-      myText = text;
-      myBold = false;
-      myUrl = null;
-    }
+    private static class Link {
+      private final Rectangle myRectangle;
+      private final String myUrl;
 
-    public String getText() {
-      return myText;
-    }
-
-    public boolean isBold() {
-      return myBold;
-    }
-
-    public String getUrl() {
-      return myUrl;
-    }
-
-    public boolean isKeepWithNext() {
-      return myKeepWithNext;
-    }
-
-    public AboutBoxLine keepWithNext() {
-      myKeepWithNext = true;
-      return this;
+      private Link(Rectangle rectangle, String url) {
+        myRectangle = rectangle;
+        myUrl = url;
+      }
     }
   }
 }
