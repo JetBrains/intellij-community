@@ -50,11 +50,7 @@ import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.ConfigureBranchesAction;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.ISVNLogEntryHandler;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLogEntry;
-import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
@@ -205,23 +201,22 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   private String getRepositoryRoot(@NotNull SvnRepositoryLocation svnLocation) throws VcsException {
-    // TODO: Implement this with command line
+    // TODO: Additionally SvnRepositoryLocation could possibly be refactored to always contain FilePath (or similar local item)
+    // TODO: So here we could get repository url without performing remote svn command
 
-    final String repositoryRoot;
-    SVNRepository repository = null;
-
+    SVNURL rootUrl;
     try {
-      repository = myVcs.createRepository(svnLocation.getURL());
-      repositoryRoot = repository.getRepositoryRoot(true).toString();
+      rootUrl = SvnUtil.getRepositoryRoot(myVcs, svnLocation.toSvnUrl());
     }
     catch (SVNException e) {
-      throw new VcsException(e);
-    } finally {
-      if (repository != null) {
-        repository.closeSession();
-      }
+      throw new SvnBindException(e);
     }
-    return repositoryRoot;
+
+    if (rootUrl == null) {
+      throw new SvnBindException("Could not resolve repository root url for " + svnLocation);
+    }
+
+    return rootUrl.toDecodedString();
   }
 
   private void getCommittedChangesImpl(ChangeBrowserSettings settings, final SvnRepositoryLocation location,
