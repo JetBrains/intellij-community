@@ -17,7 +17,6 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
-import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
@@ -29,7 +28,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Key;
@@ -374,10 +372,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       treeElement.rawAddChildrenWithoutNotifications(contentLeaf);
     }
 
-    if (CacheUtil.isCopy(this)) {
-      treeElement.setCharTable(IdentityCharTable.INSTANCE);
-    }
-
     return treeElement;
   }
 
@@ -508,7 +502,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public boolean isWritable() {
-    return getViewProvider().getVirtualFile().isWritable() && !CacheUtil.isCopy(this);
+    return getViewProvider().getVirtualFile().isWritable();
   }
 
   @Override
@@ -650,32 +644,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     subtreeChanged(); // important! otherwise cached information is not released
     if (isContentsLoaded()) {
       unloadContent();
-    }
-  }
-
-  @Override
-  public PsiFile cacheCopy(final FileContent content) {
-    if (isContentsLoaded()) {
-      return this;
-    }
-    else {
-      CharSequence text;
-      if (content == null) {
-        Document document = FileDocumentManager.getInstance().getDocument(getVirtualFile());
-        text = document.getCharsSequence();
-      }
-      else {
-        text = CacheUtil.getContentText(content);
-      }
-
-      FileType fileType = getFileType();
-      final String name = getName();
-      PsiFile fileCopy =
-        PsiFileFactory.getInstance(getProject()).createFileFromText(name, fileType, text, getModificationStamp(), false, false);
-      fileCopy.putUserData(CacheUtil.CACHE_COPY_KEY, Boolean.TRUE);
-
-      ((PsiFileImpl)fileCopy).setOriginalFile(this);
-      return fileCopy;
     }
   }
 

@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -474,11 +473,6 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       myMirrorFileElement = null;
       myPackageStatement = packageStatement;
     }
-  }
-
-  @Override
-  public PsiFile cacheCopy(final FileContent content) {
-    return this;
   }
 
   @Override
