@@ -20,7 +20,7 @@ import com.intellij.ide.structureView.StructureViewModel;
 /**
  * @author max
  */
-public interface PropertiesGroupingStructureViewModel extends StructureViewModel {
+public interface PropertiesGroupingStructureViewModel extends StructureViewModel.ElementInfoProvider {
   void setSeparator(String separator);
 
   String getSeparator();

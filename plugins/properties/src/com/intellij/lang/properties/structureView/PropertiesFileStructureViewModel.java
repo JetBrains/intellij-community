@@ -106,4 +106,14 @@ public class PropertiesFileStructureViewModel extends TextEditorBasedStructureVi
   protected Class[] getSuitableClasses() {
     return new Class[] {Property.class};
   }
+
+  @Override
+  public boolean isAlwaysShowsPlus(StructureViewTreeElement element) {
+    return false;
+  }
+
+  @Override
+  public boolean isAlwaysLeaf(StructureViewTreeElement element) {
+    return false;
+  }
 }
