@@ -55,6 +55,39 @@ public class VcsLogJoinerTest {
   }
 
   @Test
+  public void oneNodeTest() {
+    runTest(
+      asList("3|-a1|-"),
+      asList("3|-a1|-"),
+      asList("a1"),
+      asList("a1"),
+      "a1"
+    );
+  }
+
+  @Test
+  public void oneNodeResetTest() {
+    runTest(
+      asList("3|-a1|-a2", "2|-a2|-"),
+      asList("2|-a2|-"),
+      asList("a2", "a1"),
+      asList("a2"),
+      "a2"
+    );
+  }
+
+  @Test
+  public void oneNodeReset2Test() {
+    runTest(
+      asList("3|-a1|-a2", "2|-a2|-"),
+      asList("2|-a2|-"),
+      asList("a1"),
+      asList("a2"),
+      "a2"
+    );
+  }
+
+  @Test
   public void simpleRemoveCommitsTest() {
     runTest(
       asList("4|-a2|-a1", "3|-b1|-a", "2|-a1|-a", "1|-a|-"),
