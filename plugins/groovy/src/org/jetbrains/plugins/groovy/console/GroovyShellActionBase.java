@@ -43,6 +43,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import icons.JetgroovyIcons;
@@ -94,23 +95,31 @@ public abstract class GroovyShellActionBase extends DumbAwareAction {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     assert project != null;
 
-    CompilerManager.getInstance(project).make(new CompileStatusNotification() {
+    selectModule(project, new Consumer<Module>() {
       @Override
-      public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
-        if (aborted) return;
+      public void consume(final Module module) {
+        CompilerManager.getInstance(project).make(module, new CompileStatusNotification() {
+          @Override
+          public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+            if (aborted) return;
 
-        final Project project = compileContext.getProject();
+            final Project project = compileContext.getProject();
 
-        if (errors == 0 ||
-            Messages.showYesNoDialog(project, "Compilation failed with errors. Do you want to run " + getTitle() + " anyway?", getTitle(),
-                                     JetgroovyIcons.Groovy.Groovy_32x32) == Messages.YES) {
-          runGroovyShell(project);
-        }
+            if (errors == 0 || askToContinueWithErrors(project)) {
+              doRunShell(module);
+            }
+          }
+        });
       }
     });
   }
 
-  private void runGroovyShell(Project project) {
+  private boolean askToContinueWithErrors(Project project) {
+    String question = "Compilation failed with errors. Do you want to run " + getTitle() + " anyway?";
+    return Messages.showYesNoDialog(project, question, getTitle(), JetgroovyIcons.Groovy.Groovy_32x32) == Messages.YES;
+  }
+
+  private void selectModule(Project project, final Consumer<Module> callback) {
     List<Module> modules = new ArrayList<Module>();
     final Map<Module, String> versions = new HashMap<Module, String>();
 
@@ -123,7 +132,7 @@ public abstract class GroovyShellActionBase extends DumbAwareAction {
     }
 
     if (modules.size() == 1) {
-      doRun(modules.get(0));
+      callback.consume(modules.get(0));
       return;
     }
 
@@ -150,7 +159,7 @@ public abstract class GroovyShellActionBase extends DumbAwareAction {
         @Override
         public PopupStep onChosen(Module selectedValue, boolean finalChoice) {
           PropertiesComponent.getInstance(selectedValue.getProject()).setValue(GROOVY_SHELL_LAST_MODULE, selectedValue.getName());
-          doRun(selectedValue);
+          callback.consume(selectedValue);
           return null;
         }
       };
@@ -171,7 +180,7 @@ public abstract class GroovyShellActionBase extends DumbAwareAction {
     JBPopupFactory.getInstance().createListPopup(step).showCenteredInCurrentWindow(project);
   }
 
-  protected void doRun(final Module module) {
+  protected void doRunShell(final Module module) {
     final GroovyShellRunner shellRunner = getRunner(module);
     if (shellRunner == null) return;
 
