@@ -1,3 +1,4 @@
 label: <begin>123<end>
 -----
-label: def preved = 123<caret>
+label:
+def preved = 123<caret>
