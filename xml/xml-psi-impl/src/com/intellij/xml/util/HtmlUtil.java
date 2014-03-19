@@ -143,7 +143,7 @@ public class HtmlUtil {
   private static final Set<String> POSSIBLY_INLINE_TAGS_MAP = new THashSet<String>();
 
   @NonNls private static final String[] HTML5_TAGS = {
-    "article", "aside", "audio", "canvas", "command", "datalist", "details", "embed", "figcaption", "figure", "footer", "header", "hgroup",
+    "article", "aside", "audio", "canvas", "command", "datalist", "details", "embed", "figcaption", "figure", "footer", "header",
     "keygen", "mark", "meter", "nav", "output", "progress", "rp", "rt", "ruby", "section", "source", "summary", "time", "video", "wbr",
     "main"
   };
