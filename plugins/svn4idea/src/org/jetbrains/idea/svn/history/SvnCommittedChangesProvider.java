@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
@@ -236,8 +235,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     Date dateTo = settings.getDateBeforeFilter();
     Long changeTo = settings.getChangeBeforeFilter();
 
-    SVNRevision revisionBefore = createRevisionBefore(location, dateTo, changeTo);
-    SVNRevision revisionAfter = createRevisionAfter(dateFrom, changeFrom);
+    SVNRevision revisionBefore = createRevision(dateTo, changeTo, SVNRevision.HEAD);
+    SVNRevision revisionAfter = createRevision(dateFrom, changeFrom, SVNRevision.create(1));
 
     SvnTarget target = SvnTarget.fromURL(location.toSvnUrl(), revisionBefore);
     myVcs.getFactory(target).createHistoryClient().doLog(target, revisionBefore, revisionAfter, settings.STOP_ON_COPY, true,
@@ -246,54 +245,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   @NotNull
-  private static SVNRevision createRevisionAfter(@Nullable Date date, @Nullable Long change) throws VcsException {
-    return createRevision(date, change, new ThrowableComputable<SVNRevision, VcsException>() {
-      @Override
-      public SVNRevision compute() throws VcsException {
-        return SVNRevision.create(1);
-      }
-    });
-  }
-
-  @NotNull
-  private SVNRevision createRevisionBefore(@NotNull final SvnRepositoryLocation location, @Nullable Date date, @Nullable Long change)
-    throws VcsException {
-    return createRevision(date, change, new ThrowableComputable<SVNRevision, VcsException>() {
-      @Override
-      public SVNRevision compute() throws VcsException {
-        return getLatestRevision(location);
-      }
-    });
-  }
-
-  @NotNull
-  private SVNRevision getLatestRevision(@NotNull SvnRepositoryLocation location) throws VcsException {
-    // TODO: Implement this with command line - issue is that if url does not exist, SVNRepository will be created and asked correctly
-    // TODO: But "svn info -r HEAD" will fail - check if non-existing location could be passed or inteface should be expanded to use
-    // TODO: peg revisions.
-    SVNRepository repository = null;
-    long revision;
-
-    try {
-      repository = myVcs.createRepository(location.getURL());
-      revision = repository.getLatestRevision();
-    }
-    catch (SVNException e) {
-      throw new SvnBindException(e);
-    }
-    finally {
-      if (repository != null) {
-        repository.closeSession();
-      }
-    }
-
-    return SVNRevision.create(revision);
-  }
-
-  @NotNull
-  private static SVNRevision createRevision(@Nullable Date date,
-                                            @Nullable Long change,
-                                            @NotNull ThrowableComputable<SVNRevision, VcsException> defaultValue)
+  private static SVNRevision createRevision(@Nullable Date date, @Nullable Long change, @NotNull SVNRevision defaultValue)
     throws VcsException {
     final SVNRevision result;
 
@@ -304,7 +256,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       result = SVNRevision.create(change.longValue());
     }
     else {
-      result = defaultValue.compute();
+      result = defaultValue;
     }
 
     return result;
