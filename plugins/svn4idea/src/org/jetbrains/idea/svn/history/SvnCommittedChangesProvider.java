@@ -37,7 +37,10 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.*;
+import com.intellij.util.AsynchConsumer;
+import com.intellij.util.Consumer;
+import com.intellij.util.PairConsumer;
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
@@ -53,7 +56,11 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNStatus;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -223,24 +230,19 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                                        final boolean filterOutByDate) throws VcsException {
     setCollectingChangesProgress(location);
 
-    try {
-      final String author = settings.getUserFilter();
-      final Date dateFrom = settings.getDateAfterFilter();
-      final Long changeFrom = settings.getChangeAfterFilter();
-      final Date dateTo = settings.getDateBeforeFilter();
-      final Long changeTo = settings.getChangeBeforeFilter();
+    String author = settings.getUserFilter();
+    Date dateFrom = settings.getDateAfterFilter();
+    Long changeFrom = settings.getChangeAfterFilter();
+    Date dateTo = settings.getDateBeforeFilter();
+    Long changeTo = settings.getChangeBeforeFilter();
 
-      final SVNRevision revisionBefore = createRevisionBefore(location, dateTo, changeTo);
-      final SVNRevision revisionAfter = createRevisionAfter(dateFrom, changeFrom);
+    SVNRevision revisionBefore = createRevisionBefore(location, dateTo, changeTo);
+    SVNRevision revisionAfter = createRevisionAfter(dateFrom, changeFrom);
 
-      // TODO: Implement this with command line
-      SVNLogClient logger = myVcs.createLogClient();
-      logger.doLog(location.toSvnUrl(), ArrayUtil.EMPTY_STRING_ARRAY, revisionBefore, revisionBefore, revisionAfter, settings.STOP_ON_COPY,
-                   true, includeMergedRevisions, maxCount, null, createLogHandler(resultConsumer, filterOutByDate, author));
-    }
-    catch (SVNException e) {
-      throw new VcsException(e);
-    }
+    SvnTarget target = SvnTarget.fromURL(location.toSvnUrl(), revisionBefore);
+    myVcs.getFactory(target).createHistoryClient().doLog(target, revisionBefore, revisionAfter, settings.STOP_ON_COPY, true,
+                                                         includeMergedRevisions, maxCount, null,
+                                                         createLogHandler(resultConsumer, filterOutByDate, author));
   }
 
   @NotNull
