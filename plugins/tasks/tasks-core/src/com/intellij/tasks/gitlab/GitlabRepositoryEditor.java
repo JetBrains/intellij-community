@@ -5,8 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.tasks.gitlab.model.GitlabProject;
-import com.intellij.tasks.impl.RemoteFetchTask;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.tasks.impl.TaskUiUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.FormBuilder;
@@ -60,12 +59,7 @@ public class GitlabRepositoryEditor extends BaseRepositoryEditor<GitlabRepositor
   protected JComponent createCustomPanel() {
     myProjectLabel = new JBLabel("Project:", SwingConstants.RIGHT);
     myProjectComboBox = new ComboBox(300);
-    myProjectComboBox.setRenderer(new ListCellRendererWrapper<GitlabProject>() {
-      @Override
-      public void customize(JList list, GitlabProject project, int index, boolean selected, boolean hasFocus) {
-        setText(project == null ? "Set server URL and token first" : project.getName());
-      }
-    });
+    myProjectComboBox.setRenderer(new TaskUiUtil.SimpleComboBoxRenderer("Set server URL and token first"));
     myProjectLabel.setLabelFor(myProjectComboBox);
     return new FormBuilder().addLabeledComponent(myProjectLabel, myProjectComboBox).getPanel();
   }
@@ -90,7 +84,7 @@ public class GitlabRepositoryEditor extends BaseRepositoryEditor<GitlabRepositor
     myTestButton.setEnabled(myRepository.isConfigured());
   }
 
-  private class FetchProjectsTask extends RemoteFetchTask.ComboBoxUpdater<GitlabProject> {
+  private class FetchProjectsTask extends TaskUiUtil.ComboBoxUpdater<GitlabProject> {
     private FetchProjectsTask() {
       super(GitlabRepositoryEditor.this.myProject, "Downloading Gitlab projects...", myProjectComboBox);
     }
