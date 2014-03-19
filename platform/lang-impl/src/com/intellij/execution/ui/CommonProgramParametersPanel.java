@@ -37,6 +37,8 @@ import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.PathUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,7 +48,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CommonProgramParametersPanel extends JPanel implements PanelWithAnchor {
-
   private LabeledComponent<RawCommandLineEditor> myProgramParametersComponent;
   private LabeledComponent<JPanel> myWorkingDirectoryComponent;
   private TextFieldWithBrowseButton myWorkingDirectoryField;
@@ -55,7 +56,6 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
 
   private Module myModuleContext = null;
   private boolean myHaveModuleContext = false;
-
 
   public CommonProgramParametersPanel() {
     super();
@@ -78,10 +78,12 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
         fileChooserDescriptor.setTitle(ExecutionBundle.message("select.working.directory.message"));
         fileChooserDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, myModuleContext);
         Project project = myModuleContext != null ? myModuleContext.getProject() : null;
-        VirtualFile file = FileChooser.chooseFile(fileChooserDescriptor, myWorkingDirectoryComponent, project, null);
-        if (file != null) {
-          setWorkingDirectory(file.getPresentableUrl());
-        }
+        FileChooser.chooseFile(fileChooserDescriptor, project, myWorkingDirectoryComponent, null, new Consumer<VirtualFile>() {
+          @Override
+          public void consume(VirtualFile file) {
+            setWorkingDirectory(file.getPresentableUrl());
+          }
+        });
       }
     }) {
       @Override
@@ -185,7 +187,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
 
   public void reset(CommonProgramRunConfigurationParameters configuration) {
     setProgramParameters(configuration.getProgramParameters());
-    setWorkingDirectory(configuration.getWorkingDirectory());
+    setWorkingDirectory(PathUtil.toSystemDependentName(configuration.getWorkingDirectory()));
 
     myEnvVariablesComponent.setEnvs(configuration.getEnvs());
     myEnvVariablesComponent.setPassParentEnvs(configuration.isPassParentEnvs());
