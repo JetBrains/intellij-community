@@ -346,10 +346,7 @@ public class InferenceSession {
     if (PsiPolyExpressionUtil.isMethodCallPolyExpression(context, method)) {
       PsiType returnType = method.getReturnType();
       if (!PsiType.VOID.equals(returnType) && returnType != null) {
-        PsiType targetType = PsiTypesUtil.getExpectedTypeByParent(context);
-        if (targetType == null) {
-          targetType = getTargetType(context);
-        }
+        PsiType targetType = getTargetType(context);
         if (targetType != null) {
           registerConstraints(PsiUtil.isRawSubstitutor(method, mySiteSubstitutor) ? returnType : mySiteSubstitutor.substitute(returnType), targetType);
         }
@@ -465,7 +462,11 @@ public class InferenceSession {
     return false;
   }
   
-  private static PsiType getTargetType(final PsiExpression context) {
+  public static PsiType getTargetType(final PsiExpression context) {
+    PsiType targetType = PsiTypesUtil.getExpectedTypeByParent(context);
+    if (targetType != null) {
+      return targetType;
+    }
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(context.getParent());
     if (parent instanceof PsiExpressionList) {
       PsiElement gParent = parent.getParent();
@@ -495,11 +496,7 @@ public class InferenceSession {
         }
       }
     } else if (parent instanceof PsiConditionalExpression) {
-      PsiType targetType = PsiTypesUtil.getExpectedTypeByParent((PsiExpression)parent);
-      if (targetType == null) {
-        targetType = getTargetType((PsiExpression)parent);
-      }
-      return targetType;
+      return getTargetType((PsiExpression)parent);
     }
     else if (parent instanceof PsiLambdaExpression) {
       if (PsiUtil.skipParenthesizedExprUp(parent.getParent()) instanceof PsiExpressionList) {

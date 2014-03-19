@@ -37,6 +37,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -1458,6 +1459,27 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
     catch (IndexNotReadyException e) {
       return false;
+    }
+  }
+
+  @Override
+  public void visitConditionalExpression(PsiConditionalExpression expression) {
+    super.visitConditionalExpression(expression);
+    if (PsiUtil.isLanguageLevel8OrHigher(expression) && PsiPolyExpressionUtil.isPolyExpression(expression)) {
+      final PsiExpression thenExpression = expression.getThenExpression();
+      final PsiExpression elseExpression = expression.getElseExpression();
+      if (thenExpression != null && elseExpression != null) {
+        final PsiType conditionalType = expression.getType();
+        if (conditionalType != null) {
+          final PsiExpression[] sides = new PsiExpression[] {thenExpression, elseExpression};
+          for (PsiExpression side : sides) {
+            final PsiType sideType = side.getType();
+            if (sideType != null && !TypeConversionUtil.isAssignable(conditionalType, sideType)) {
+              myHolder.add(HighlightUtil.checkAssignability(conditionalType, sideType, side, side));
+            }
+          }
+        }
+      }
     }
   }
 }
