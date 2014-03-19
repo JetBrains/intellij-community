@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.impl.matcher.handlers;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.psi.*;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
@@ -235,7 +236,8 @@ public abstract class MatchingHandler extends MatchPredicate {
       final MatchingHandler handler = context.getPattern().getHandler( element );
 
       if (handler instanceof SubstitutionHandler) {
-        if (!((SubstitutionHandler)handler).validate(context,SubstitutionHandler.getElementContextByPsi(element))) {
+        if (!((SubstitutionHandler)handler).validate(
+          context, StructuralSearchUtil.getProfileByPsiElement(element).getElementContextByPsi(element))) {
           return false;
         }
       } else {

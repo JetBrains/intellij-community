@@ -1,12 +1,13 @@
 package com.intellij.structuralsearch.impl.matcher;
 
+import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SimpleHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
-import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 
 import java.util.HashMap;
@@ -79,7 +80,7 @@ public abstract class CompiledPattern {
   }
 
   public String getTypedVarString(PsiElement element) {
-    return SubstitutionHandler.getTypedVarString(element);
+    return StructuralSearchUtil.getProfileByPsiElement(element).getTypedVarString(element);
   }
 
   private final HashMap<Object,MatchingHandler> handlers = new HashMap<Object,MatchingHandler>();

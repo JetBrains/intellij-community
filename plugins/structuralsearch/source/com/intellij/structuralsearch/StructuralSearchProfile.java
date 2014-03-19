@@ -164,4 +164,18 @@ public abstract class StructuralSearchProfile {
   public boolean canBeVarDelimeter(@NotNull PsiElement element) {
     return false;
   }
+
+  public String getText(PsiElement match, int start, int end) {
+    final String matchText = match.getText();
+    if (start==0 && end==-1) return matchText;
+    return matchText.substring(start, end == -1 ? matchText.length() : end);
+  }
+
+  public Class getElementContextByPsi(PsiElement element) {
+    return element.getClass();
+  }
+
+  public String getTypedVarString(PsiElement element) {
+    return element.getText();
+  }
 }

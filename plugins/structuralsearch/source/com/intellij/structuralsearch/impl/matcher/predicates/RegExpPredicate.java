@@ -4,10 +4,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.MatchUtils;
-import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchPredicate;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import org.jetbrains.annotations.NonNls;
@@ -153,7 +153,7 @@ public final class RegExpPredicate extends MatchPredicate {
       //  text = text.substring(1,text.length()-1);
       //}
     } else {
-      text = SubstitutionHandler.getTypedVarString(matchedNode);
+      text = StructuralSearchUtil.getProfileByPsiElement(matchedNode).getTypedVarString(matchedNode);
     }
     return text;
   }

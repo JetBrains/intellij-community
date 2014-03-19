@@ -39,6 +39,60 @@ import java.util.List;
 public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   private JavaLexicalNodesFilter myJavaLexicalNodesFilter;
 
+  public String getText(PsiElement match, int start,int end) {
+    if (match instanceof PsiIdentifier) {
+      PsiElement parent = match.getParent();
+      if (parent instanceof PsiJavaCodeReferenceElement && !(parent instanceof PsiExpression)) {
+        match = parent; // care about generic
+      }
+    }
+    final String matchText = match.getText();
+    if (start==0 && end==-1) return matchText;
+    return matchText.substring(start,end == -1? matchText.length():end);
+  }
+
+  public Class getElementContextByPsi(PsiElement element) {
+    if (element instanceof PsiIdentifier) {
+      element = element.getParent();
+    }
+
+    if (element instanceof PsiMember) {
+      return PsiMember.class;
+    } else {
+      return PsiExpression.class;
+    }
+  }
+
+  public String getTypedVarString(final PsiElement element) {
+    String text;
+
+    if (element instanceof PsiNamedElement) {
+      text = ((PsiNamedElement)element).getName();
+    }
+    else if (element instanceof PsiAnnotation) {
+      PsiJavaCodeReferenceElement referenceElement = ((PsiAnnotation)element).getNameReferenceElement();
+      text = referenceElement == null ? null : referenceElement.getQualifiedName();
+    }
+    else if (element instanceof PsiNameValuePair) {
+      text = ((PsiNameValuePair)element).getName();
+    }
+    else {
+      text = element.getText();
+      if (StringUtil.startsWithChar(text, '@')) {
+        text = text.substring(1);
+      }
+      if (StringUtil.endsWithChar(text, ';')) text = text.substring(0, text.length() - 1);
+      else if (element instanceof PsiExpressionStatement) {
+        int i = text.indexOf(';');
+        if (i != -1) text = text.substring(0,i);
+      }
+    }
+
+    if (text==null) text = element.getText();
+
+    return text;
+  }
+
   public void compile(PsiElement[] elements, @NotNull GlobalCompilingVisitor globalVisitor) {
     elements[0].getParent().accept(new JavaCompilingVisitor(globalVisitor));
   }
@@ -264,4 +318,6 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       );
     }
   }
+
+
 }

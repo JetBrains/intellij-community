@@ -3,8 +3,7 @@ package com.intellij.structuralsearch.impl.matcher.handlers;
 import com.intellij.dupLocator.iterators.FilteringNodeIterator;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.NodeFilter;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
@@ -99,7 +98,7 @@ public class SubstitutionHandler extends MatchingHandler {
       if (start==0 && end==-1 && result.getStart()==0 && result.getEnd()==-1) {
         matchresult = matchContext.getMatcher().match(match,result.getMatchRef().getElement());
       } else {
-        matchresult = getText(match,start,end).equals(
+        matchresult = StructuralSearchUtil.getProfileByPsiElement(match).getText(match, start, end).equals(
           result.getMatchImage()
         );
       }
@@ -218,7 +217,7 @@ public class SubstitutionHandler extends MatchingHandler {
   }
 
   private MatchResultImpl createMatch(final PsiElement match, int start, int end) {
-    final String image = match == null ? null : getText(match, start, end);
+    final String image = match == null ? null : StructuralSearchUtil.getProfileByPsiElement(match).getText(match, start, end);
     final SmartPsiPointer ref = new SmartPsiPointer(match);
 
     final MatchResultImpl result = myNestedResult == null ? new MatchResultImpl(
@@ -243,57 +242,12 @@ public class SubstitutionHandler extends MatchingHandler {
     return result;
   }
 
-  public static final String getTypedVarString(final PsiElement element) {
-    String text;
-
-    if (element instanceof PsiNamedElement) {
-      text = ((PsiNamedElement)element).getName();
-    }
-    else if (element instanceof PsiAnnotation) {
-      PsiJavaCodeReferenceElement referenceElement = ((PsiAnnotation)element).getNameReferenceElement();
-      text = referenceElement == null ? null : referenceElement.getQualifiedName();
-    }
-    else if (element instanceof PsiNameValuePair) {
-      text = ((PsiNameValuePair)element).getName();
-    }
-    else {
-      text = element.getText();
-      if (StringUtil.startsWithChar(text, '@')) {
-        text = text.substring(1);
-      }
-      if (StringUtil.endsWithChar(text, ';')) text = text.substring(0, text.length() - 1);
-      else if (element instanceof PsiExpressionStatement) {
-        int i = text.indexOf(';');
-        if (i != -1) text = text.substring(0,i);
-      }
-    }
-
-    if (text==null) text = element.getText();
-    
-    return text;
-  }
-
-  static final Class MEMBER_CONTEXT = PsiMember.class;
-  static final Class EXPR_CONTEXT = PsiExpression.class;
-
-  static Class getElementContextByPsi(PsiElement element) {
-    if (element instanceof PsiIdentifier) {
-      element = element.getParent();
-    }
-
-    if (element instanceof PsiMember) {
-      return MEMBER_CONTEXT;
-    } else {
-      return EXPR_CONTEXT;
-    }
-  }
-
   boolean validate(MatchContext context, Class elementContext) {
     MatchResult substitution = context.getResult().findSon(name);
 
     if (minOccurs >= 1 &&
         ( substitution == null ||
-          getElementContextByPsi(substitution.getMatchRef().getElement()) != elementContext
+          StructuralSearchUtil.getProfileByFileType(context.getOptions().getFileType()).getElementContextByPsi(substitution.getMatchRef().getElement()) != elementContext
         )
        ) {
       return false;
@@ -599,17 +553,5 @@ public class SubstitutionHandler extends MatchingHandler {
 
   public MatchResultImpl getNestedResult() {
     return myNestedResult;
-  }
-
-  public static final String getText(PsiElement match, int start,int end) {
-    if (match instanceof PsiIdentifier) {
-      PsiElement parent = match.getParent();
-      if (parent instanceof PsiJavaCodeReferenceElement && !(parent instanceof PsiExpression)) {
-        match = parent; // care about generic
-      }
-    }
-    final String matchText = match.getText();
-    if (start==0 && end==-1) return matchText;
-    return matchText.substring(start,end == -1? matchText.length():end);
   }
 }
