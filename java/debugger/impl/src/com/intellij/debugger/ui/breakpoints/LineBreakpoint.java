@@ -34,7 +34,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -124,16 +123,11 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   @Override
   protected void reload(PsiFile file) {
     super.reload(file);
-    int offset;
     final SourcePosition position = getSourcePosition();
     if (position != null) {
-      offset = position.getOffset();
+      int offset = position.getOffset();
+      myOwnerMethodName = findOwnerMethod(file, offset);
     }
-    else {
-      final RangeHighlighter highlighter = getHighlighter();
-      offset = highlighter != null? highlighter.getStartOffset() : -1;
-    }
-    myOwnerMethodName = findOwnerMethod(file, offset);
   }
 
   @Override

@@ -16,7 +16,6 @@
 
 package com.intellij.psi.impl;
 
-import com.intellij.ide.caches.FileContent;
 import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,11 +26,9 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.cache.CacheUtil;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -67,7 +64,6 @@ public class PsiManagerImpl extends PsiManagerEx {
 
   private final AtomicInteger myBatchFilesProcessingModeCount = new AtomicInteger(0);
 
-  private static final Key<PsiFile> CACHED_PSI_FILE_COPY_IN_FILECONTENT = Key.create("CACHED_PSI_FILE_COPY_IN_FILECONTENT");
   public static final Topic<AnyPsiChangeListener> ANY_PSI_CHANGE_TOPIC =
     Topic.create("ANY_PSI_CHANGE_TOPIC", AnyPsiChangeListener.class, Topic.BroadcastDirection.TO_PARENT);
 
@@ -198,25 +194,6 @@ public class PsiManagerImpl extends PsiManagerEx {
   public void cleanupForNextTest() {
     myFileManager.cleanupForNextTest();
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
-  }
-
-  @Nullable
-  public PsiFile getFile(@NotNull FileContent content) {
-    PsiFile psiFile = content.getUserData(CACHED_PSI_FILE_COPY_IN_FILECONTENT);
-    if (psiFile == null) {
-      final VirtualFile vFile = content.getVirtualFile();
-      psiFile = myFileManager.getCachedPsiFile(vFile);
-      if (psiFile == null) {
-        psiFile = findFile(vFile);
-        if (psiFile == null) return null;
-        psiFile = CacheUtil.createFileCopy(content, psiFile);
-      }
-      //psiFile = content.putUserDataIfAbsent(CACHED_PSI_FILE_COPY_IN_FILECONTENT, psiFile);
-      content.putUserData(CACHED_PSI_FILE_COPY_IN_FILECONTENT, psiFile);
-    }
-
-    LOG.assertTrue(psiFile instanceof PsiCompiledElement || psiFile.isValid());
-    return psiFile;
   }
 
   @Override

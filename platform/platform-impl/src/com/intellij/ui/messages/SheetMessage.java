@@ -105,6 +105,9 @@ public class SheetMessage {
         if (staticImage != null) {
           Graphics2D g2d = (Graphics2D) g.create();
 
+          g2d.setBackground(new JBColor(new Color(255, 255, 255, 0), new Color(110, 110, 110, 0)));
+          g2d.clearRect(0, 0, myController.SHEET_NC_WIDTH, myController.SHEET_NC_HEIGHT);
+
           g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.95f));
 
           int imageCropOffset = (UIUtil.isRetina()) ? imageHeight * 2 : imageHeight;

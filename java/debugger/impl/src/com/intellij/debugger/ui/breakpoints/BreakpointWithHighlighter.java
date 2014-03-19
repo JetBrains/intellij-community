@@ -31,7 +31,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -68,9 +67,6 @@ import javax.swing.*;
  * Time: 3:22:55 PM
  */
 public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperties> extends Breakpoint<P> {
-  @Nullable
-  private RangeHighlighter myHighlighter;
-
   @Nullable
   private SourcePosition mySourcePosition;
 
@@ -127,10 +123,6 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   @Nullable
   public BreakpointWithHighlighter init() {
     if (!isValid()) {
-      final RangeHighlighter highlighter = myHighlighter;
-      if (highlighter != null) {
-        highlighter.dispose();
-      }
       return null;
     }
 
@@ -188,23 +180,6 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     //for persistency
     super(project, xBreakpoint);
     reload();
-  }
-
-  public BreakpointWithHighlighter(@NotNull final Project project, @NotNull final RangeHighlighter highlighter, XBreakpoint breakpoint) {
-    super(project, breakpoint);
-    myHighlighter = highlighter;
-    setEditorFilter(highlighter);
-    reload();
-  }
-
-  protected void setEditorFilter(RangeHighlighter highlighter) {
-    highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
-  }
-
-  @Nullable
-  public RangeHighlighter getHighlighter() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    return myHighlighter;
   }
 
   @Override
@@ -417,27 +392,6 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     }
   }
 
-  /**
-   * called by BreakpointManager when destroying the breakpoint
-   */
-  @Override
-  public void delete() {
-    if (isVisible()) {
-      final RangeHighlighter highlighter = getHighlighter();
-      if (highlighter != null) {
-        DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
-          @Override
-          public void run() {
-            highlighter.dispose();
-            //we should delete it here, so gutter will not fire events to deleted breakpoint
-            BreakpointWithHighlighter.super.delete();
-          }
-        });
-      }
-    }
-
-  }
-
   public boolean isAt(@NotNull Document document, int offset) {
     final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     int line = document.getLineNumber(offset);
@@ -471,59 +425,59 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   @Override
   public abstract Key<? extends BreakpointWithHighlighter> getCategory();
 
-  public boolean canMoveTo(@Nullable final SourcePosition position) {
-    if (position == null || !position.getFile().isValid()) {
-      return false;
-    }
-    final PsiFile psiFile = position.getFile();
-    final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
-    if (document == null) {
-      return false;
-    }
-    final int spOffset = position.getOffset();
-    if (spOffset < 0) {
-      return false;
-    }
-    final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager();
-    return breakpointManager.findBreakpoint(document, spOffset, getCategory()) == null;
-  }
+  //public boolean canMoveTo(@Nullable final SourcePosition position) {
+  //  if (position == null || !position.getFile().isValid()) {
+  //    return false;
+  //  }
+  //  final PsiFile psiFile = position.getFile();
+  //  final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
+  //  if (document == null) {
+  //    return false;
+  //  }
+  //  final int spOffset = position.getOffset();
+  //  if (spOffset < 0) {
+  //    return false;
+  //  }
+  //  final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager();
+  //  return breakpointManager.findBreakpoint(document, spOffset, getCategory()) == null;
+  //}
 
-  public boolean moveTo(@NotNull SourcePosition position) {
-    if (!canMoveTo(position)) {
-      return false;
-    }
-    final PsiFile psiFile = position.getFile();
-    final PsiFile oldFile = getSourcePosition().getFile();
-    final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
-    final Document oldDocument = PsiDocumentManager.getInstance(getProject()).getDocument(oldFile);
-    if (document == null || oldDocument == null) {
-      return false;
-    }
-    final RangeHighlighter newHighlighter = createHighlighter(myProject, document, position.getLine());
-    if (newHighlighter == null) {
-      return false;
-    }
-    final RangeHighlighter oldHighlighter = myHighlighter;
-    myHighlighter = newHighlighter;
-
-    reload();
-
-    if (!isValid()) {
-      myHighlighter.dispose();
-      myHighlighter = oldHighlighter;
-      reload();
-      return false;
-    }
-
-    if (oldHighlighter != null) {
-      oldHighlighter.dispose();
-    }
-
-    DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().fireBreakpointChanged(this);
-    updateUI();
-
-    return true;
-  }
+  //public boolean moveTo(@NotNull SourcePosition position) {
+  //  if (!canMoveTo(position)) {
+  //    return false;
+  //  }
+  //  final PsiFile psiFile = position.getFile();
+  //  final PsiFile oldFile = getSourcePosition().getFile();
+  //  final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
+  //  final Document oldDocument = PsiDocumentManager.getInstance(getProject()).getDocument(oldFile);
+  //  if (document == null || oldDocument == null) {
+  //    return false;
+  //  }
+  //  final RangeHighlighter newHighlighter = createHighlighter(myProject, document, position.getLine());
+  //  if (newHighlighter == null) {
+  //    return false;
+  //  }
+  //  final RangeHighlighter oldHighlighter = myHighlighter;
+  //  myHighlighter = newHighlighter;
+  //
+  //  reload();
+  //
+  //  if (!isValid()) {
+  //    myHighlighter.dispose();
+  //    myHighlighter = oldHighlighter;
+  //    reload();
+  //    return false;
+  //  }
+  //
+  //  if (oldHighlighter != null) {
+  //    oldHighlighter.dispose();
+  //  }
+  //
+  //  DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().fireBreakpointChanged(this);
+  //  updateUI();
+  //
+  //  return true;
+  //}
 
   public boolean isVisible() {
     return myVisible;
@@ -535,13 +489,8 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
 
   @Nullable
   public Document getDocument() {
-    final RangeHighlighter highlighter = getHighlighter();
-    if (highlighter != null) {
-      return highlighter.getDocument();
-    }
-    final SourcePosition position = getSourcePosition();
-    if (position != null) {
-      final PsiFile file = position.getFile();
+    final PsiFile file = getPsiFile();
+    if (file != null) {
       return PsiDocumentManager.getInstance(getProject()).getDocument(file);
     }
     return null;

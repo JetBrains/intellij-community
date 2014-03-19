@@ -129,7 +129,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   public void readExternal(@NotNull Document document, @NotNull URL url) throws InvalidDataException, FileNotFoundException {
-    document = JDOMXIncluder.resolve(document, url.toExternalForm());
+    document = JDOMXIncluder.resolve(document, url.toExternalForm(), ApplicationManager.getApplication().isUnitTestMode());
     Element rootElement = document.getRootElement();
     internJDOMElement(rootElement);
     readExternal(document.getRootElement());
