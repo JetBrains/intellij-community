@@ -140,7 +140,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   protected static boolean isMacScrollbar() {
-    return UIUtil.isUnderNativeMacLookAndFeel();
+    return UIUtil.isUnderNativeMacLookAndFeel() && !Registry.is("ui.no.mac.scrollbar");
   }
 
   public boolean alwaysShowTrack() {
