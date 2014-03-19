@@ -148,4 +148,7 @@ public interface ComponentPopupBuilder {
    */
   @NotNull
   ComponentPopupBuilder setKeyEventHandler(@NotNull BooleanFunction<KeyEvent> handler);
+
+  @NotNull
+  ComponentPopupBuilder setShowBorder(boolean show);
 }
