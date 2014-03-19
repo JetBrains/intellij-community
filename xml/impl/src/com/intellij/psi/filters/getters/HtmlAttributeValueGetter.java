@@ -76,12 +76,7 @@ public class HtmlAttributeValueGetter extends XmlAttributeValueGetter {
         return new String[]{"text/css", "text/html", "text/plain", "text/xml"};
       }
       else if ("http-equiv".equals(name) && "meta".equals(tagName)) {
-        return new String[]{"Accept", "Accept-Charset", "Accept-Encoding", "Accept-Language", "Accept-Ranges", "Age", "Allow",
-            "Authorization", "Cache-Control", "Connection", "Content-Encoding", "Content-Language", "Content-Length", "Content-Location",
-            "Content-MD5", "Content-Range", "Content-Type", "Date", "ETag", "Expect", "Expires", "From", "Host", "If-Match",
-            "If-Modified-Since", "If-None-Match", "If-Range", "If-Unmodified-Since", "Last-Modified", "Location", "Max-Forwards", "Pragma",
-            "Proxy-Authenticate", "Proxy-Authorization", "Range", "Referer", "Refresh", "Retry-After", "Server", "TE", "Trailer", "Transfer-Encoding",
-            "Upgrade", "User-Agent", "Vary", "Via", "Warning", "WWW-Authenticate"};
+        return HtmlUtil.RFC2616_HEADERS;
       }
       else if("content".equals(name) && "meta".equals(tagName) && getAttribute(tag, "name") == null) {
         return HtmlUtil.CONTENT_TYPES;
