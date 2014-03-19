@@ -20,7 +20,7 @@ import java.util.*;
  */
 public class StructuralSearchUtil {
   private static final List<StructuralSearchProfile> myRegisteredProfiles  = new ArrayList<StructuralSearchProfile>();
-  public static final FileType DEFAULT_FILE_TYPE = StdFileTypes.XML;
+  public static final FileType DEFAULT_FILE_TYPE = StdFileTypes.JAVA;
 
   public static boolean ourUseUniversalMatchingAlgorithm = false;
   private static StructuralSearchProfile[] ourNewStyleProfiles;
