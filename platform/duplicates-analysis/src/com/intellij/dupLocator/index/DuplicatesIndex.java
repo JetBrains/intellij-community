@@ -29,10 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.io.EnumeratorIntegerDescriptor;
-import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.*;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
@@ -59,7 +56,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
   }
 
   @NonNls public static final ID<Integer, TIntArrayList> NAME = ID.create("DuplicatesIndex");
-  private static final int myBaseVersion = 7;
+  private static final int myBaseVersion = 8;
 
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     @Override
@@ -153,6 +150,9 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
     return myInputFilter;
   }
 
+  //private static final TracingData myTracingData = new TracingData();
+  private static final TracingData myTracingData = null;
+
   private static class MyFragmentsCollector implements FragmentsCollector {
     private final THashMap<Integer, TIntArrayList> myMap = new THashMap<Integer, TIntArrayList>();
     private final DuplicatesProfile myProfile;
@@ -168,6 +168,8 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
       if (!isIndexedFragment(frag, cost, myProfile, myDuplocatorState)) {
         return;
       }
+
+      if (myTracingData != null) myTracingData.record(hash, cost, frag);
 
       TIntArrayList list = myMap.get(hash);
       if (list == null) { myMap.put(hash, list = new TIntArrayList()); }
