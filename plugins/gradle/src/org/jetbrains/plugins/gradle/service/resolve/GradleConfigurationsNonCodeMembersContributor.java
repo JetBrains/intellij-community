@@ -67,17 +67,16 @@ public class GradleConfigurationsNonCodeMembersContributor extends NonCodeMember
     GrMethodCall call = PsiTreeUtil.getParentOfType(place, GrMethodCall.class);
     if (call == null) {
       // TODO replace with groovy implicit method
-      GrReferenceExpressionImpl expression = (GrReferenceExpressionImpl)place;
-      String expr = expression.getCanonicalText();
-      GrImplicitVariableImpl myPsi = new GrImplicitVariableImpl(place.getManager(), expr, GRADLE_API_CONFIGURATION, place);
-      processor.execute(myPsi, state);
-      setNavigation(myPsi, dependencyHandlerClass, METHOD_GET_BY_NAME, 1);
+      if(place instanceof GrReferenceExpressionImpl) {
+        GrReferenceExpressionImpl expression = (GrReferenceExpressionImpl)place;
+        String expr = expression.getCanonicalText();
+        GrImplicitVariableImpl myPsi = new GrImplicitVariableImpl(place.getManager(), expr, GRADLE_API_CONFIGURATION, place);
+        processor.execute(myPsi, state);
+        setNavigation(myPsi, dependencyHandlerClass, METHOD_GET_BY_NAME, 1);
+      }
       return;
     }
     GrArgumentList args = call.getArgumentList();
-    if (args == null) {
-      return;
-    }
     int argsCount = GradleResolverUtil.getGrMethodArumentsCount(args);
 
     argsCount++; // Configuration name is delivered as an argument.
