@@ -47,6 +47,7 @@ String patchAppDescriptor(String targetDirectory) {
 def layoutFull(String home, String targetDirectory, String patchedDescriptorDir = null) {
   projectBuilder.stage("layout to $targetDirectory")
 
+  List<String> jpsCommonModules = ["jps-model-impl", "jps-model-serialization"]
   List<String> openapiModules = [platformApiModules,
     "compiler-openapi",
     "debugger-openapi",
@@ -70,7 +71,6 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "execution-impl",
     "external-system-impl",
     "idea-ui",
-    "instrumentation-util",
     "java-analysis-impl",
     "java-indexing-impl",
     "java-impl",
@@ -84,6 +84,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "testFramework",
     "tests_bootstrap",
           ].flatten()
+  implementationModules.removeAll(jpsCommonModules) //todo[nik] remove jps modules from platformImplementationModules instead and update layouts of minor IDEs accordingly
 
   ant.patternset(id: "resources.included") {
     include(name: "**/*.properties")
@@ -109,6 +110,9 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     dir("lib") {
       dir("rt") {
         fileset(dir: "${home}/lib/rt", includesfile: "${home}/lib/rt/required_for_dist.txt")
+        jar("jps-plugin-system.jar") {
+          module("jps-plugin-system")
+        }
       }
 
       dir("libpty") {
@@ -177,6 +181,9 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
         module("instrumentation-util")
       }
 
+      jar("jps-model.jar") {
+        jpsCommonModules.each { module it }
+      }
       jar("jps-server.jar") {
         module("jps-builders")
       }
@@ -718,6 +725,7 @@ def layoutCommunityJps(String home, String target) {
       module("forms-compiler")
       module("instrumentation-util")
       module("jps-builders")
+      module("jps-plugin-system")
       module("jps-standalone-builder")
       module("java-runtime")
     }

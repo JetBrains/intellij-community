@@ -98,6 +98,7 @@
       <module fileurl="file://$PROJECT_DIR$/jps/jps-launcher/jps-launcher.iml" filepath="$PROJECT_DIR$/jps/jps-launcher/jps-launcher.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/jps/model-api/jps-model-api.iml" filepath="$PROJECT_DIR$/jps/model-api/jps-model-api.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/model-impl/jps-model-impl.iml" filepath="$PROJECT_DIR$/jps/model-impl/jps-model-impl.iml" group="jps" />
+      <module fileurl="file://$PROJECT_DIR$/jps/plugin-system/jps-plugin-system.iml" filepath="$PROJECT_DIR$/jps/plugin-system/jps-plugin-system.iml" group="jps"/>
       <module fileurl="file://$PROJECT_DIR$/jps/model-serialization/jps-model-serialization.iml" filepath="$PROJECT_DIR$/jps/model-serialization/jps-model-serialization.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/model-impl/jps-model-tests.iml" filepath="$PROJECT_DIR$/jps/model-impl/jps-model-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/model-serialization/jps-serialization-tests.iml" filepath="$PROJECT_DIR$/jps/model-serialization/jps-serialization-tests.iml" group="jps" />
