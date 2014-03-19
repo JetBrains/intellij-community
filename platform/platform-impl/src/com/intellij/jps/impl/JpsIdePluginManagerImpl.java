@@ -15,12 +15,9 @@
  */
 package com.intellij.jps.impl;
 
-import com.intellij.compiler.server.CompileServerPlugin;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.plugin.JpsPluginManager;
@@ -39,19 +36,23 @@ public class JpsIdePluginManagerImpl extends JpsPluginManager {
   private List<PluginDescriptor> myExternalBuildPlugins = new CopyOnWriteArrayList<PluginDescriptor>();
 
   public JpsIdePluginManagerImpl() {
-    ExtensionPoint<CompileServerPlugin> extensionPoint = Extensions.getRootArea().getExtensionPoint(CompileServerPlugin.EP_NAME);
-    extensionPoint.addExtensionPointListener(new ExtensionPointListener<CompileServerPlugin>() {
-      @Override
-      public void extensionAdded(@NotNull CompileServerPlugin extension, @Nullable PluginDescriptor pluginDescriptor) {
-        if (pluginDescriptor != null) {
-          myExternalBuildPlugins.add(pluginDescriptor);
+    ExtensionsArea rootArea = Extensions.getRootArea();
+    //todo[nik] introduce more generic platform extension for JPS plugins instead
+    if (rootArea.hasExtensionPoint("com.intellij.compileServer.plugin")) {
+      ExtensionPoint extensionPoint = rootArea.getExtensionPoint("com.intellij.compileServer.plugin");
+      extensionPoint.addExtensionPointListener(new ExtensionPointListener() {
+        @Override
+        public void extensionAdded(@NotNull Object extension, @Nullable PluginDescriptor pluginDescriptor) {
+          if (pluginDescriptor != null) {
+            myExternalBuildPlugins.add(pluginDescriptor);
+          }
         }
-      }
 
-      @Override
-      public void extensionRemoved(@NotNull CompileServerPlugin extension, @Nullable PluginDescriptor pluginDescriptor) {
-      }
-    });
+        @Override
+        public void extensionRemoved(@NotNull Object extension, @Nullable PluginDescriptor pluginDescriptor) {
+        }
+      });
+    }
   }
 
   @NotNull
@@ -59,9 +60,15 @@ public class JpsIdePluginManagerImpl extends JpsPluginManager {
   public <T> Collection<T> loadExtensions(@NotNull Class<T> extensionClass) {
     String resourceName = "META-INF/services/" + extensionClass.getName();
     Set<Class<T>> classes = new LinkedHashSet<Class<T>>();
+    Set<ClassLoader> loaders = new LinkedHashSet<ClassLoader>();
     for (PluginDescriptor plugin : myExternalBuildPlugins) {
-      ClassLoader loader = plugin.getPluginClassLoader();
-      if (loader == null) continue;
+      ContainerUtil.addIfNotNull(loaders, plugin.getPluginClassLoader());
+    }
+    if (loaders.isEmpty()) {
+      loaders.add(getClass().getClassLoader());
+    }
+
+    for (ClassLoader loader : loaders) {
       try {
         Enumeration<URL> resources = loader.getResources(resourceName);
         while (resources.hasMoreElements()) {
