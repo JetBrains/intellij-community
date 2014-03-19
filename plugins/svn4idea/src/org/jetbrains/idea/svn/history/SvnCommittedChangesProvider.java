@@ -37,10 +37,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.AsynchConsumer;
-import com.intellij.util.Consumer;
-import com.intellij.util.PairConsumer;
-import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
@@ -140,7 +137,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       final String repositoryRoot = getRepositoryRoot(svnLocation);
       final ChangeBrowserSettings.Filter filter = settings.createFilter();
 
-      getCommittedChangesImpl(settings, svnLocation, new String[]{""}, maxCount, new Consumer<SVNLogEntry>() {
+      getCommittedChangesImpl(settings, svnLocation, maxCount, new Consumer<SVNLogEntry>() {
         public void consume(final SVNLogEntry svnLogEntry) {
           final SvnChangeList cl = new SvnChangeList(myVcs, svnLocation, svnLogEntry, repositoryRoot);
           if (filter.accepts(cl)) {
@@ -159,7 +156,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     final ArrayList<SvnChangeList> result = new ArrayList<SvnChangeList>();
     final String repositoryRoot = getRepositoryRoot(svnLocation);
 
-    getCommittedChangesImpl(settings, svnLocation, new String[]{""}, maxCount, new Consumer<SVNLogEntry>() {
+    getCommittedChangesImpl(settings, svnLocation, maxCount, new Consumer<SVNLogEntry>() {
       public void consume(final SVNLogEntry svnLogEntry) {
         result.add(new SvnChangeList(myVcs, svnLocation, svnLogEntry, repositoryRoot));
       }
@@ -186,7 +183,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       }
     });
 
-    getCommittedChangesImpl(settings, svnLocation, new String[]{""}, maxCount, new Consumer<SVNLogEntry>() {
+    getCommittedChangesImpl(settings, svnLocation, maxCount, new Consumer<SVNLogEntry>() {
       public void consume(final SVNLogEntry svnLogEntry) {
         try {
           mergeSourceTracker.consume(svnLogEntry);
@@ -221,7 +218,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     return repositoryRoot;
   }
 
-  private void getCommittedChangesImpl(ChangeBrowserSettings settings, final SvnRepositoryLocation location, final String[] filterUrls,
+  private void getCommittedChangesImpl(ChangeBrowserSettings settings, final SvnRepositoryLocation location,
                                        final int maxCount, final Consumer<SVNLogEntry> resultConsumer, final boolean includeMergedRevisions,
                                        final boolean filterOutByDate) throws VcsException {
     setCollectingChangesProgress(location);
@@ -238,8 +235,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
 
       // TODO: Implement this with command line
       SVNLogClient logger = myVcs.createLogClient();
-      logger.doLog(location.toSvnUrl(), filterUrls, revisionBefore, revisionBefore, revisionAfter, settings.STOP_ON_COPY, true,
-                   includeMergedRevisions, maxCount, null, createLogHandler(resultConsumer, filterOutByDate, author));
+      logger.doLog(location.toSvnUrl(), ArrayUtil.EMPTY_STRING_ARRAY, revisionBefore, revisionBefore, revisionAfter, settings.STOP_ON_COPY,
+                   true, includeMergedRevisions, maxCount, null, createLogHandler(resultConsumer, filterOutByDate, author));
     }
     catch (SVNException e) {
       throw new VcsException(e);
