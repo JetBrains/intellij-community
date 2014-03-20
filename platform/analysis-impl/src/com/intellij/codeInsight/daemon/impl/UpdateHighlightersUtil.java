@@ -427,7 +427,7 @@ public class UpdateHighlightersUtil {
       layer = HighlighterLayer.CARET_ROW-1;
     }
     else if (severity == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY) {
-      layer = HighlighterLayer.SELECTION-1;
+      layer = HighlighterLayer.ELEMENT_UNDER_CARET;
     }
     else {
       layer = HighlighterLayer.ADDITIONAL_SYNTAX;
