@@ -53,7 +53,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
-import com.intellij.ui.GuiUtils;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
@@ -103,17 +102,26 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private final Alarm               myUpdateEditorAlarm    = new Alarm();
   private final Alarm               mySelectionChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  private JPanel              myPanel;
   private JPanel              myValuesPanel;
   private JPanel              myStructureViewPanel;
-  private JPanel              mySplitParent;
   private boolean             myDisposed;
   private VirtualFileListener myVfsListener;
   private Editor              mySelectedEditor;
 
   public ResourceBundleEditor(Project project, ResourceBundle resourceBundle) {
     myProject = project;
-    GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel);
+
+    final JPanel splitPanel = new JPanel();
+    myValuesPanel = new JPanel();
+    myStructureViewPanel = new JPanel();
+    JBSplitter splitter = new JBSplitter(false);
+    splitter.setFirstComponent(myStructureViewPanel);
+    splitter.setSecondComponent(myValuesPanel);
+    splitter.setShowDividerControls(true);
+    splitter.setHonorComponentsMinimumSize(true);
+    splitter.setAndLoadSplitterProportionKey(getClass() + ".splitter");
+    splitPanel.setLayout(new BorderLayout());
+    splitPanel.add(splitter, BorderLayout.CENTER);
 
     myResourceBundle = resourceBundle;
     myStructureViewComponent = new ResourceBundleStructureViewComponent(project, myResourceBundle, this);
@@ -149,9 +157,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       String propName = ((ResourceBundlePropertyStructureViewElement)child).getValue();
       setState(new ResourceBundleEditorState(propName));
     }
-    myDataProviderPanel = new DataProviderPanel(myPanel);
+    myDataProviderPanel = new DataProviderPanel(splitPanel);
 
-    getSplitter().setAndLoadSplitterProportionKey(getClass() + ".splitter");
     project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
@@ -353,6 +360,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     gc.weighty = 1;
 
     valuesPanelComponent.add(new JPanel(), gc);
+    selectionChanged();
     myValuesPanel.repaint();
   }
 
@@ -692,10 +700,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   @NotNull
   public ResourceBundleEditorState getState(@NotNull FileEditorStateLevel level) {
     return new ResourceBundleEditorState(getSelectedPropertyName());
-  }
-
-  private JBSplitter getSplitter() {
-    return (JBSplitter)mySplitParent.getComponents()[0];
   }
 
   @Override

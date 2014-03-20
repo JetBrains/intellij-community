@@ -41,7 +41,7 @@ public class SheetController {
   private JCheckBox doNotAskCheckBox;
   private boolean myDoNotAskResult;
 
-  private BufferedImage myOffscreenShadowImage;
+  private BufferedImage myShadowImage;
   
   private JButton[] buttons;
   private JButton myDefaultButton;
@@ -79,9 +79,6 @@ public class SheetController {
       myIcon = icon;
     }
 
-    myOffscreenShadowImage = GraphicsUtilities.createCompatibleTranslucentImage(
-      SHEET_WIDTH, SHEET_HEIGHT);
-
     myDoNotAskOption = doNotAskOption;
     mySheetMessage = sheetMessage;
     buttons = new JButton[buttonTitles.length];
@@ -112,6 +109,24 @@ public class SheetController {
     }
 
     mySheetPanel = createSheetPanel(title, message, buttons);
+
+    initShadowImage();
+  }
+
+  private void initShadowImage() {
+    BufferedImage mySheetStencil = GraphicsUtilities.createCompatibleTranslucentImage(
+      SHEET_WIDTH, SHEET_HEIGHT);
+
+    Graphics2D g2 = mySheetStencil.createGraphics();
+    g2.setColor(new JBColor(Gray._255, Gray._0));
+    g2.fillRect(0, 0, SHEET_WIDTH, SHEET_HEIGHT);
+    g2.dispose();
+
+    ShadowRenderer renderer = new ShadowRenderer();
+    renderer.setSize(SHADOW_BORDER);
+    renderer.setOpacity(.95f);
+    renderer.setColor(new JBColor(JBColor.BLACK, Gray._10));
+    myShadowImage = renderer.createShadow(mySheetStencil);
   }
 
   private void handleMnemonics(int i, String buttonTitle) {
@@ -253,7 +268,7 @@ public class SheetController {
 
     recalculateShadow();
 
-    sheetPanel.setSize(SHEET_NC_WIDTH + 200, SHEET_NC_HEIGHT + 200);
+    sheetPanel.setSize(SHEET_NC_WIDTH, SHEET_NC_HEIGHT);
 
     return sheetPanel;
   }
@@ -273,27 +288,10 @@ public class SheetController {
   }
 
   private void paintShadow(Graphics2D g2d) {
-
-    if (myOffscreenShadowImage.getWidth() != SHEET_WIDTH || myOffscreenShadowImage.getHeight() != SHEET_HEIGHT) {
-      myOffscreenShadowImage = new BufferedImage(SHEET_WIDTH, SHEET_HEIGHT, BufferedImage.TYPE_INT_ARGB);
-    }
-
     g2d.setBackground(new JBColor(new Color(255, 255, 255, 0), new Color(110, 110, 110, 0)));
-    g2d.clearRect(0, 0, SHEET_NC_WIDTH, SHEET_NC_HEIGHT);
-
-    Graphics2D g2 = myOffscreenShadowImage.createGraphics();
-    g2.setColor(new JBColor(Gray._255, Gray._0));
-    g2.fillRect(0, 0, SHEET_WIDTH, SHEET_HEIGHT);
-    g2.dispose();
-
-    ShadowRenderer renderer = new ShadowRenderer();
-    renderer.setSize(SHADOW_BORDER);
-    renderer.setOpacity(.95f);
-    renderer.setColor(new JBColor(JBColor.BLACK, Gray._10));
-    BufferedImage shadow = renderer.createShadow(myOffscreenShadowImage);
-    g2d.drawImage(shadow, 0, -SHADOW_BORDER, null);
-    //g2d.setBackground(new JBColor(new Color(255, 255, 255, 0), new Color(110, 110, 110, 0)));
-    //g2d.clearRect(SHADOW_BORDER, 0, SHEET_WIDTH, SHEET_HEIGHT);
+    g2d.clearRect(0, 0, SHEET_NC_WIDTH, SHEET_HEIGHT);
+    g2d.drawImage(myShadowImage, 0, -SHADOW_BORDER, null);
+    g2d.clearRect(SHADOW_BORDER, 0, SHEET_WIDTH, SHEET_HEIGHT);
   }
 
   private void layoutButtons(final JButton[] buttons, JPanel panel) {

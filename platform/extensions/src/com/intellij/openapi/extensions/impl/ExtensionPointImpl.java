@@ -18,6 +18,7 @@ package com.intellij.openapi.extensions.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.StringInterner;
@@ -241,9 +242,18 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       myLoadedAdapters.clear();
 
       for (ExtensionComponentAdapter adapter : adapters) {
-        @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
-        registerExtension(extension, adapter, myExtensions.size(), !loaded.contains(adapter));
-        myExtensionAdapters.remove(adapter);
+        try {
+          @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
+          registerExtension(extension, adapter, myExtensions.size(), !loaded.contains(adapter));
+          myExtensionAdapters.remove(adapter);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.error(e);
+          myExtensionAdapters.remove(adapter);
+        }
       }
     }
   }

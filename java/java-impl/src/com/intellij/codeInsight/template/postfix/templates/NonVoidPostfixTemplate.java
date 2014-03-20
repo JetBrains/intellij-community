@@ -15,22 +15,20 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
+import com.intellij.openapi.editor.Document;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 
-public class ReturnStatementPostfixTemplate extends NonVoidPostfixTemplate {
-  public ReturnStatementPostfixTemplate() {
-    super("return", "Returns value from containing method", "return expr;");
+abstract public class NonVoidPostfixTemplate extends PostfixTemplate {
+  protected NonVoidPostfixTemplate(@NotNull String name, @NotNull String description, @NotNull String example) {
+    super(name, description, example);
   }
 
   @Override
-  public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
+  public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
     PsiExpression expr = getTopmostExpression(context);
-    PsiElement parent = expr != null ? expr.getParent() : null;
-    if (!(parent instanceof PsiExpressionStatement)) return;
-    PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
-    PsiReturnStatement returnStatement = (PsiReturnStatement)factory.createStatementFromText("return " + expr.getText() + ";", parent);
-    parent.replace(returnStatement);
+    return expr != null && PostfixTemplatesUtils.isNonVoid(expr.getType());
   }
 }

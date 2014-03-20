@@ -591,7 +591,7 @@ public class BreakpointManager {
   }
 
   //used in Fabrique
-  public synchronized void addBreakpoint(Breakpoint breakpoint) {
+  public synchronized void addBreakpoint(@NotNull Breakpoint breakpoint) {
     myBreakpoints.put(breakpoint.myXBreakpoint, breakpoint);
     myBreakpointsListForIteration = null;
     breakpoint.updateUI();

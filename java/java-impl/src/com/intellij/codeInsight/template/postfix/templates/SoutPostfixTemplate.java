@@ -15,22 +15,18 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
+import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-public class ReturnStatementPostfixTemplate extends NonVoidPostfixTemplate {
-  public ReturnStatementPostfixTemplate() {
-    super("return", "Returns value from containing method", "return expr;");
+public class SoutPostfixTemplate extends NonVoidPostfixTemplate {
+  public SoutPostfixTemplate() {
+    super("sout", "Creates System.out.println call", "System.out.println(expr);");
   }
 
   @Override
   public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    PsiExpression expr = getTopmostExpression(context);
-    PsiElement parent = expr != null ? expr.getParent() : null;
-    if (!(parent instanceof PsiExpressionStatement)) return;
-    PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
-    PsiReturnStatement returnStatement = (PsiReturnStatement)factory.createStatementFromText("return " + expr.getText() + ";", parent);
-    parent.replace(returnStatement);
+    PostfixTemplatesUtils.createStatement(context, editor, "System.out.println(", ")");
   }
 }
