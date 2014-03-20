@@ -9,6 +9,8 @@ import com.intellij.xdebugger.frame.XValueGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class ScopeVariablesGroup extends XValueGroup {
   private final Scope scope;
   private final VariableContext context;
@@ -44,6 +46,14 @@ public class ScopeVariablesGroup extends XValueGroup {
     else {
       this.context = context;
     }
+  }
+
+  public static void createAndAddScopeList(@NotNull XCompositeNode node, @NotNull List<Scope> scopes, @NotNull VariableContext context, @Nullable CallFrame callFrame) {
+    XValueChildrenList list = new XValueChildrenList(scopes.size());
+    for (Scope scope : scopes) {
+      list.addTopGroup(new ScopeVariablesGroup(scope, context, callFrame));
+    }
+    node.addChildren(list, true);
   }
 
   private static String createScopeNodeName(@NotNull Scope scope) {
