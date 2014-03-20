@@ -100,6 +100,7 @@ import pydevd_file_utils
 import traceback
 from pydevd_utils import *
 from pydevd_utils import quote_smart as quote
+import pydev_log
 
 
 from pydevd_tracing import GetExceptionTracebackStr
