@@ -539,6 +539,22 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     }
   }
 
+  public void testFindInDirectoryOutsideProject() throws Exception {
+    final TempDirTestFixture tempDirFixture = new TempDirTestFixtureImpl();
+    tempDirFixture.setUp();
+    try {
+      tempDirFixture.createFile("a.txt", "foo bar foo");
+      FindModel findModel = FindManagerTestUtils.configureFindModel("foo");
+      findModel.setWholeWordsOnly(true);
+      findModel.setProjectScope(false);
+      findModel.setDirectoryName(tempDirFixture.getFile("").getPath());
+      assertSize(2, findUsages(findModel));
+    }
+    finally {
+      tempDirFixture.tearDown();
+    }
+  }
+
   public void testFindInJavaDocs() {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
     String text = "/** done done done */";
