@@ -52,11 +52,11 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
   protected ActionGroup createActionGroup() {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(createAllAction());
+    group.add(createSelectMultipleValuesAction());
     if (!myDataHolder.getCurrentUser().isEmpty()) {
       group.add(createPredefinedValueAction(Collections.singleton(ME)));
     }
     group.addAll(createRecentItemsActionGroup());
-    group.add(createSelectMultipleValuesAction());
     return group;
   }
 
