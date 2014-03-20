@@ -14,7 +14,7 @@ class FunctionScopesValueGroup extends XValueGroup {
   private final FunctionValue value;
   private final VariableContext variableContext;
 
-  public FunctionScopesValueGroup(FunctionValue value, VariableContext context) {
+  public FunctionScopesValueGroup(@NotNull FunctionValue value, @NotNull VariableContext context) {
     super("Function scopes");
 
     this.value = value;

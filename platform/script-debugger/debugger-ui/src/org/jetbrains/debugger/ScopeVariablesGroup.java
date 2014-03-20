@@ -14,34 +14,18 @@ import java.util.List;
 public class ScopeVariablesGroup extends XValueGroup {
   private final Scope scope;
   private final VariableContext context;
+
   private final CallFrame callFrame;
 
   public ScopeVariablesGroup(@NotNull final Scope scope, @NotNull final VariableContext context, @Nullable CallFrame callFrame) {
     super(createScopeNodeName(scope));
 
     this.scope = scope;
-    this.callFrame = callFrame;
+    this.callFrame = scope.getType() == Scope.Type.LOCAL ? callFrame : null;
 
     if (callFrame == null) {
-      this.context = new VariableContextBase() {
-        @NotNull
-        @Override
-        public EvaluateContext getEvaluateContext() {
-          return context.getEvaluateContext();
-        }
-
-        @NotNull
-        @Override
-        public DebuggerViewSupport getDebugProcess() {
-          return context.getDebugProcess();
-        }
-
-        @Override
-        public boolean watchableAsEvaluationExpression() {
-          // functions scopes - we can watch variables only from global scope
-          return scope.getType() == Scope.Type.GLOBAL;
-        }
-      };
+      // functions scopes - we can watch variables only from global scope
+      this.context = new ScopeVariablesGroupContext(context, scope.getType() == Scope.Type.GLOBAL);
     }
     else {
       this.context = context;
@@ -95,7 +79,7 @@ public class ScopeVariablesGroup extends XValueGroup {
 
   @Override
   public void computeChildren(final @NotNull XCompositeNode node) {
-    ActionCallback callback = callFrame == null || scope.getType() != Scope.Type.LOCAL ? null : new ActionCallback().doWhenDone(new Runnable() {
+    ActionCallback callback = callFrame == null ? null : new ActionCallback().doWhenDone(new Runnable() {
       @Override
       public void run() {
         if (node.isObsolete()) {
@@ -120,5 +104,32 @@ public class ScopeVariablesGroup extends XValueGroup {
       }
     });
     Variables.consume(scope, node, context, callback);
+  }
+
+  private static final class ScopeVariablesGroupContext extends VariableContextBase {
+    private final VariableContext parentContext;
+    private final boolean watchableAsEvaluationExpression;
+
+    public ScopeVariablesGroupContext(@NotNull VariableContext context, boolean watchableAsEvaluationExpression) {
+      parentContext = context;
+      this.watchableAsEvaluationExpression = watchableAsEvaluationExpression;
+    }
+
+    @NotNull
+    @Override
+    public EvaluateContext getEvaluateContext() {
+      return parentContext.getEvaluateContext();
+    }
+
+    @NotNull
+    @Override
+    public DebuggerViewSupport getDebugProcess() {
+      return parentContext.getDebugProcess();
+    }
+
+    @Override
+    public boolean watchableAsEvaluationExpression() {
+      return watchableAsEvaluationExpression;
+    }
   }
 }
