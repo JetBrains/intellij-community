@@ -78,7 +78,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     }
   }
 
-  protected final Project getProject() {
+  public final Project getProject() {
     return myBreakpointManager.getProject();
   }
 
