@@ -818,7 +818,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
 
     int exitCode = 0;
-    if (restart) {
+    if (restart && Restarter.isSupported()) {
       try {
         exitCode = Restarter.scheduleRestart();
       }
@@ -1026,7 +1026,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     if (myHeadlessMode) return;
     if (!isReadAccessAllowed()) {
       LOG.error(
-        "Read access is allowed from event dispatch thread or inside read-action only (see com.intellij.openapi.application.Application.runReadAction())",
+        "Read access is allowed from event dispatch thread or inside read-action only" +
+        " (see com.intellij.openapi.application.Application.runReadAction())",
         "Current thread: " + describe(Thread.currentThread()), "Our dispatch thread:" + describe(ourDispatchThread),
         "SystemEventQueueThread: " + describe(getEventQueueThread()));
     }

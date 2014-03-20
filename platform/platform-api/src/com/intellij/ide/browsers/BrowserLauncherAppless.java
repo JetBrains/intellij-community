@@ -42,6 +42,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.OptionsDialog;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -133,7 +134,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
       }
     }
 
-    browseUsingPath(uri.toString(), settings.getBrowserPath(), null, null);
+    browseUsingPath(uri.toString(), settings.getBrowserPath(), null, null, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
   private void openOrBrowse(@NotNull String url, boolean browse) {
@@ -384,7 +385,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
                                  @Nullable String browserPath,
                                  @Nullable WebBrowser browser,
                                  @Nullable Project project,
-                                 @NotNull String... additionalParameters) {
+                                 @NotNull String[] additionalParameters) {
     return doLaunch(url, browserPath == null && browser != null ? PathUtil.toSystemDependentName(browser.getPath()) : browserPath, browser, project, additionalParameters);
   }
 
@@ -393,21 +394,28 @@ public class BrowserLauncherAppless extends BrowserLauncher {
                            @Nullable WebBrowser browser,
                            @Nullable Project project,
                            @NotNull String[] additionalParameters) {
-    if (StringUtil.isEmptyOrSpaces(browserPath)) {
-      final String error = browser == null ? IdeBundle.message("error.please.specify.path.to.web.browser", CommonBundle.settingsActionPath()) : browser
-        .getBrowserNotFoundMessage();
-      doShowError(error, browser, project, IdeBundle.message("title.browser.not.found"));
+    if (!checkPath(browserPath, browser, project)) {
       return false;
     }
-
     return doLaunch(url, BrowserUtil.getOpenBrowserCommand(browserPath, false), browser, project, additionalParameters);
   }
 
+  @Contract("null, _, _ -> false")
+  public boolean checkPath(@Nullable String browserPath, @Nullable WebBrowser browser, @Nullable Project project) {
+    if (!StringUtil.isEmptyOrSpaces(browserPath)) {
+      return true;
+    }
+
+    doShowError(browser == null ? IdeBundle.message("error.please.specify.path.to.web.browser", CommonBundle.settingsActionPath()) : browser
+      .getBrowserNotFoundMessage(), browser, project, IdeBundle.message("title.browser.not.found"));
+    return false;
+  }
+
   private boolean doLaunch(@Nullable String url,
-                                  @NotNull List<String> command,
-                                  @Nullable final WebBrowser browser,
-                                  @Nullable final Project project,
-                                  String[] additionalParameters) {
+                           @NotNull List<String> command,
+                           @Nullable final WebBrowser browser,
+                           @Nullable final Project project,
+                           String[] additionalParameters) {
     GeneralCommandLine commandLine = new GeneralCommandLine(command);
     if (url != null) {
       commandLine.addParameter(url);
@@ -453,7 +461,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
     }
   }
 
-  protected static boolean isOpenCommandUsed(@NotNull GeneralCommandLine command) {
+  public static boolean isOpenCommandUsed(@NotNull GeneralCommandLine command) {
     return SystemInfo.isMac && ExecUtil.getOpenCommandPath().equals(command.getExePath());
   }
 }

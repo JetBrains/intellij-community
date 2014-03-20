@@ -13,17 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight;
+package org.jetbrains.jps.maven.model.impl;
 
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.Tag;
 
-public class ClsGenerics18HighlightingTest extends ClsGenericsHighlightingTest {
-  public void testIDEA121866() { 
-    //doTest(); 
-  }
+import java.util.HashSet;
+import java.util.Set;
 
-  @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_1_8;
-  }
+/**
+ * @author Sergey Evdokimov
+ */
+public class FilePattern {
+
+  @Tag("includes")
+  @AbstractCollection(surroundWithTag =  false, elementTag = "pattern")
+  public Set<String> includes = new HashSet<String>();
+
+  @Tag("excludes")
+  @AbstractCollection(surroundWithTag =  false, elementTag = "pattern")
+  public Set<String> excludes = new HashSet<String>();
+
 }

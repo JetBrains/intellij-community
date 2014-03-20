@@ -27,8 +27,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.channel.socket.oio.OioSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.HttpRequestDecoder;
-import io.netty.handler.codec.http.HttpResponseEncoder;
+import io.netty.handler.codec.http.HttpServerCodec;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
@@ -38,7 +37,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 
 public final class NettyUtil {
-  public static final int DEFAULT_CONNECT_ATTEMPT_COUNT = 8;
+  public static final int DEFAULT_CONNECT_ATTEMPT_COUNT = 20;
   public static final int MIN_START_TIME = 100;
 
   public static void log(Throwable throwable, Logger log) {
@@ -68,10 +67,10 @@ public final class NettyUtil {
         catch (IOException e) {
           if (++attemptCount < maxAttemptCount) {
             //noinspection BusyWait
-            Thread.sleep(attemptCount * 100);
+            Thread.sleep(attemptCount * MIN_START_TIME);
           }
           else {
-            asyncResult.reject("cannot connect");
+            asyncResult.reject("Cannot connect");
             return null;
           }
         }
@@ -82,7 +81,7 @@ public final class NettyUtil {
       return channel;
     }
     catch (Throwable e) {
-      asyncResult.reject("cannot connect: " + e.getMessage());
+      asyncResult.reject("Cannot connect: " + e.getMessage());
       return null;
     }
   }
@@ -130,7 +129,7 @@ public final class NettyUtil {
     return bootstrap;
   }
 
-  public static void initHttpHandlers(ChannelPipeline pipeline) {
-    pipeline.addLast(new HttpRequestDecoder(), new HttpObjectAggregator(1048576 * 10), new HttpResponseEncoder());
+  public static void addHttpServerCodec(ChannelPipeline pipeline) {
+    pipeline.addLast(new HttpServerCodec(), new HttpObjectAggregator(1048576 * 10));
   }
 }

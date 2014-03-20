@@ -19,6 +19,7 @@ import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.LightFilePointer;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
@@ -28,11 +29,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.*;
@@ -48,6 +51,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MavenProject {
 
   private static final Key<MavenArtifactIndex> DEPENDENCIES_CACHE_KEY = Key.create("MavenProject.DEPENDENCIES_CACHE_KEY");
+  private static final Key<List<String>> FILTERS_CACHE_KEY = Key.create("MavenProject.FILTERS_CACHE_KEY");
 
   @NotNull private final VirtualFile myFile;
   @NotNull private volatile State myState = new State();
@@ -566,6 +570,39 @@ public class MavenProject {
   @NotNull
   public List<String> getFilters() {
     return myState.myFilters;
+  }
+
+  public List<String> getFilterPropertiesFiles() {
+    List<String> res = getCachedValue(FILTERS_CACHE_KEY);
+    if (res == null) {
+      Element propCfg = getPluginGoalConfiguration("org.codehaus.mojo", "properties-maven-plugin", "read-project-properties");
+      if (propCfg != null) {
+        Element files = propCfg.getChild("files");
+        if (files != null) {
+          res = new ArrayList<String>();
+
+          for (Element file : files.getChildren("file")) {
+            File f = new File(file.getValue());
+            if (!f.isAbsolute()) {
+              f = new File(getDirectory(), file.getValue());
+            }
+
+            res.add(f.getAbsolutePath());
+          }
+        }
+      }
+
+      if (res == null) {
+        res = getFilters();
+      }
+      else {
+        res.addAll(getFilters());
+      }
+
+      res = putCachedValue(FILTERS_CACHE_KEY, res);
+    }
+
+    return res;
   }
 
   @NotNull

@@ -139,7 +139,8 @@ public class InstalledPackagesPanel extends JPanel {
     }.installOn(myPackagesTable);
   }
 
-  private ManagePackagesDialog createManagePackagesDialog() {
+  @NotNull
+  protected ManagePackagesDialog createManagePackagesDialog() {
     return new ManagePackagesDialog(myProject,
                                     myPackageManagementService,
                                     new PackageManagementService.Listener() {

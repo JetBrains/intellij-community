@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,10 +89,10 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     scrollPane.setBorder(null);
 
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    init(project, scrollPane, getPreferredFocusableComponent(), true, true, true, true, null,
+    init(project, scrollPane, getPreferredFocusableComponent(), true, true, true, null,
          false, aStep.getTitle(), null, true, null, false, null, null, null, false, null, true, false, true, null, 0f,
-         null, true, false, new Component[0], null, SwingConstants.LEFT, true, Collections.<Pair<ActionListener, KeyStroke>>emptyList(), null, null, false, true,
-         true, null);
+         null, true, false, new Component[0], null, SwingConstants.LEFT, true, Collections.<Pair<ActionListener, KeyStroke>>emptyList(),
+         null, null, false, true, true, true, null);
 
     registerAction("disposeAll", KeyEvent.VK_ESCAPE, InputEvent.SHIFT_MASK, new AbstractAction() {
       @Override
@@ -313,7 +313,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
         final Rectangle r = ScreenUtil.getScreenRectangle(locationOnScreen);
         resultHeight = ofContent.height > r.height - (r.height / 4) ? r.height - (r.height / 4) : ofContent.height;
       }
-      
+
       int resultWidth = ofContent.width > MAX_SIZE.width ? MAX_SIZE.width : ofContent.width;
 
       if (ofContent.height > MAX_SIZE.height) {

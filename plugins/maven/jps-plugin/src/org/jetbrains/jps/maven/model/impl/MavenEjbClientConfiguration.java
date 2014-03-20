@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight;
+package org.jetbrains.jps.maven.model.impl;
 
-import com.intellij.pom.java.LanguageLevel;
+/**
+ * @author Sergey Evdokimov
+ */
+public class MavenEjbClientConfiguration extends FilePattern {
 
-public class ClsGenerics18HighlightingTest extends ClsGenericsHighlightingTest {
-  public void testIDEA121866() { 
-    //doTest(); 
+  public boolean isEmpty() {
+    return includes.isEmpty() && excludes.isEmpty();
   }
 
-  @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_1_8;
-  }
 }
