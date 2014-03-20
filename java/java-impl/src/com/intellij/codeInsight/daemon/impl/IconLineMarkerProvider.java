@@ -23,6 +23,7 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,14 +31,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ImageLoader;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -208,38 +208,9 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
 
   private static Icon createOrFindBetterIcon(VirtualFile file, boolean tryToFindBetter) throws IOException {
     if (tryToFindBetter) {
-      VirtualFile parent = file.getParent();
-      String name = file.getNameWithoutExtension();
-      String ext = file.getExtension();
-      VirtualFile newFile;
-      boolean retina = UIUtil.isRetina();
-      boolean dark = UIUtil.isUnderDarcula();
-      if (retina && dark) {
-        newFile = parent.findChild(name + "@2x_dark." + ext);
-        if (newFile != null) {
-          return loadIcon(newFile, 2);
-        }
-      }
-
-      if (dark) {
-        newFile = parent.findChild(name + "_dark." + ext);
-        if (newFile != null) {
-          return loadIcon(file, 1);
-        }
-      }
-
-      if (retina) {
-        newFile = parent.findChild(name + "@2x." + ext);
-        if (newFile != null) {
-          return loadIcon(newFile, 2);
-        }
-      }
+      return IconLoader.findIcon(new File(file.getPath()).toURI().toURL());
     }
     return new ImageIcon(file.contentsToByteArray());
-  }
-
-  private static ImageIcon loadIcon(VirtualFile file, int scale) throws IOException {
-    return new ImageIcon(ImageLoader.loadFromStream(file.getInputStream(), scale));
   }
 
   private static boolean isIconClassType(PsiType type) {
