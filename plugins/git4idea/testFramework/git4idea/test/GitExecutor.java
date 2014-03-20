@@ -89,8 +89,8 @@ public class GitExecutor extends Executor {
     commit(message);
   }
 
-  public static void checkout(@NotNull String branch) {
-    git("checkout " + branch);
+  public static void checkout(@NotNull String... params) {
+    git("checkout " + StringUtil.join(params, " "));
   }
 
   public static void commit(@NotNull String message) {

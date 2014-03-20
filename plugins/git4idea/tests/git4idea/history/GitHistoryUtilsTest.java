@@ -297,10 +297,10 @@ public class GitHistoryUtilsTest extends GitPlatformTest {
 
   @Test
   public void testGetCurrentRevisionInOtherBranch() throws Exception {
-    checkout("feature");
+    checkout("-b feature");
     overwrite(bfile, "new content");
     addCommit("new content");
-    final String[] output = log("--pretty=%H#%at", "-n1").trim().split("#");
+    final String[] output = log("master --pretty=%H#%at", "-n1").trim().split("#");
 
     GitRevisionNumber revisionNumber = (GitRevisionNumber) GitHistoryUtils.getCurrentRevision(myProject, toFilePath(bfile), "master");
     assertEquals(revisionNumber.getRev(), output[0]);
@@ -332,7 +332,7 @@ public class GitHistoryUtilsTest extends GitPlatformTest {
     git("update-ref refs/remotes/origin/master HEAD"); // to avoid pushing to this fake origin
 
     touch("dir/b.txt", "content");
-    commit("recreated bfile");
+    addCommit("recreated bfile");
 
     refresh();
 
