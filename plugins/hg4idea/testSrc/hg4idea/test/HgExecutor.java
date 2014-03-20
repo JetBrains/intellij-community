@@ -64,7 +64,7 @@ public class HgExecutor extends Executor {
     List<String> split = splitCommandInParameters(command);
     split.add(0, HG_EXECUTABLE);
     debug("hg " + command);
-    return run(split);
+    return run(split, true);
   }
 
   public static void updateProject() {

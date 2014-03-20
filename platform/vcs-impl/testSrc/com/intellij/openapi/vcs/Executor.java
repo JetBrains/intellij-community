@@ -134,7 +134,7 @@ public class Executor {
     }
   }
 
-  protected static String run(List<String> params) {
+  protected static String run(@NotNull List<String> params, boolean ignoreNonZeroExitCode) {
     final ProcessBuilder builder = new ProcessBuilder().command(params);
     builder.directory(ourCurrentDir());
     builder.redirectErrorStream(true);
@@ -152,12 +152,18 @@ public class Executor {
       throw new RuntimeException("Timeout waiting for the command execution. Command: " + StringUtil.join(params, " "));
     }
 
-    if (result.getExitCode() != 0) {
-      debug("{" + result.getExitCode() + "}");
-    }
     String stdout = result.getStdout().trim();
-    if (!StringUtil.isEmptyOrSpaces(stdout)) {
-      debug(stdout.trim());
+    if (result.getExitCode() != 0) {
+      if (ignoreNonZeroExitCode) {
+        debug("{" + result.getExitCode() + "}");
+      }
+      debug(stdout);
+      if (!ignoreNonZeroExitCode) {
+        throw new IllegalStateException("Failed with exit code" + result.getExitCode());
+      }
+    }
+    else {
+      debug(stdout);
     }
     return stdout;
   }
@@ -232,7 +238,9 @@ public class Executor {
   }
 
   protected static void debug(String msg) {
-    System.out.println(msg);
+    if (!StringUtil.isEmptyOrSpaces(msg)) {
+      System.out.println(msg);
+    }
   }
 
   private static String shortenPath(String path) {

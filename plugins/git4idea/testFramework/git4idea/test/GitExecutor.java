@@ -46,12 +46,16 @@ public class GitExecutor extends Executor {
   }
 
   public static String git(String command) {
+    return git(command, false);
+  }
+
+  public static String git(String command, boolean ignoreNonZeroExitCode) {
     printVersionTheFirstTime();
     List<String> split = splitCommandInParameters(command);
     split.add(0, PathHolder.GIT_EXECUTABLE);
     debug("# git " + command);
     for (int attempt = 0; attempt < 3; attempt++) {
-      String stdout = run(split);
+      String stdout = run(split, ignoreNonZeroExitCode);
       if (stdout.contains("fatal") && stdout.contains("Unable to create") && stdout.contains(".git/index.lock")) {
         if (attempt > MAX_RETRIES) {
           throw new RuntimeException("fatal error during execution of Git command: $command");
