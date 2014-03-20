@@ -49,7 +49,7 @@ public class GradleBuildClasspathManager {
 
   public GradleBuildClasspathManager(@NotNull Project project) {
     myProject = project;
-    reload();
+    allFilesCache = ContainerUtil.newArrayList();
   }
 
   @NotNull
