@@ -22,6 +22,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.BreakpointStepMethodFilter;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -52,6 +53,7 @@ import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
@@ -390,8 +392,11 @@ public class BreakpointManager {
     return null;
   }
 
-  public Breakpoint findBreakpoint(XBreakpoint xBreakpoint) {
-    return myBreakpoints.get(xBreakpoint);
+  @Nullable
+  public static Breakpoint findBreakpoint(@NotNull XBreakpoint xBreakpoint) {
+    Project project = ((XBreakpointBase)xBreakpoint).getProject();
+    BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
+    return breakpointManager.myBreakpoints.get(xBreakpoint);
   }
 
   private List<Element> myOriginalBreakpointsNodes = new ArrayList<Element>();

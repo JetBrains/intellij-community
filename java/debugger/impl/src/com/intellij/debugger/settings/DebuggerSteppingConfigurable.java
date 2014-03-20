@@ -94,7 +94,7 @@ public class DebuggerSteppingConfigurable implements SearchableConfigurable, Con
 
   public JComponent createComponent() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    myProject = JavaDebuggerSupport.getCurrentProject();
+    myProject = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
     myCbSkipSyntheticMethods = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.synthetic.methods"));
     myCbSkipConstructors = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.constructors"));
     myCbSkipClassLoaders = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.classloaders"));

@@ -15,8 +15,6 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.xdebugger.XDebuggerUtil;
@@ -62,8 +60,7 @@ public abstract class JavaBreakpointTypeBase<T extends JavaBreakpointProperties>
   @Nullable
   @Override
   public XSourcePosition getSourcePosition(@NotNull XBreakpoint<T> breakpoint) {
-    BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(JavaDebuggerSupport.getCurrentProject()).getBreakpointManager();
-    Breakpoint javaBreakpoint = breakpointManager.findBreakpoint(breakpoint);
+    Breakpoint javaBreakpoint = BreakpointManager.findBreakpoint(breakpoint);
     if (javaBreakpoint != null) {
       PsiClass aClass = javaBreakpoint.getPsiClass();
       if (aClass != null && aClass.getContainingFile() != null) {
