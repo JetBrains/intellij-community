@@ -50,6 +50,8 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.util.CachedValueProvider;
@@ -414,6 +416,22 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   @NotNull
   public PsiClassHolderFileStub<?> getStub() {
     return (PsiClassHolderFileStub)getStubTree().getRoot();
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
+    final ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
+    if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
+      final PsiClass[] classes = getClasses();
+      for (PsiClass aClass : classes) {
+        if (!processor.execute(aClass, state)) return false;
+      }
+    }
+    return true;
   }
 
   @Override
