@@ -184,7 +184,6 @@ class PyDBCheckAliveThread(PyDBDaemonThread):
                     except:
                         traceback.print_exc()
 
-                    self.stop()
                     self.killReceived = True
                     return
 
