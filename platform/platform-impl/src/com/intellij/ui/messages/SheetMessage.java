@@ -17,6 +17,7 @@ package com.intellij.ui.messages;
 
 import com.apple.eawt.FullScreenUtilities;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.ui.Animator;
@@ -105,16 +106,20 @@ public class SheetMessage {
         if (staticImage != null) {
           Graphics2D g2d = (Graphics2D) g.create();
 
+
           g2d.setBackground(new JBColor(new Color(255, 255, 255, 0), new Color(110, 110, 110, 0)));
           g2d.clearRect(0, 0, myController.SHEET_NC_WIDTH, myController.SHEET_NC_HEIGHT);
 
+
           g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.95f));
 
-          int imageCropOffset = (UIUtil.isRetina()) ? imageHeight * 2 : imageHeight;
+          int multiplyFactor = staticImage.getWidth(null)/myController.SHEET_NC_WIDTH;
 
-          g.drawImage(staticImage, 0, 0, myController.SHEET_NC_WIDTH,imageHeight,
-                      0, staticImage.getHeight(null) - imageCropOffset,
-                      staticImage.getWidth(null) ,staticImage.getHeight(null) ,null);
+          g.drawImage(staticImage, 0, 0,
+                      myController.SHEET_NC_WIDTH, imageHeight,
+                      0, staticImage.getHeight(null) - imageHeight * multiplyFactor,
+                      staticImage.getWidth(null), staticImage.getHeight(null),
+                      null);
         }
       }
     };
