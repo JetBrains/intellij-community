@@ -17,8 +17,10 @@ package com.intellij.ui.messages;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdesktop.swingx.graphics.GraphicsUtilities;
 import org.jdesktop.swingx.graphics.ShadowRenderer;
@@ -114,8 +116,8 @@ public class SheetController {
   }
 
   private void initShadowImage() {
-    BufferedImage mySheetStencil = GraphicsUtilities.createCompatibleTranslucentImage(
-      SHEET_WIDTH, SHEET_HEIGHT);
+
+    final BufferedImage mySheetStencil = GraphicsUtilities.createCompatibleTranslucentImage(SHEET_WIDTH, SHEET_HEIGHT);
 
     Graphics2D g2 = mySheetStencil.createGraphics();
     g2.setColor(new JBColor(Gray._255, Gray._0));
@@ -340,7 +342,9 @@ public class SheetController {
     myOffScreenFrame.add(mySheetPanel);
     myOffScreenFrame.getRootPane().setDefaultButton(myDefaultButton);
 
-    final BufferedImage image = new BufferedImage(SHEET_NC_WIDTH, SHEET_NC_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+    final BufferedImage image = (SystemInfo.isJavaVersionAtLeast("1.7")) ?
+                                UIUtil.createImage(SHEET_NC_WIDTH, SHEET_NC_HEIGHT, BufferedImage.TYPE_INT_ARGB) :
+                                GraphicsUtilities.createCompatibleTranslucentImage(SHEET_NC_WIDTH, SHEET_NC_HEIGHT);
 
     Graphics g = image.createGraphics();
     mySheetPanel.paint(g);

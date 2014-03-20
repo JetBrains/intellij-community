@@ -61,7 +61,7 @@ class RootIndex {
 
     Set<VirtualFile> allRoots = info.getAllRoots();
     for (VirtualFile root : allRoots) {
-      List<VirtualFile> hierarchy = getHierarchy(root, allRoots);
+      List<VirtualFile> hierarchy = getHierarchy(root, allRoots, info);
       Pair<DirectoryInfo, String> pair = hierarchy == null ? new Pair<DirectoryInfo, String>(null, null) : info.calcDirectoryInfo(root, hierarchy);
       cacheInfos(root, root, pair.first);
       myPackagePrefixRoots.putValue(pair.second, root);
@@ -310,10 +310,12 @@ class RootIndex {
   }
 
   @Nullable
-  private static List<VirtualFile> getHierarchy(VirtualFile dir, Set<VirtualFile> allRoots) {
+  private static List<VirtualFile> getHierarchy(VirtualFile dir, Set<VirtualFile> allRoots, RootInfo info) {
     List<VirtualFile> hierarchy = ContainerUtil.newArrayList();
+    boolean hasContentRoots = false;
     while (dir != null) {
-      if (FileTypeManager.getInstance().isFileIgnored(dir)) {
+      hasContentRoots |= info.contentRootOf.get(dir) != null;
+      if (!hasContentRoots && FileTypeManager.getInstance().isFileIgnored(dir)) {
         return null;
       }
       if (allRoots.contains(dir)) {
