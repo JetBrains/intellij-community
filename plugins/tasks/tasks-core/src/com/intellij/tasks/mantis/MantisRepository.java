@@ -14,6 +14,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.apache.axis.AxisFault;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,14 +88,13 @@ public class MantisRepository extends BaseRepositoryImpl {
     ensureProjectsRefreshed();
     MantisConnectPortType soap = createSoap();
 
-    int total = limit - offset + 1;
-    List<Task> tasks = new ArrayList<Task>(total);
+    List<Task> tasks = new ArrayList<Task>(limit);
 
     int pageNumber = offset / PAGE_SIZE + 1;
     // what the heck does it suppose to mean?
-    while (tasks.size() < total) {
+    while (tasks.size() < limit) {
       cancelled.checkCanceled();
-      int pageSize = Math.min(PAGE_SIZE, total - tasks.size());
+      int pageSize = Math.min(PAGE_SIZE, limit - tasks.size());
       List<Task> issuesFromPage = getIssuesFromPage(soap, pageNumber, pageSize);
       tasks.addAll(issuesFromPage);
       if (issuesFromPage.size() < pageSize) {
@@ -148,8 +148,12 @@ public class MantisRepository extends BaseRepositoryImpl {
     return new CancellableConnection() {
       @Override
       protected void doTest() throws Exception {
-        //refreshProjects();
-        createSoap();
+        try {
+          createSoap().mc_enum_access_levels(getUsername(), getPassword());
+        }
+        catch (AxisFault e) {
+          throw new Exception(TaskBundle.message("failure.server.message", e.getMessage()));
+        }
       }
 
       @Override
@@ -171,7 +175,7 @@ public class MantisRepository extends BaseRepositoryImpl {
     if (data.getId() == null || data.getSummary() == null) {
       return null;
     }
-    return new MantisTask(data, this);
+    return new MantisTask(data, myCurrentProject, this);
   }
 
   @NotNull

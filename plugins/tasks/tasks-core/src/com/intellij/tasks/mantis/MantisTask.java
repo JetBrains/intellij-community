@@ -31,8 +31,9 @@ public class MantisTask extends Task {
     myRepository = repository;
     myId = String.valueOf(data.getId());
     mySummary = data.getSummary();
-    myClosed = data.getStatus().getId().intValue() >= 90;
     myDescription = data.getDescription();
+    myProjectName = data.getProject() == null ? null : data.getProject().getName();
+    myClosed = data.getStatus().getId().intValue() >= 90;
     myCreated = data.getDate_submitted().getTime();
     myUpdated = data.getLast_updated().getTime();
 
@@ -66,10 +67,13 @@ public class MantisTask extends Task {
     }
   }
 
-  public MantisTask(@NotNull IssueHeaderData header, @NotNull MantisRepository repository) {
+  public MantisTask(@NotNull IssueHeaderData header, @Nullable MantisProject project, @NotNull MantisRepository repository) {
     myRepository = repository;
     myId = String.valueOf(header.getId());
     mySummary = header.getSummary();
+    // actually it's not necessary because on activation tasks updated by TaskRepository#findTask
+    // and in this case constructor from IssueData will be used
+    myProjectName = project == null || project.isUnspecified() ? null : project.getName();
     myClosed = header.getStatus().intValue() >= 90;
     myDescription = null; // unavailable from header
     myCreated = null; // unavailable from header
@@ -92,13 +96,13 @@ public class MantisTask extends Task {
   @Nullable
   @Override
   public String getDescription() {
-    return null;
+    return myDescription;
   }
 
   @NotNull
   @Override
   public Comment[] getComments() {
-    return Comment.EMPTY_ARRAY;
+    return myComments;
   }
 
   @NotNull
@@ -122,7 +126,7 @@ public class MantisTask extends Task {
   @Nullable
   @Override
   public Date getCreated() {
-    return null;
+    return myCreated;
   }
 
   @Override
