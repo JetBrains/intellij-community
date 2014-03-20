@@ -101,7 +101,8 @@ public class ConsoleExecuteAction extends DumbAwareAction {
                       (myExecuteActionHandler.isEmptyCommandExecutionAllowed() || !StringUtil.isEmptyOrSpaces(editor.getDocument().getCharsSequence()));
     if (enabled) {
       Lookup lookup = LookupManager.getActiveLookup(editor);
-      enabled = lookup == null || !lookup.isCompletion();
+      // we should check getCurrentItem() also - fast typing could produce outdated lookup, such lookup reports isCompletion() true
+      enabled = lookup == null || !lookup.isCompletion() || lookup.getCurrentItem() == null;
     }
 
     e.getPresentation().setEnabled(enabled);
