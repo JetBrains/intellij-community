@@ -4,6 +4,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.ObsolescentAsyncResults;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XValueChildrenList;
@@ -22,6 +23,13 @@ public final class Variables {
   public static final String SPECIAL_PROPERTY_PREFIX = "__";
 
   private static final Pattern UNNAMED_FUNCTION_PATTERN = Pattern.compile("^function[\\t ]*\\(");
+
+  private static final Comparator<Variable> NATURAL_NAME_COMPARATOR = new Comparator<Variable>() {
+    @Override
+    public int compare(Variable o1, Variable o2) {
+      return naturalCompare(o1.getName(), o2.getName());
+    }
+  };
 
   public static void consume(@NotNull Scope scope,
                              @NotNull XCompositeNode node,
@@ -109,37 +117,91 @@ public final class Variables {
   }
 
   private static void sort(List<Variable> result) {
-    if (result.isEmpty()) {
-      return;
+    ContainerUtil.sort(result, NATURAL_NAME_COMPARATOR);
+  }
+
+  // prefixed '_' must last, fixed case sensitive natural compare
+  private static int naturalCompare(@Nullable String string1, @Nullable String string2) {
+    //noinspection StringEquality
+    if (string1 == string2) {
+      return 0;
+    }
+    if (string1 == null) {
+      return -1;
+    }
+    if (string2 == null) {
+      return 1;
     }
 
-    Collections.sort(result, new Comparator<Variable>() {
-      @Override
-      public int compare(Variable o1, Variable o2) {
-        int diff = getWidth(o1) - getWidth(o2);
-        if (diff != 0) {
-          return diff;
+    final int string1Length = string1.length();
+    final int string2Length = string2.length();
+    int i = 0, j = 0;
+    for (; i < string1Length && j < string2Length; i++, j++) {
+      char ch1 = string1.charAt(i);
+      char ch2 = string2.charAt(j);
+      if ((StringUtil.isDecimalDigit(ch1) || ch1 == ' ') && (StringUtil.isDecimalDigit(ch2) || ch2 == ' ')) {
+        int startNum1 = i;
+        while (ch1 == ' ' || ch1 == '0') { // skip leading spaces and zeros
+          startNum1++;
+          if (startNum1 >= string1Length) {
+            break;
+          }
+          ch1 = string1.charAt(startNum1);
         }
-        return StringUtil.naturalCompare(o1.getName(), o2.getName()) + diff;
+        int startNum2 = j;
+        while (ch2 == ' ' || ch2 == '0') { // skip leading spaces and zeros
+          startNum2++;
+          if (startNum2 >= string2Length) {
+            break;
+          }
+          ch2 = string2.charAt(startNum2);
+        }
+        i = startNum1;
+        j = startNum2;
+        // find end index of number
+        while (i < string1Length && StringUtil.isDecimalDigit(string1.charAt(i))) {
+          i++;
+        }
+        while (j < string2Length && StringUtil.isDecimalDigit(string2.charAt(j))) {
+          j++;
+        }
+        int lengthDiff = (i - startNum1) - (j - startNum2);
+        if (lengthDiff != 0) {
+          // numbers with more digits are always greater than shorter numbers
+          return lengthDiff;
+        }
+        for (; startNum1 < i; startNum1++, startNum2++) {
+          // compare numbers with equal digit count
+          int diff = string1.charAt(startNum1) - string2.charAt(startNum2);
+          if (diff != 0) {
+            return diff;
+          }
+        }
+        i--;
+        j--;
       }
-
-      private int getWidth(Variable var) {
-        String name = var.getName();
-        if (name.isEmpty()) {
-          return 0;
-        }
-
-        if (name.startsWith(SPECIAL_PROPERTY_PREFIX)) {
+      else if (ch1 != ch2) {
+        if (ch1 == '_') {
           return 1;
         }
-        else if (Character.isUpperCase(name.charAt(0))) {
-          return -2;
+        else if (ch2 == '_') {
+          return -1;
         }
         else {
-          return 0;
+          return ch1 - ch2;
         }
       }
-    });
+    }
+    // After the loop the end of one of the strings might not have been reached, if the other
+    // string ends with a number and the strings are equal until the end of that number. When
+    // there are more characters in the string, then it is greater.
+    if (i < string1Length) {
+      return 1;
+    }
+    else if (j < string2Length) {
+      return -1;
+    }
+    return string1Length - string2Length;
   }
 
   public static XValueChildrenList createVariablesList(@NotNull List<Variable> variables, @NotNull VariableContext variableContext) {
