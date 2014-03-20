@@ -4,7 +4,6 @@ import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XCompositeNode;
-import com.intellij.xdebugger.frame.XValueChildrenList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.*;
@@ -57,15 +56,7 @@ public final class CallFrameView extends StackFrameImplBase implements VariableC
   @Override
   public void computeChildren(@NotNull XCompositeNode node) {
     node.setAlreadySorted(true);
-    createAndAddScopeList(node, callFrame.getVariableScopes(), this, callFrame);
-  }
-
-  public static void createAndAddScopeList(XCompositeNode node, List<Scope> scopes, VariableContext context, @Nullable CallFrame callFrame) {
-    XValueChildrenList list = new XValueChildrenList(scopes.size());
-    for (Scope scope : scopes) {
-      list.addTopGroup(new ScopeVariablesGroup(scope, context, callFrame));
-    }
-    node.addChildren(list, true);
+    ScopeVariablesGroup.createAndAddScopeList(node, callFrame.getVariableScopes(), this, callFrame);
   }
 
   @NotNull
