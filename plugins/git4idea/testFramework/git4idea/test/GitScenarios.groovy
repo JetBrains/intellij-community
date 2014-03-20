@@ -61,7 +61,7 @@ class GitScenarios {
    */
   static def unmergedFiles(GitRepository repository) {
     conflict(repository, BRANCH_FOR_UNMERGED_CONFLICTS, "unmerged.txt")
-    git("merge $BRANCH_FOR_UNMERGED_CONFLICTS")
+    git("merge $BRANCH_FOR_UNMERGED_CONFLICTS", true)
     git("branch -D $BRANCH_FOR_UNMERGED_CONFLICTS")
   }
 
