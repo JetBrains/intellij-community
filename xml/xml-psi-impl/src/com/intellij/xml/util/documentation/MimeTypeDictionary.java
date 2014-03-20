@@ -68,8 +68,13 @@ public class MimeTypeDictionary {
 
       final String[] split = line.split(",");
       if (split.length > 1) {
-        result.add(!split[1].isEmpty() ? split[1] : category + "/" + split[0]);
+        result.add(!split[1].isEmpty() ? split[1] : withCategory(category, split[0]));
       }
     }
+  }
+
+  private static String withCategory(String category, String name) {
+    final int whitespacePosition = name.indexOf(' ');
+    return category + "/" + (whitespacePosition > 0 ? name.substring(0, whitespacePosition) : name);
   }
 }
