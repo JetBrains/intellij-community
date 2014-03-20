@@ -35,32 +35,33 @@ import java.util.regex.Pattern;
 public class MantisRepository extends BaseRepositoryImpl {
 
   private static final boolean DEBUG_ALL_PROJECTS = Boolean.getBoolean("tasks.mantis.debug.all.projects");
+  private static final String SOAP_API_LOCATION = "/api/soap/mantisconnect.php";
 
-  private final static String SOAP_API_LOCATION = "/api/soap/mantisconnect.php";
-
-  // Projects fetched from server last time is cached, so workaround for IDEA-105413 could work
+  // Projects fetched from server last time is cached, so workaround for IDEA-105413 could work.
   private List<MantisProject> myProjects = null;
+  // It means that special pseudo-project "All Projects" is supported on server side.
   // false if Mantis version < 1.2.9, because of http://www.mantisbt.org/bugs/view.php?id=13526
   private boolean myAllProjectsAvailable = true;
 
-  private MantisProject myCurrentProject = MantisProject.ALL_PROJECTS;
-  private MantisFilter myCurrentFilter = MantisFilter.LAST_TASKS;
+  private MantisProject myCurrentProject;
+  private MantisFilter myCurrentFilter;
 
   @SuppressWarnings({"UnusedDeclaration"})
   public MantisRepository() {
+    // empty
   }
 
   public MantisRepository(TaskRepositoryType type) {
     super(type);
   }
 
-  private MantisRepository(MantisRepository other) {
+  public MantisRepository(MantisRepository other) {
     super(other);
     myCurrentProject = other.getCurrentProject();
     myCurrentFilter = other.getCurrentFilter();
     myProjects = other.myProjects;
-    myAllProjectsAvailable = other.myAllProjectsAvailable;
     // deep copy isn't needed because, new list will be assigned to field on update in configurable
+    myAllProjectsAvailable = other.myAllProjectsAvailable;
   }
 
   @Override
@@ -70,7 +71,7 @@ public class MantisRepository extends BaseRepositoryImpl {
 
   @Nullable
   @Override
-  public String extractId(final String taskName) {
+  public String extractId(String taskName) {
     Matcher matcher = Pattern.compile("\\d+").matcher(taskName);
     return matcher.find() ? matcher.group() : null;
   }
@@ -101,16 +102,17 @@ public class MantisRepository extends BaseRepositoryImpl {
 
   private List<Task> getIssuesFromPage(@NotNull MantisConnectPortType soap, int page, int pageSize) throws Exception {
     List<IssueHeaderData> collectedHeaders = new ArrayList<IssueHeaderData>();
-    // Projects to iterate over, actually needed only when "All Projects" pseudo-project is selected and it's not supported by Mantis server
-    List<MantisProject> projects;
-    if (myCurrentProject == MantisProject.ALL_PROJECTS && !myAllProjectsAvailable) {
-      projects = myProjects;
-    } else {
-      projects = Collections.singletonList(myCurrentProject);
-    }
+    boolean isWorkaround = myCurrentProject.isUndefined() && !myAllProjectsAvailable;
+    // Projects to iterate over, actually needed only when "All Projects" pseudo-project is selected
+    // and is unsupported on server side.
+    List<MantisProject> projects = isWorkaround? myProjects : Collections.singletonList(myCurrentProject);
     for (MantisProject project : projects) {
+      if (isWorkaround && project.isUndefined()) {
+        continue;
+      }
+      assert !project.isUndefined() || myAllProjectsAvailable;
       IssueHeaderData[] headers;
-      if (myCurrentFilter == MantisFilter.LAST_TASKS) {
+      if (myCurrentFilter.isUndefined()) {
         headers = soap.mc_project_get_issue_headers(getUsername(), getPassword(),
                                                     bigInteger(project.getId()), bigInteger(page), bigInteger(pageSize));
       }
@@ -152,7 +154,7 @@ public class MantisRepository extends BaseRepositoryImpl {
   }
 
   @Nullable
-  private Task createIssue(final IssueData data) {
+  private Task createIssue(IssueData data) {
     if (data.getId() == null || data.getSummary() == null) {
       return null;
     }
@@ -160,21 +162,16 @@ public class MantisRepository extends BaseRepositoryImpl {
   }
 
   @Nullable
-  private Task createIssue(final IssueHeaderData data) {
+  private Task createIssue(IssueHeaderData data) {
     if (data.getId() == null || data.getSummary() == null) {
       return null;
     }
     return new MantisTask(data, this);
   }
 
-  public List<MantisProject> getProjects() throws Exception {
+  public List<MantisProject> fetchProjects() throws Exception {
     ensureProjectsRefreshed();
     return myProjects;
-  }
-
-  public List<MantisFilter> getFilters(MantisProject project) throws Exception {
-    ensureProjectsRefreshed();
-    return project.getFilters();
   }
 
   private void ensureProjectsRefreshed() throws Exception {
@@ -183,58 +180,42 @@ public class MantisRepository extends BaseRepositoryImpl {
     }
   }
 
-  public List<MantisProject> refreshProjectsAndFilters() throws Exception {
-    try {
-      final MantisConnectPortType soap = createSoap();
-      myProjects = new ArrayList<MantisProject>();
-      ProjectData[] projectDatas = soap.mc_projects_get_user_accessible(getUsername(), getPassword());
-      List<MantisProject> projects = new ArrayList<MantisProject>(ContainerUtil.map(projectDatas, new Function<ProjectData, MantisProject>() {
+  public void refreshProjectsAndFilters() throws Exception {
+    MantisConnectPortType soap = createSoap();
+    myAllProjectsAvailable = checkAllProjectsAvailable(soap);
+    myProjects = new ArrayList<MantisProject>();
+    ProjectData[] projectDatas = soap.mc_projects_get_user_accessible(getUsername(), getPassword());
+    List<MantisProject> projects =
+      new ArrayList<MantisProject>(ContainerUtil.map(projectDatas, new Function<ProjectData, MantisProject>() {
         @Override
         public MantisProject fun(final ProjectData data) {
           return new MantisProject(data.getId().intValue(), data.getName());
         }
       }));
-
-      myAllProjectsAvailable = checkAllProjectsAvailable(soap);
-
-      if (myAllProjectsAvailable) {
-        // add it now to update its filters with the rest of projects
-        projects.add(0, MantisProject.ALL_PROJECTS);
-      }
-
-      final List<MantisFilter> commonFilters = new LinkedList<MantisFilter>();
-      for (MantisProject project : projects) {
-        // Is filter project specific?
-        FilterData[] filterDatas = soap.mc_filter_get(getUsername(), getPassword(), bigInteger(project.getId()));
-        List<MantisFilter> projectFilters = new LinkedList<MantisFilter>();
-        for (FilterData data : filterDatas) {
-          MantisFilter filter = new MantisFilter(data.getId().intValue(), data.getName());
-          if (data.getProject_id().intValue() == 0) {
-            commonFilters.add(filter);
-          }
-          projectFilters.add(filter);
+    List<MantisFilter> commonFilters = new LinkedList<MantisFilter>();
+    for (MantisProject project : projects) {
+      FilterData[] filterDatas = soap.mc_filter_get(getUsername(), getPassword(), bigInteger(project.getId()));
+      List<MantisFilter> projectFilters = new LinkedList<MantisFilter>();
+      for (FilterData data : filterDatas) {
+        MantisFilter filter = new MantisFilter(data.getId().intValue(), data.getName());
+        if (data.getProject_id().intValue() == 0) {
+          commonFilters.add(filter);
         }
-
-        projectFilters.add(0, MantisFilter.LAST_TASKS);
-        project.setFilters(projectFilters);
-        myProjects.add(project);
+        projectFilters.add(filter);
       }
 
-      // manually populate filter for "All Projects" pseudo project, if it's not supported by server
-      if (!myAllProjectsAvailable) {
-        Collections.sort(commonFilters);
-        commonFilters.add(0, MantisFilter.LAST_TASKS);
-        MantisProject.ALL_PROJECTS.setFilters(commonFilters);
-        myProjects.add(0, MantisProject.ALL_PROJECTS);
-      }
+      projectFilters.add(0, MantisFilter.newUndefined());
+      project.setFilters(projectFilters);
+      myProjects.add(project);
+    }
 
-      return myProjects;
-    }
-    catch (Exception e) {
-      myCurrentProject = MantisProject.ALL_PROJECTS;
-      myCurrentFilter = MantisFilter.LAST_TASKS;
-      throw e;
-    }
+    // Explicitly add undefined project
+    Collections.sort(commonFilters);
+    commonFilters.add(0, MantisFilter.newUndefined());
+
+    MantisProject undefined = MantisProject.newUndefined();
+    undefined.setFilters(commonFilters);
+    myProjects.add(0, undefined);
   }
 
   private MantisConnectPortType createSoap() throws Exception {
@@ -257,7 +238,7 @@ public class MantisRepository extends BaseRepositoryImpl {
     return myCurrentProject;
   }
 
-  public void setCurrentProject(@Nullable final MantisProject currentProject) {
+  public void setCurrentProject(@Nullable MantisProject currentProject) {
     myCurrentProject = currentProject;
   }
 
@@ -266,7 +247,7 @@ public class MantisRepository extends BaseRepositoryImpl {
     return myCurrentFilter;
   }
 
-  public void setCurrentFilter(@Nullable final MantisFilter currentFilter) {
+  public void setCurrentFilter(@Nullable MantisFilter currentFilter) {
     myCurrentFilter = currentFilter;
   }
 
@@ -289,5 +270,4 @@ public class MantisRepository extends BaseRepositoryImpl {
   protected int getFeatures() {
     return super.getFeatures() & ~NATIVE_SEARCH;
   }
-
 }

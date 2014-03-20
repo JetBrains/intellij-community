@@ -1,5 +1,6 @@
 package com.intellij.tasks.mantis;
 
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -7,7 +8,12 @@ import org.jetbrains.annotations.NotNull;
  * Date: 9/24/12
  */
 public final class MantisFilter implements Comparable<MantisFilter> {
-  public final static MantisFilter LAST_TASKS = new MantisFilter(0, "[Last tasks]");
+  // Used for "[Last task] filter"
+  public static final int UNDEFINED_FILTER_ID = 0;
+
+  public static MantisFilter newUndefined() {
+    return new MantisFilter(0, "[Last tasks]");
+  }
 
   private int id;
   private String name;
@@ -21,6 +27,7 @@ public final class MantisFilter implements Comparable<MantisFilter> {
     this.name = name;
   }
 
+  @Attribute("id")
   public int getId() {
     return id;
   }
@@ -29,12 +36,17 @@ public final class MantisFilter implements Comparable<MantisFilter> {
     this.id = id;
   }
 
+  @Attribute("name")
   public String getName() {
     return name;
   }
 
   public void setName(final String name) {
     this.name = name;
+  }
+
+  public final boolean isUndefined() {
+    return getId() == UNDEFINED_FILTER_ID;
   }
 
   @Override

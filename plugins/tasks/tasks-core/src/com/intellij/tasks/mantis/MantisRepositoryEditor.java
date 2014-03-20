@@ -50,38 +50,43 @@ public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepositor
     myTestButton.setText("Login");
     myTestButton.setEnabled(myRepository.isConfigured());
 
+    // Fill comboboxes with current items if any
+    MantisProject currentProject = myRepository.getCurrentProject();
+    myProjectCombobox.addItem(currentProject);
+    if (currentProject != null) {
+      myFilterCombobox.setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(currentProject.getFilters())));
+      myFilterCombobox.setSelectedItem(myRepository.getCurrentFilter());
+    }
+
     // Populate filters list on project selection
     myProjectCombobox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
         if (e.getStateChange() == ItemEvent.SELECTED) {
+          // equality check is needed to prevent resetting of combobox with filters
+          // on initial projects update
           MantisProject project = (MantisProject)myProjectCombobox.getSelectedItem();
-          if (project != null) {
+          if (project != null && !project.equals(myRepository.getCurrentProject())) {
             //noinspection unchecked
             myFilterCombobox.setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(project.getFilters())));
             // "Last updated" filter should always be available
             myFilterCombobox.setSelectedIndex(0);
+            doApply();
           }
         }
       }
     });
-    installListener(myProjectCombobox);
     installListener(myFilterCombobox);
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (myRepository.getCurrentProject() != null) {
-          new FetchMantisProjects() {
-            @Override
-            protected void updateUI() {
-              super.updateUI();
-              myFilterCombobox.setSelectedItem(myRepository.getCurrentFilter());
-            }
-          }.queue();
+    // Update the rest of projects in combobox, if repository is already configured
+    if (myRepository.getCurrentProject() != null) {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          new FetchMantisProjects().queue();
         }
-      }
-    });
+      });
+    }
   }
 
 
@@ -131,7 +136,7 @@ public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepositor
     @NotNull
     @Override
     protected List<MantisProject> fetch(@NotNull ProgressIndicator indicator) throws Exception {
-      return myRepository.refreshProjectsAndFilters();
+      return myRepository.fetchProjects();
     }
 
     @Nullable

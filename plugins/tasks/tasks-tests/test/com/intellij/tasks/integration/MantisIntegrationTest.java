@@ -20,8 +20,8 @@ public class MantisIntegrationTest extends TaskManagerTestCase {
     mantisRepository.setUsername("deva");
     mantisRepository.setPassword("deva");
 
-    assertTrue(mantisRepository.getProjects().size() >= 2);
-    final MantisProject mantisProject = mantisRepository.getProjects().get(1);
+    assertTrue(mantisRepository.fetchProjects().size() >= 2);
+    final MantisProject mantisProject = mantisRepository.fetchProjects().get(1);
     assertEquals(mantisProject.getName(), "Mantis 1.2 project 1");
     mantisRepository.setCurrentProject(mantisProject);
 

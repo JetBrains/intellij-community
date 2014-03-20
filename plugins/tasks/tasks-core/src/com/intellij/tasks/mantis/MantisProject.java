@@ -1,5 +1,7 @@
 package com.intellij.tasks.mantis;
 
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -10,7 +12,12 @@ import java.util.List;
  * Date: 9/24/12
  */
 public final class MantisProject {
-  public final static MantisProject ALL_PROJECTS = new MantisProject(0, "All Projects");
+  // Used for "All projects" option in settings
+  public static final int UNDEFINED_PROJECT_ID = 0;
+
+  public static MantisProject newUndefined() {
+    return new MantisProject(0, "All Projects");
+  }
 
   private List<MantisFilter> myFilters;
 
@@ -19,7 +26,7 @@ public final class MantisProject {
 
   @SuppressWarnings({"UnusedDeclaration"})
   public MantisProject() {
-    String s = "pass";
+    // empty
   }
 
   public MantisProject(int id, @NotNull String name) {
@@ -27,6 +34,7 @@ public final class MantisProject {
     this.name = name;
   }
 
+  @Attribute("id")
   public int getId() {
     return id;
   }
@@ -35,6 +43,7 @@ public final class MantisProject {
     this.id = id;
   }
 
+  @Attribute("name")
   @NotNull
   public String getName() {
     return name;
@@ -44,9 +53,16 @@ public final class MantisProject {
     this.name = name;
   }
 
+
+  public final boolean isUndefined() {
+    return getId() == UNDEFINED_PROJECT_ID;
+  }
+
+  //@OptionTag(tag = "filters", nameAttribute = "")
+  @AbstractCollection(surroundWithTag = false)
   @NotNull
   public List<MantisFilter> getFilters() {
-    return myFilters == null ? Collections.<MantisFilter>emptyList() : myFilters;
+    return myFilters == null? Collections.<MantisFilter>emptyList() : myFilters;
   }
 
   public void setFilters(@NotNull List<MantisFilter> filters) {
