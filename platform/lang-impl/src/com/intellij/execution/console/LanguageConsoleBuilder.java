@@ -148,13 +148,13 @@ public final class LanguageConsoleBuilder {
 
   public LanguageConsoleView build(@NotNull Project project, @NotNull Language language) {
     GutteredLanguageConsole console = new GutteredLanguageConsole(language.getDisplayName() + " Console", project, language, gutterContentProvider, psiFileFactory);
+    if (oneLineInput) {
+      console.getConsoleEditor().setOneLineMode(true);
+    }
     LanguageConsoleViewImpl consoleView = new LanguageConsoleViewImpl(console, true);
     if (executeActionHandler != null) {
       assert historyType != null;
       doInitAction(consoleView, executeActionHandler, historyType);
-    }
-    if (oneLineInput) {
-      console.getConsoleEditor().setOneLineMode(true);
     }
     console.initComponents();
     return consoleView;
@@ -222,11 +222,7 @@ public final class LanguageConsoleBuilder {
     protected void setupEditorDefault(@NotNull EditorEx editor) {
       super.setupEditorDefault(editor);
 
-      if (editor == getConsoleEditor()) {
-        editor.setOneLineMode(true);
-        return;
-      }
-      else if (gutterContentProvider == null) {
+      if (editor == getConsoleEditor() || gutterContentProvider == null) {
         return;
       }
 
