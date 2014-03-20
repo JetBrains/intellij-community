@@ -358,8 +358,8 @@ public class GenericsHighlightUtil {
       if (inheritedSubstitutor != null) {
         final PsiTypeParameter[] typeParameters = superClass.getTypeParameters();
         for (PsiTypeParameter typeParameter : typeParameters) {
-          PsiType type1 = GenericsUtil.eliminateWildcards(inheritedSubstitutor.substitute(typeParameter));
-          PsiType type2 = GenericsUtil.eliminateWildcards(superTypeSubstitutor.substitute(typeParameter));
+          PsiType type1 = inheritedSubstitutor.substitute(typeParameter);
+          PsiType type2 = superTypeSubstitutor.substitute(typeParameter);
 
           if (!Comparing.equal(type1, type2)) {
             String description = JavaErrorMessages.message("generics.cannot.be.inherited.with.different.type.arguments",
