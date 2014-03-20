@@ -44,19 +44,13 @@ public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepositor
   private JBLabel myProjectLabel;
   private JBLabel myFilterLabel;
 
-  public MantisRepositoryEditor(final Project project, final MantisRepository repository, final Consumer<MantisRepository> changeListener) {
+  private boolean myInitialized = false;
+
+  public MantisRepositoryEditor(Project project, MantisRepository repository, Consumer<MantisRepository> changeListener) {
     super(project, repository, changeListener);
 
     myTestButton.setText("Login");
     myTestButton.setEnabled(myRepository.isConfigured());
-
-    // Fill comboboxes with current items if any
-/*    MantisProject currentProject = myRepository.getCurrentProject();
-    myProjectCombobox.addItem(currentProject);
-    if (currentProject != null) {
-      myFilterCombobox.setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(currentProject.getFilters())));
-      myFilterCombobox.setSelectedItem(myRepository.getCurrentFilter());
-    }*/
 
     // Populate filters list on project selection
     myProjectCombobox.addItemListener(new ItemListener() {
@@ -69,14 +63,15 @@ public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepositor
           if (project != null) {
             //noinspection unchecked
             myFilterCombobox.setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(project.getFilters())));
-            if (project.equals(myRepository.getCurrentProject())) {
-              // matters only on initialization
-              myFilterCombobox.setSelectedItem(myRepository.getCurrentFilter());
-            }
-            else {
+            if (!project.equals(myRepository.getCurrentProject())) {
               // unspecified filter should always be available
               myFilterCombobox.setSelectedIndex(0);
               doApply();
+            }
+            else if (!myInitialized) {
+              // matters only on initialization
+              myFilterCombobox.setSelectedItem(myRepository.getCurrentFilter());
+              myInitialized = true;
             }
           }
         }

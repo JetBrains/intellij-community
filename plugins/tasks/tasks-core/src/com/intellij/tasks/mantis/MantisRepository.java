@@ -14,7 +14,6 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.apache.axis.utils.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +27,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.tasks.actions.GotoTaskAction.PAGE_SIZE;
+
 /**
  * @author Dmitry Avdeev
  */
@@ -36,6 +37,7 @@ public class MantisRepository extends BaseRepositoryImpl {
 
   private static final boolean DEBUG_ALL_PROJECTS = Boolean.getBoolean("tasks.mantis.debug.all.projects");
   private static final String SOAP_API_LOCATION = "/api/soap/mantisconnect.php";
+  private static final Pattern ID_PATTERN = Pattern.compile("\\d+");
 
   // Projects fetched from server last time is cached, so workaround for IDEA-105413 could work.
   private List<MantisProject> myProjects = null;
@@ -72,35 +74,38 @@ public class MantisRepository extends BaseRepositoryImpl {
   @Nullable
   @Override
   public String extractId(String taskName) {
-    Matcher matcher = Pattern.compile("\\d+").matcher(taskName);
+    Matcher matcher = ID_PATTERN.matcher(taskName);
     return matcher.find() ? matcher.group() : null;
   }
 
   @Override
-  public Task[] getIssues(@Nullable String query, int max, long since, @NotNull ProgressIndicator cancelled) throws Exception {
+  public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed, @NotNull ProgressIndicator cancelled)
+    throws Exception {
     if (myCurrentProject == null || myCurrentFilter == null) {
       throw new Exception(TaskBundle.message("failure.configuration"));
     }
     ensureProjectsRefreshed();
     MantisConnectPortType soap = createSoap();
-    List<Task> tasks = new ArrayList<Task>(max);
-    int page = 1;
+
+    int total = limit - offset + 1;
+    List<Task> tasks = new ArrayList<Task>(total);
+
+    int pageNumber = offset / PAGE_SIZE + 1;
     // what the heck does it suppose to mean?
-    int issuesOnPage = StringUtils.isEmpty(query) ? max : max * query.length() * 5;
-    while (true) {
+    while (tasks.size() < total) {
       cancelled.checkCanceled();
-      final List<Task> issuesFromPage = getIssuesFromPage(soap, page, issuesOnPage);
+      int pageSize = Math.min(PAGE_SIZE, total - tasks.size());
+      List<Task> issuesFromPage = getIssuesFromPage(soap, pageNumber, pageSize);
       tasks.addAll(issuesFromPage);
-      if (issuesFromPage.size() < issuesOnPage || tasks.size() >= max) {
+      if (issuesFromPage.size() < pageSize) {
         break;
       }
-      page++;
+      pageNumber++;
     }
-    tasks = tasks.subList(0, Math.min(max, tasks.size()));
     return tasks.toArray(new Task[tasks.size()]);
   }
 
-  private List<Task> getIssuesFromPage(@NotNull MantisConnectPortType soap, int page, int pageSize) throws Exception {
+  private List<Task> getIssuesFromPage(@NotNull MantisConnectPortType soap, int pageNumber, int pageSize) throws Exception {
     List<IssueHeaderData> collectedHeaders = new ArrayList<IssueHeaderData>();
     boolean isWorkaround = myCurrentProject.isUnspecified() && !myAllProjectsAvailable;
     // Projects to iterate over, actually needed only when "All Projects" pseudo-project is selected
@@ -114,12 +119,12 @@ public class MantisRepository extends BaseRepositoryImpl {
       IssueHeaderData[] headers;
       if (myCurrentFilter.isUnspecified()) {
         headers = soap.mc_project_get_issue_headers(getUsername(), getPassword(),
-                                                    bigInteger(project.getId()), bigInteger(page), bigInteger(pageSize));
+                                                    bigInteger(project.getId()), bigInteger(pageNumber), bigInteger(pageSize));
       }
       else {
         headers = soap.mc_filter_get_issue_headers(getUsername(), getPassword(),
                                                    bigInteger(project.getId()), bigInteger(myCurrentFilter.getId()),
-                                                   bigInteger(page), bigInteger(pageSize));
+                                                   bigInteger(pageNumber), bigInteger(pageSize));
       }
       ContainerUtil.addAll(collectedHeaders, headers);
     }
