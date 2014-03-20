@@ -1274,7 +1274,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       else {
         if (x >= px) {
-          if ((x - px) * 2 < charWidth) column++;
+          if (c != '\n' && (x - px) * 2 < charWidth) column++;
         }
         else {
           int diff = px - x;
