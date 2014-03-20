@@ -102,17 +102,17 @@ public class MantisRepository extends BaseRepositoryImpl {
 
   private List<Task> getIssuesFromPage(@NotNull MantisConnectPortType soap, int page, int pageSize) throws Exception {
     List<IssueHeaderData> collectedHeaders = new ArrayList<IssueHeaderData>();
-    boolean isWorkaround = myCurrentProject.isUndefined() && !myAllProjectsAvailable;
+    boolean isWorkaround = myCurrentProject.isUnspecified() && !myAllProjectsAvailable;
     // Projects to iterate over, actually needed only when "All Projects" pseudo-project is selected
     // and is unsupported on server side.
     List<MantisProject> projects = isWorkaround? myProjects : Collections.singletonList(myCurrentProject);
     for (MantisProject project : projects) {
-      if (isWorkaround && project.isUndefined()) {
+      if (isWorkaround && project.isUnspecified()) {
         continue;
       }
-      assert !project.isUndefined() || myAllProjectsAvailable;
+      assert !project.isUnspecified() || myAllProjectsAvailable;
       IssueHeaderData[] headers;
-      if (myCurrentFilter.isUndefined()) {
+      if (myCurrentFilter.isUnspecified()) {
         headers = soap.mc_project_get_issue_headers(getUsername(), getPassword(),
                                                     bigInteger(project.getId()), bigInteger(page), bigInteger(pageSize));
       }
@@ -143,7 +143,7 @@ public class MantisRepository extends BaseRepositoryImpl {
     return new CancellableConnection() {
       @Override
       protected void doTest() throws Exception {
-        //refreshProjectsAndFilters();
+        //refreshProjects();
         createSoap();
       }
 
@@ -169,21 +169,22 @@ public class MantisRepository extends BaseRepositoryImpl {
     return new MantisTask(data, this);
   }
 
-  public List<MantisProject> fetchProjects() throws Exception {
+  @NotNull
+  public List<MantisProject> getProjects() throws Exception {
     ensureProjectsRefreshed();
-    return myProjects;
+    return myProjects == null ? Collections.<MantisProject>emptyList() : myProjects;
   }
 
   private void ensureProjectsRefreshed() throws Exception {
     if (myProjects == null) {
-      refreshProjectsAndFilters();
+      refreshProjects();
     }
   }
 
-  public void refreshProjectsAndFilters() throws Exception {
+  public void refreshProjects() throws Exception {
     MantisConnectPortType soap = createSoap();
     myAllProjectsAvailable = checkAllProjectsAvailable(soap);
-    myProjects = new ArrayList<MantisProject>();
+
     ProjectData[] projectDatas = soap.mc_projects_get_user_accessible(getUsername(), getPassword());
     List<MantisProject> projects =
       new ArrayList<MantisProject>(ContainerUtil.map(projectDatas, new Function<ProjectData, MantisProject>() {
@@ -206,18 +207,19 @@ public class MantisRepository extends BaseRepositoryImpl {
 
       projectFilters.add(0, MantisFilter.newUndefined());
       project.setFilters(projectFilters);
-      myProjects.add(project);
     }
 
-    // Explicitly add undefined project
     Collections.sort(commonFilters);
     commonFilters.add(0, MantisFilter.newUndefined());
 
     MantisProject undefined = MantisProject.newUndefined();
     undefined.setFilters(commonFilters);
-    myProjects.add(0, undefined);
+    projects.add(0, undefined);
+
+    myProjects = projects;
   }
 
+  @NotNull
   private MantisConnectPortType createSoap() throws Exception {
     return new MantisConnectLocator().getMantisConnectPort(new URL(getUrl() + SOAP_API_LOCATION));
   }

@@ -51,12 +51,12 @@ public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepositor
     myTestButton.setEnabled(myRepository.isConfigured());
 
     // Fill comboboxes with current items if any
-    MantisProject currentProject = myRepository.getCurrentProject();
+/*    MantisProject currentProject = myRepository.getCurrentProject();
     myProjectCombobox.addItem(currentProject);
     if (currentProject != null) {
       myFilterCombobox.setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(currentProject.getFilters())));
       myFilterCombobox.setSelectedItem(myRepository.getCurrentFilter());
-    }
+    }*/
 
     // Populate filters list on project selection
     myProjectCombobox.addItemListener(new ItemListener() {
@@ -66,12 +66,18 @@ public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepositor
           // equality check is needed to prevent resetting of combobox with filters
           // on initial projects update
           MantisProject project = (MantisProject)myProjectCombobox.getSelectedItem();
-          if (project != null && !project.equals(myRepository.getCurrentProject())) {
+          if (project != null) {
             //noinspection unchecked
             myFilterCombobox.setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(project.getFilters())));
-            // "Last updated" filter should always be available
-            myFilterCombobox.setSelectedIndex(0);
-            doApply();
+            if (project.equals(myRepository.getCurrentProject())) {
+              // matters only on initialization
+              myFilterCombobox.setSelectedItem(myRepository.getCurrentFilter());
+            }
+            else {
+              // unspecified filter should always be available
+              myFilterCombobox.setSelectedIndex(0);
+              doApply();
+            }
           }
         }
       }
@@ -136,7 +142,8 @@ public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepositor
     @NotNull
     @Override
     protected List<MantisProject> fetch(@NotNull ProgressIndicator indicator) throws Exception {
-      return myRepository.fetchProjects();
+      myRepository.refreshProjects();
+      return myRepository.getProjects();
     }
 
     @Nullable

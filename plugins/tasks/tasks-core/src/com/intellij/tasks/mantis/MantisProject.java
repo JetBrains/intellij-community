@@ -1,9 +1,10 @@
 package com.intellij.tasks.mantis;
 
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -13,13 +14,13 @@ import java.util.List;
  */
 public final class MantisProject {
   // Used for "All projects" option in settings
-  public static final int UNDEFINED_PROJECT_ID = 0;
+  public static final int UNSPECIFIED_PROJECT_ID = 0;
 
   public static MantisProject newUndefined() {
-    return new MantisProject(0, "All Projects");
+    return new MantisProject(0, "-- from all projects --");
   }
 
-  private List<MantisFilter> myFilters;
+  private List<MantisFilter> myFilters = new ArrayList<MantisFilter>();
 
   private int id;
   private String name;
@@ -54,12 +55,18 @@ public final class MantisProject {
   }
 
 
-  public final boolean isUndefined() {
-    return getId() == UNDEFINED_PROJECT_ID;
+  public final boolean isUnspecified() {
+    return getId() == UNSPECIFIED_PROJECT_ID;
   }
 
   //@OptionTag(tag = "filters", nameAttribute = "")
-  @AbstractCollection(surroundWithTag = false)
+  //@AbstractCollection(surroundWithTag = false)
+
+  /**
+   * Filters here are used only to simplify combo boxes management and are refreshed every time when settings
+   * are opened or user hit "Login" button. Thus they are not persisted in settings.
+   */
+  @Transient
   @NotNull
   public List<MantisFilter> getFilters() {
     return myFilters == null? Collections.<MantisFilter>emptyList() : myFilters;

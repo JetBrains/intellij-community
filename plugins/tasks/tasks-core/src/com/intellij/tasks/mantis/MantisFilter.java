@@ -9,10 +9,10 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class MantisFilter implements Comparable<MantisFilter> {
   // Used for "[Last task] filter"
-  public static final int UNDEFINED_FILTER_ID = 0;
+  public static final int UNSPECIFIED_FILTER_ID = 0;
 
   public static MantisFilter newUndefined() {
-    return new MantisFilter(0, "[Last tasks]");
+    return new MantisFilter(0, "-- all issues --");
   }
 
   private int id;
@@ -45,8 +45,8 @@ public final class MantisFilter implements Comparable<MantisFilter> {
     this.name = name;
   }
 
-  public final boolean isUndefined() {
-    return getId() == UNDEFINED_FILTER_ID;
+  public final boolean isUnspecified() {
+    return getId() == UNSPECIFIED_FILTER_ID;
   }
 
   @Override
