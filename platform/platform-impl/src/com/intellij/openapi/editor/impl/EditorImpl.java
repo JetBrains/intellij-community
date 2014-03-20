@@ -358,6 +358,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (myDocument.isInBulkUpdate()) return; // bulkUpdateFinished() will repaint anything
         int textLength = myDocument.getTextLength();
 
+        clearTextWidthCache();
+
         int start = Math.min(Math.max(highlighter.getAffectedAreaStartOffset(), 0), textLength);
         int end = Math.min(Math.max(highlighter.getAffectedAreaEndOffset(), 0), textLength);
 
@@ -1688,6 +1690,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myScrollPane == null) {
       return;
     }
+
+    clearTextWidthCache();
 
     stopOptimizedScrolling();
     mySelectionModel.removeBlockSelection();
