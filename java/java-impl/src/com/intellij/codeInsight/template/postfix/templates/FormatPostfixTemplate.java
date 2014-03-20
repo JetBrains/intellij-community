@@ -15,22 +15,29 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
+import com.intellij.codeInsight.template.postfix.util.PostfixTemplatesUtils;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
-public class ReturnStatementPostfixTemplate extends NonVoidPostfixTemplate {
-  public ReturnStatementPostfixTemplate() {
-    super("return", "Returns value from containing method", "return expr;");
+public class FormatPostfixTemplate extends PostfixTemplate {
+  public FormatPostfixTemplate() {
+    super("format", "Creates String.format call", "String.format(expr);");
   }
 
   @Override
   public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
+    PostfixTemplatesUtils.createStatement(context, editor, "String.format(", ", )", -2);
+  }
+
+  @Override
+  public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
     PsiExpression expr = getTopmostExpression(context);
-    PsiElement parent = expr != null ? expr.getParent() : null;
-    if (!(parent instanceof PsiExpressionStatement)) return;
-    PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
-    PsiReturnStatement returnStatement = (PsiReturnStatement)factory.createStatementFromText("return " + expr.getText() + ";", parent);
-    parent.replace(returnStatement);
+    PsiType type = expr != null ? expr.getType() : null;
+    return expr != null && type != null && CommonClassNames.JAVA_LANG_STRING.equals(type.getCanonicalText());
   }
 }
