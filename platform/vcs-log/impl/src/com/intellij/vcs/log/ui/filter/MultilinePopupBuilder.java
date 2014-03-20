@@ -52,9 +52,10 @@ class MultilinePopupBuilder {
 
   @NotNull private final EditorTextField myTextField;
 
-  MultilinePopupBuilder(@NotNull Project project, @NotNull final Collection<String> values) {
+  MultilinePopupBuilder(@NotNull Project project, @NotNull final Collection<String> values, @NotNull String initialValue) {
     myTextField = createTextField(project);
     new MyCompletionProvider(values).apply(myTextField);
+    myTextField.setText(initialValue);
   }
 
   @NotNull

@@ -143,7 +143,7 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
         return;
       }
 
-      final MultilinePopupBuilder popupBuilder = new MultilinePopupBuilder(project, myVariants);
+      final MultilinePopupBuilder popupBuilder = new MultilinePopupBuilder(project, myVariants, getPopupText(mySelectedValues));
       JBPopup popup = popupBuilder.createPopup();
       popup.addListener(new JBPopupAdapter() {
         @Override
@@ -160,6 +160,11 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
         }
       });
       popup.showUnderneathOf(MultipleValueFilterPopupComponent.this);
+    }
+
+    @NotNull
+    private String getPopupText(@Nullable Collection<String> selectedValues) {
+      return selectedValues == null || selectedValues.isEmpty() ? "" : StringUtil.join(selectedValues, "\n");
     }
   }
 
