@@ -23,6 +23,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,7 +40,7 @@ public class Executor {
 
   private static void cdAbs(String absolutePath) {
     ourCurrentDir = absolutePath;
-    log("cd " + shortenPath(absolutePath));
+    debug("# cd " + shortenPath(absolutePath));
   }
 
   private static void cdRel(String relativePath) {
@@ -63,7 +64,8 @@ public class Executor {
     return ourCurrentDir;
   }
 
-  public static String touch(String filePath) {
+  @NotNull
+  public static File touch(String filePath) {
     try {
       File file = child(filePath);
       assert !file.exists() : "File " + file + " shouldn't exist yet";
@@ -71,16 +73,17 @@ public class Executor {
       new File(file.getParent()).mkdirs(); // ensure to create the directories
       boolean fileCreated = file.createNewFile();
       assert fileCreated;
-      log("touch " + filePath);
-      return file.getPath();
+      debug("# touch " + filePath);
+      return file;
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  public static String touch(String fileName, String content) {
-    String filePath = touch(fileName);
+  @NotNull
+  public static File touch(String fileName, String content) {
+    File filePath = touch(fileName);
     echo(fileName, content);
     return filePath;
   }
@@ -94,18 +97,27 @@ public class Executor {
     }
   }
 
-  public static String mkdir(String dirName) {
+  public static void overwrite(@NotNull File file, @NotNull String content) throws IOException {
+    FileUtil.writeToFile(file, content.getBytes(), false);
+  }
+
+  public static void append(@NotNull File file, @NotNull String content) throws IOException {
+    FileUtil.writeToFile(file, content.getBytes(), true);
+  }
+
+  @NotNull
+  public static File mkdir(@NotNull String dirName) {
     File file = child(dirName);
     boolean dirMade = file.mkdir();
     assert dirMade;
-    log("mkdir " + dirName);
-    return file.getPath();
+    debug("# mkdir " + dirName);
+    return file;
   }
 
   public static String cat(String fileName) {
     try {
       String content = FileUtil.loadFile(child(fileName));
-      log("cat " + fileName);
+      debug("# cat " + fileName);
       return content;
     }
     catch (IOException e) {
@@ -141,11 +153,11 @@ public class Executor {
     }
 
     if (result.getExitCode() != 0) {
-      log("{" + result.getExitCode() + "}");
+      debug("{" + result.getExitCode() + "}");
     }
     String stdout = result.getStdout().trim();
     if (!StringUtil.isEmptyOrSpaces(stdout)) {
-      log(stdout.trim());
+      debug(stdout.trim());
     }
     return stdout;
   }
@@ -212,14 +224,14 @@ public class Executor {
     for (String env : envs) {
       String val = System.getenv(env);
       if (val != null && new File(val).canExecute()) {
-        log(String.format("Using %s from %s: %s", programNameForLog, env, val));
+        debug(String.format("Using %s from %s: %s", programNameForLog, env, val));
         return val;
       }
     }
     return null;
   }
 
-  protected static void log(String msg) {
+  protected static void debug(String msg) {
     System.out.println(msg);
   }
 

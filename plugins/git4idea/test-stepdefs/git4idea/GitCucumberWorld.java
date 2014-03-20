@@ -46,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.picocontainer.MutablePicoContainer;
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -155,8 +156,8 @@ public class GitCucumberWorld {
   @Order(2)
   public void setUpStandardMultipleRootsConfig() {
     cd(myProjectRoot);
-    String community = mkdir("community");
-    GitTestUtil.createRepository(myProject, community);
+    File community = mkdir("community");
+    GitTestUtil.createRepository(myProject, community.getPath());
   }
 
   @After("@remote")

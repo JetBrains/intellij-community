@@ -54,12 +54,12 @@ class GitBranchWorkerTest extends GitPlatformTest {
     super.setUp();
 
     cd(myProjectRoot)
-    def community = mkdir("community")
-    def contrib = mkdir("contrib")
+    File community = mkdir("community")
+    File contrib = mkdir("contrib")
 
     myUltimate = createRepository(myProjectRoot.path)
-    myCommunity = createRepository(community)
-    myContrib = createRepository(contrib)
+    myCommunity = createRepository(community.path)
+    myContrib = createRepository(contrib.path)
     myRepositories = [ myUltimate, myCommunity, myContrib ]
 
     cd(myProjectRoot)

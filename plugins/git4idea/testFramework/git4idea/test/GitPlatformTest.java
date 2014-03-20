@@ -39,6 +39,7 @@ public abstract class GitPlatformTest extends UsefulTestCase {
 
   @NotNull protected Project myProject;
   @NotNull protected VirtualFile myProjectRoot;
+  @NotNull protected String myProjectPath;
   @NotNull protected GitRepositoryManager myGitRepositoryManager;
   @NotNull protected GitVcsSettings myGitSettings;
   @NotNull protected GitPlatformFacade myPlatformFacade;
@@ -70,6 +71,7 @@ public abstract class GitPlatformTest extends UsefulTestCase {
 
     myProject = myProjectFixture.getProject();
     myProjectRoot = myProject.getBaseDir();
+    myProjectPath = myProjectRoot.getPath();
 
     myGitSettings = GitVcsSettings.getInstance(myProject);
     myGitSettings.getAppSettings().setPathToGit(GIT_EXECUTABLE);
@@ -109,6 +111,10 @@ public abstract class GitPlatformTest extends UsefulTestCase {
     git("clone --bare '%s' %s", source.getRoot().getPath(), target);
     cd(source);
     git("remote add %s '%s'", targetName, myProjectRoot + "/" + target);
+  }
+
+  protected void refresh() {
+    myProjectRoot.refresh(false, true);
   }
 
 }

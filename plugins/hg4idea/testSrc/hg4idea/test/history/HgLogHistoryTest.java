@@ -26,7 +26,6 @@ import org.zmlx.hg4idea.util.HgHistoryUtil;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 import static com.intellij.openapi.vcs.Executor.cd;
 import static com.intellij.openapi.vcs.Executor.echo;

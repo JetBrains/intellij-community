@@ -39,8 +39,8 @@ import static junit.framework.Assert.assertNotNull;
 
 public class GitTestUtil {
 
-  private static final String USER_NAME = "John Doe";
-  private static final String USER_EMAIL = "John.Doe@example.com";
+  public static final String USER_NAME = "John Doe";
+  public static final String USER_EMAIL = "John.Doe@example.com";
 
   /**
    * <p>Creates file structure for given paths. Path element should be a relative (from project root)
@@ -77,17 +77,23 @@ public class GitTestUtil {
    * @param repoRoot
    */
   public static void initRepo(@NotNull String repoRoot) {
+    initRepo(repoRoot, true);
+  }
+
+  public static void initRepo(@NotNull String repoRoot, boolean makeInitialCommit) {
     cd(repoRoot);
     git("init");
     setupUsername();
-    touch("initial.txt");
-    git("add initial.txt");
-    git("commit -m initial");
+    if (makeInitialCommit) {
+      touch("initial.txt");
+      git("add initial.txt");
+      git("commit -m initial");
+    }
   }
 
   public static void setupUsername() {
-    git("config user.name " + USER_NAME);
-    git("config user.email " + USER_EMAIL);
+    git("config user.name '" + USER_NAME + "'");
+    git("config user.email '" + USER_EMAIL + "'");
   }
 
   /**
@@ -98,6 +104,11 @@ public class GitTestUtil {
   @NotNull
   public static GitRepository createRepository(@NotNull Project project, @NotNull String root) {
     initRepo(root);
+    return registerRepo(project, root);
+  }
+
+  @NotNull
+  public static GitRepository registerRepo(Project project, String root) {
     ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(project);
     vcsManager.setDirectoryMapping(root, GitVcs.NAME);
     VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(root));

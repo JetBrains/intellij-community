@@ -15,9 +15,12 @@
  */
 package git4idea.test;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.Executor;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
@@ -46,7 +49,7 @@ public class GitExecutor extends Executor {
     printVersionTheFirstTime();
     List<String> split = splitCommandInParameters(command);
     split.add(0, PathHolder.GIT_EXECUTABLE);
-    log("git " + command);
+    debug("# git " + command);
     for (int attempt = 0; attempt < 3; attempt++) {
       String stdout = run(split);
       if (stdout.contains("fatal") && stdout.contains("Unable to create") && stdout.contains(".git/index.lock")) {
@@ -75,6 +78,37 @@ public class GitExecutor extends Executor {
 
   public static void cd(GitRepository repository) {
     cd(repository.getRoot().getPath());
+  }
+
+  public static void addCommit(@NotNull String message) {
+    git("add .");
+    commit(message);
+  }
+
+  public static void checkout(@NotNull String branch) {
+    git("checkout " + branch);
+  }
+
+  public static void commit(@NotNull String message) {
+    git("commit -m '" + message + "'");
+  }
+
+  @NotNull
+  public static String last() {
+    return git("log -1 --pretty=%H");
+  }
+
+  @NotNull
+  public static String log(String... params) {
+    return git("log " + StringUtil.join(params, " "));
+  }
+
+  public static void mv(String fromPath, String toPath) {
+    git("mv " + fromPath + " " + toPath);
+  }
+
+  public static void mv(File from, File to) {
+    mv(from.getPath(), to.getPath());
   }
 
   private static void printVersionTheFirstTime() {
