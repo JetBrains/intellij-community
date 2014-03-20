@@ -134,11 +134,11 @@ class GitScenarios {
 
     git("checkout master")
     for (it in fileNames) {
-      append(it, LOCAL_CHANGES_OVERWRITTEN_BY.masterLine)
+      append1(it, LOCAL_CHANGES_OVERWRITTEN_BY.masterLine)
     }
   }
 
-  static def append(String fileName, String content) {
+  static def append1(String fileName, String content) {
      echo(fileName, content)
   }
 
