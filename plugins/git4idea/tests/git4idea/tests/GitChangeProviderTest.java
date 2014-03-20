@@ -62,7 +62,7 @@ public class GitChangeProviderTest extends GitOldTest {
     super.setUp(testMethod);
     myChangeProvider = (GitChangeProvider) GitVcs.getInstance(myProject).getChangeProvider();
 
-    myFiles = GitTestUtil.createFileStructure(myProject, myRepo, "a.txt", "b.txt", "dir/c.txt", "dir/subdir/d.txt");
+    myFiles = GitTestUtil.createFileStructure(myProject, myRepo.getVFRootDir(), "a.txt", "b.txt", "dir/c.txt", "dir/subdir/d.txt");
     myRepo.addCommit();
     myRepo.refresh();
 

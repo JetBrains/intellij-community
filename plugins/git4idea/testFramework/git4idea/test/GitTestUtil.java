@@ -53,19 +53,22 @@ public class GitTestUtil {
    * <p>Note: use forward slash to denote directories, even if it is backslash that separates dirs in your system.</p>
    * <p>All files are populated with "initial content" string.</p>
    */
-  public static Map<String, VirtualFile> createFileStructure(Project project, GitTestRepository repo, String... paths) {
+  @NotNull
+  public static Map<String, VirtualFile> createFileStructure(@NotNull Project project, @NotNull VirtualFile rootDir, String... paths) {
     Map<String, VirtualFile> result = new HashMap<String, VirtualFile>();
 
     for (String path : paths) {
       String[] pathElements = path.split("/");
       boolean lastIsDir = path.endsWith("/");
-      VirtualFile currentParent = repo.getVFRootDir();
+      VirtualFile currentParent = rootDir;
       for (int i = 0; i < pathElements.length-1; i++) {
         currentParent = createDir(project, currentParent, pathElements[i]);
       }
 
       String lastElement = pathElements[pathElements.length-1];
-      currentParent = lastIsDir ? createDir(project, currentParent, lastElement) : createFile(project, currentParent, lastElement, "content" + Math.random());
+      currentParent = lastIsDir ?
+                      createDir(project, currentParent, lastElement) :
+                      createFile(project, currentParent, lastElement, "content" + Math.random());
       result.put(path, currentParent);
     }
     return result;

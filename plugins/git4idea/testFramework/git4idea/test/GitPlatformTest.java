@@ -15,18 +15,25 @@
  */
 package git4idea.test;
 
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.TestVcsNotifier;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.vcs.AbstractVcsTestCase;
 import git4idea.DialogManager;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
@@ -82,6 +89,13 @@ public abstract class GitPlatformTest extends UsefulTestCase {
     myGitRepositoryManager = GitUtil.getRepositoryManager(myProject);
     myPlatformFacade = ServiceManager.getService(myProject, GitPlatformFacade.class);
     myGit = ServiceManager.getService(myProject, Git.class);
+
+    initChangeListManager();
+  }
+
+  private void initChangeListManager() {
+    ((ProjectComponent) ChangeListManager.getInstance(myProject)).projectOpened();
+    ((ProjectComponent) VcsDirtyScopeManager.getInstance(myProject)).projectOpened();
   }
 
   @Override
@@ -115,6 +129,16 @@ public abstract class GitPlatformTest extends UsefulTestCase {
 
   protected void refresh() {
     myProjectRoot.refresh(false, true);
+  }
+
+  protected void doActionSilently(final VcsConfiguration.StandardConfirmation op) {
+    AbstractVcsTestCase.setStandardConfirmation(myProject, GitVcs.NAME, op, VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY);
+  }
+
+  protected void updateChangeListManager() {
+    ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+    changeListManager.ensureUpToDate(false);
   }
 
 }

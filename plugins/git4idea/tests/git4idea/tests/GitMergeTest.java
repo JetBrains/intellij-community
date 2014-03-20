@@ -17,25 +17,23 @@ package git4idea.tests;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import git4idea.test.GitOldTest;
+import git4idea.test.GitPlatformTest;
 import git4idea.test.GitTestUtil;
 import org.testng.annotations.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.testng.Assert.assertTrue;
+import static com.intellij.openapi.vcs.Executor.overwrite;
+import static git4idea.test.GitExecutor.*;
 
-/**
- * @author Kirill Likhodedov
- * @deprecated Use {@link GitLightTest}
- */
-@Deprecated
-public class GitMergeTest extends GitOldTest {
+public class GitMergeTest extends GitPlatformTest {
 
   /**
    * Tests that merge commit after resolving a conflict works fine if there is a file with spaces in its path.
@@ -43,38 +41,50 @@ public class GitMergeTest extends GitOldTest {
    */
   @Test
   public void testMergeCommitWithSpacesInPath() throws IOException {
+    addSilently();
+
+    createRepository(myProjectPath);
+    cd(myProjectPath);
+
     final String PATH = "dir with spaces/file with spaces.txt";
-    GitTestUtil.createFileStructure(myProject, myRepo, PATH);
-    myRepo.commit();
-    myRepo.push("origin", "master");
-    editFileInCommand(myRepo.getVFRootDir().findFileByRelativePath(PATH), "my content");
-    myRepo.addCommit();
+    GitTestUtil.createFileStructure(myProject, myProjectRoot, PATH);
+    addCommit("created some file structure");
 
-    myBrotherRepo.pull();
-    editFileInCommand(myBrotherRepo.getVFRootDir().findFileByRelativePath(PATH), "brother content");
-    myBrotherRepo.addCommit();
-    myBrotherRepo.push();
+    git("branch feature");
 
-    myRepo.pull();
-    editFileInCommand(myRepo.getVFRootDir().findFileByRelativePath(PATH), "my and brother content"); // manually resolving conflict
-    myRepo.add();
+    File file = new File(myProjectPath, PATH);
+    assertTrue("File doesn't exist!", file.exists());
+    overwrite(file, "my content");
+    addCommit("modified in master");
+
+    checkout("feature");
+    overwrite(file, "brother content");
+    addCommit("modified in feature");
+
+    checkout("master");
+    git("merge feature", true); // ignoring non-zero exit-code reporting about conflicts
+    overwrite(file, "merged content"); // manually resolving conflict
+    git("add .");
 
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    changeListManager.ensureUpToDate(false);
+    updateChangeListManager();
     final LocalChangeList changeList = changeListManager.getDefaultChangeList();
-    changeList.setName("Name");
     changeList.setComment("Commit message");
+    assertTrue(!changeListManager.getChangesIn(myProjectRoot).isEmpty());
     final AtomicBoolean res = new AtomicBoolean();
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
         res.set(changeListManager.commitChangesSynchronouslyWithResult(changeList, new ArrayList<Change>(
-          changeListManager.getChangesIn(myRepo.getVFRootDir()))));
+          changeListManager.getChangesIn(myProjectRoot))));
       }
     }, ModalityState.defaultModalityState());
     assertTrue(res.get());
-    changeListManager.ensureUpToDate(false);
-    assertTrue(changeListManager.getChangesIn(myRepo.getVFRootDir()).isEmpty());
+    updateChangeListManager();
+    assertTrue(changeListManager.getChangesIn(myProjectRoot).isEmpty());
   }
 
+  private void addSilently() {
+    doActionSilently(VcsConfiguration.StandardConfirmation.ADD);
+  }
 }

@@ -236,9 +236,14 @@ public abstract class AbstractVcsTestCase {
   }
 
   public void setStandardConfirmation(final String vcsName, final VcsConfiguration.StandardConfirmation op,
-                                      final VcsShowConfirmationOption.Value value) {
-    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    final AbstractVcs vcs = vcsManager.findVcsByName(vcsName);
+                                             final VcsShowConfirmationOption.Value value) {
+    setStandardConfirmation(myProject, vcsName, op, value);
+  }
+
+  public static void setStandardConfirmation(Project project, String vcsName, VcsConfiguration.StandardConfirmation op,
+                                             VcsShowConfirmationOption.Value value) {
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    AbstractVcs vcs = vcsManager.findVcsByName(vcsName);
     VcsShowConfirmationOption option = vcsManager.getStandardConfirmation(op, vcs);
     option.setValue(value);
   }

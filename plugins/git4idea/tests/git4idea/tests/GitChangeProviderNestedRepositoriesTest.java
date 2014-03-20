@@ -61,7 +61,7 @@ public class GitChangeProviderNestedRepositoriesTest extends GitChangeProviderTe
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myChildRepo.getRootDir());
     myChildRepo.refresh();
 
-    myChildFiles = GitTestUtil.createFileStructure(myProject, myChildRepo, "in1.txt", "in2.txt", "dirr/inin1.txt", "dirr/inin2.txt");
+    myChildFiles = GitTestUtil.createFileStructure(myProject, myChildRepo.getVFRootDir(), "in1.txt", "in2.txt", "dirr/inin1.txt", "dirr/inin2.txt");
     myChildRepo.addCommit();
     myChildRepo.refresh();
 
