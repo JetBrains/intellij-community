@@ -1317,7 +1317,9 @@ public class Messages {
       setButtonsAlignment(SwingConstants.CENTER);
       setDoNotAskOption(doNotAskOption);
       init();
-      MacUtil.adjustFocusTraversal(myDisposable);
+      if (isMacSheetEmulation()) {
+        MacUtil.adjustFocusTraversal(myDisposable);
+      }
     }
 
     @NotNull
