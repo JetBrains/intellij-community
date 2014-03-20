@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,7 +132,7 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
 
   protected Point getClearIconCoord() {
     final Rectangle r = getDrawingRect();
-    return new Point(r.x + r.width - 16 - 1, r.y + (r.height - 16) / 2);
+    return new Point(r.x + r.width - 16 - 2, r.y + (r.height - 16) / 2);
   }
 
   @Override
@@ -152,11 +152,11 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
     final Border border = c.getBorder();
     if (isSearchField(c)) {
       g.setColor(c.getBackground());
-
+      final boolean noBorder = c.getClientProperty("JTextField.Search.noBorderRing") == Boolean.TRUE;
       int radius = r.height-1;
-      g.fillRoundRect(r.x, r.y, r.width, r.height-1, radius, radius);
+      g.fillRoundRect(r.x, r.y+1, r.width, r.height - (noBorder ? 2 : 1), radius, radius);
       g.setColor(c.isEnabled() ? Gray._100 : new Color(0x535353));
-      if (c.getClientProperty("JTextField.Search.noBorderRing") != Boolean.TRUE) {
+      if (!noBorder) {
         if (c.hasFocus()) {
             DarculaUIUtil.paintSearchFocusRing(g, r);
         } else {
