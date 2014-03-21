@@ -14,7 +14,7 @@ import java.util.Arrays;
  * @param <INCOMING_WITH_SEQ> type of incoming message that is a command (has sequence number)
  */
 public final class MessageManager<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS, ERROR_DETAILS> {
-  static final Logger LOG = Logger.getInstance(MessageManager.class);
+  public static final Logger LOG = Logger.getInstance(MessageManager.class);
 
   private final ConcurrentIntObjectMap<AsyncResultCallback<SUCCESS, ERROR_DETAILS>> callbackMap = new StripedLockIntObjectConcurrentHashMap<AsyncResultCallback<SUCCESS, ERROR_DETAILS>>();
   private final Handler<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS, ERROR_DETAILS> handler;
