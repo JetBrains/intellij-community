@@ -149,6 +149,7 @@ public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepositor
 
     @Override
     protected void handleError() {
+      super.handleError();
       myFilterCombobox.removeAllItems();
     }
   }

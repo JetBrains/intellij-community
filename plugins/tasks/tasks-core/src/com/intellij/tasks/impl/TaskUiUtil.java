@@ -2,6 +2,7 @@ package com.intellij.tasks.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -18,6 +19,8 @@ import java.util.List;
  * @author Mikhail Golubev
  */
 public class TaskUiUtil {
+
+  private static Logger LOG = Logger.getInstance(TaskUiUtil.class);
 
   private TaskUiUtil() {
     // Utility class
@@ -45,6 +48,7 @@ public class TaskUiUtil {
         myResult = fetch(indicator);
       }
       catch (Exception e) {
+        LOG.error(e);
         myException = e;
       }
     }
@@ -127,13 +131,12 @@ public class TaskUiUtil {
       }
       else {
         // Some error occurred
-        myComboBox.removeAllItems();
         handleError();
       }
     }
 
     protected void handleError() {
-      // empty
+      myComboBox.removeAllItems();
     }
   }
 

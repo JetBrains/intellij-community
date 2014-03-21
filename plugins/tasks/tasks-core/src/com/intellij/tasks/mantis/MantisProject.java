@@ -1,5 +1,6 @@
 package com.intellij.tasks.mantis;
 
+import com.intellij.tasks.mantis.model.ProjectData;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
@@ -22,8 +23,8 @@ public final class MantisProject {
 
   private List<MantisFilter> myFilters = new ArrayList<MantisFilter>();
 
-  private int id;
-  private String name;
+  private int myId;
+  private String myName;
 
   @SuppressWarnings({"UnusedDeclaration"})
   public MantisProject() {
@@ -31,27 +32,32 @@ public final class MantisProject {
   }
 
   public MantisProject(int id, @NotNull String name) {
-    this.id = id;
-    this.name = name;
+    this.myId = id;
+    this.myName = name;
+  }
+
+  public MantisProject(@NotNull ProjectData data) {
+    myId = data.getId().intValue();
+    myName = data.getName();
   }
 
   @Attribute("id")
   public int getId() {
-    return id;
+    return myId;
   }
 
   public void setId(final int id) {
-    this.id = id;
+    this.myId = id;
   }
 
   @Attribute("name")
   @NotNull
   public String getName() {
-    return name;
+    return myName;
   }
 
   public void setName(@NotNull String name) {
-    this.name = name;
+    this.myName = name;
   }
 
 
@@ -84,14 +90,14 @@ public final class MantisProject {
 
     MantisProject project = (MantisProject)o;
 
-    if (id != project.id) return false;
+    if (myId != project.myId) return false;
 
     return true;
   }
 
   @Override
   public final int hashCode() {
-    return id;
+    return myId;
   }
 
   @Override

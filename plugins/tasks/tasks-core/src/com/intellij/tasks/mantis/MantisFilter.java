@@ -1,5 +1,6 @@
 package com.intellij.tasks.mantis;
 
+import com.intellij.tasks.mantis.model.FilterData;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,34 +16,39 @@ public final class MantisFilter implements Comparable<MantisFilter> {
     return new MantisFilter(0, "-- all issues --");
   }
 
-  private int id;
-  private String name;
+  private int myId;
+  private String myName;
 
   @SuppressWarnings({"UnusedDeclaration"})
   public MantisFilter() {
   }
 
-  public MantisFilter(final int id, final String name) {
-    this.id = id;
-    this.name = name;
+  public MantisFilter(int id, String name) {
+    myId = id;
+    myName = name;
+  }
+
+  public MantisFilter(@NotNull FilterData data) {
+    myId = data.getId().intValue();
+    myName = data.getName();
   }
 
   @Attribute("id")
   public int getId() {
-    return id;
+    return myId;
   }
 
   public void setId(final int id) {
-    this.id = id;
+    this.myId = id;
   }
 
   @Attribute("name")
   public String getName() {
-    return name;
+    return myName;
   }
 
   public void setName(final String name) {
-    this.name = name;
+    this.myName = name;
   }
 
   public final boolean isUnspecified() {
@@ -54,12 +60,12 @@ public final class MantisFilter implements Comparable<MantisFilter> {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    return id == ((MantisFilter)o).id;
+    return myId == ((MantisFilter)o).myId;
   }
 
   @Override
   public final int hashCode() {
-    return id;
+    return myId;
   }
 
   @Override

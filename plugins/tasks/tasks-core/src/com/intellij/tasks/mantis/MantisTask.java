@@ -67,13 +67,11 @@ public class MantisTask extends Task {
     }
   }
 
-  public MantisTask(@NotNull IssueHeaderData header, @Nullable MantisProject project, @NotNull MantisRepository repository) {
+  public MantisTask(@NotNull IssueHeaderData header, @NotNull MantisRepository repository) {
     myRepository = repository;
     myId = String.valueOf(header.getId());
     mySummary = header.getSummary();
-    // actually it's not necessary because on activation tasks updated by TaskRepository#findTask
-    // and in this case constructor from IssueData will be used
-    myProjectName = project == null || project.isUnspecified() ? null : project.getName();
+    myProjectName = null;
     myClosed = header.getStatus().intValue() >= 90;
     myDescription = null; // unavailable from header
     myCreated = null; // unavailable from header
