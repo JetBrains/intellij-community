@@ -25,10 +25,10 @@ public class ScopeVariablesGroup extends XValueGroup {
 
     if (callFrame == null) {
       // functions scopes - we can watch variables only from global scope
-      this.context = new ScopeVariablesGroupContext(context, scope.getType() == Scope.Type.GLOBAL);
+      this.context = new ParentlessVariableContext(context, scope.getType() == Scope.Type.GLOBAL);
     }
     else {
-      this.context = context;
+      this.context = scope.getType() == Scope.Type.LIBRARY ? new ParentlessVariableContext(context, false) : context;
     }
   }
 
@@ -106,12 +106,12 @@ public class ScopeVariablesGroup extends XValueGroup {
     Variables.consume(scope, node, context, callback);
   }
 
-  private static final class ScopeVariablesGroupContext extends VariableContextBase {
+  private static final class ParentlessVariableContext extends VariableContextBase {
     private final VariableContext parentContext;
     private final boolean watchableAsEvaluationExpression;
 
-    public ScopeVariablesGroupContext(@NotNull VariableContext context, boolean watchableAsEvaluationExpression) {
-      parentContext = context;
+    public ParentlessVariableContext(@NotNull VariableContext parentContext, boolean watchableAsEvaluationExpression) {
+      this.parentContext = parentContext;
       this.watchableAsEvaluationExpression = watchableAsEvaluationExpression;
     }
 
