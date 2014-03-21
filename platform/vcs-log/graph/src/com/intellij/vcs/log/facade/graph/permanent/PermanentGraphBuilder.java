@@ -19,6 +19,7 @@ package com.intellij.vcs.log.facade.graph.permanent;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
 import com.intellij.vcs.log.GraphCommit;
+import com.intellij.vcs.log.facade.utils.impl.BitSetFlags;
 import com.intellij.vcs.log.newgraph.SomeGraph;
 import com.intellij.vcs.log.facade.utils.Flags;
 import org.jetbrains.annotations.NotNull;
@@ -30,9 +31,9 @@ import static com.intellij.vcs.log.facade.graph.permanent.DuplicateParentFixer.f
 public class PermanentGraphBuilder {
 
   @NotNull
-  public static Pair<PermanentGraphImpl, Map<Integer, GraphCommit>> build(@NotNull Flags simpleNodes, @NotNull List<? extends GraphCommit> commits) {
+  public static Pair<PermanentGraphImpl, Map<Integer, GraphCommit>> build(@NotNull List<? extends GraphCommit> commits) {
     commits = fixDuplicateParentCommits(commits);
-    assert commits.size() == simpleNodes.size();
+    Flags simpleNodes = new BitSetFlags(commits.size());
 
     int longEdgesCount = 0;
     int[] nodeToHashIndex = new int[commits.size()];

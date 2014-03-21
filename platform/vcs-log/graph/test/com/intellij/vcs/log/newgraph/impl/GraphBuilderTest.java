@@ -21,7 +21,6 @@ import com.intellij.vcs.log.GraphCommit;
 import com.intellij.vcs.log.facade.graph.permanent.PermanentGraphBuilder;
 import com.intellij.vcs.log.facade.graph.permanent.PermanentGraphImpl;
 import com.intellij.vcs.log.newgraph.AbstractTestWithTextFile;
-import com.intellij.vcs.log.newgraph.GraphFlags;
 import com.intellij.vcs.log.newgraph.PermanentGraph;
 import com.intellij.vcs.log.parser.SimpleCommitListParser;
 import org.junit.Test;
@@ -42,9 +41,8 @@ public class GraphBuilderTest extends AbstractTestWithTextFile {
   @Override
   protected void runTest(String in, String out) {
     List<GraphCommit> commits = SimpleCommitListParser.parseCommitList(in);
-    GraphFlags flags = new GraphFlags(commits.size());
     Pair<PermanentGraphImpl,Map<Integer,GraphCommit>> graphAndCommitsWithNotLoadParent = PermanentGraphBuilder
-      .build(flags.getSimpleNodeFlags(), commits);
+      .build(commits);
     Map<Integer, GraphCommit> commitsWithNotLoadParent = graphAndCommitsWithNotLoadParent.second;
     PermanentGraph graph = graphAndCommitsWithNotLoadParent.first;
 

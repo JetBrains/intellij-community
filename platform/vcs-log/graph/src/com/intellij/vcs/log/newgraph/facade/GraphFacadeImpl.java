@@ -40,7 +40,7 @@ public class GraphFacadeImpl implements GraphFacade {
                                             @NotNull Set<Integer> branchCommitHashIndexes,
                                             @NotNull final GraphColorManager colorManager) {
     GraphFlags flags = new GraphFlags(commits.size());
-    Pair<PermanentGraphImpl,Map<Integer,GraphCommit>> graphAndUnderdoneCommits = PermanentGraphBuilder.build(flags.getSimpleNodeFlags(), commits);
+    Pair<PermanentGraphImpl,Map<Integer,GraphCommit>> graphAndUnderdoneCommits = PermanentGraphBuilder.build(commits);
     final PermanentGraphImpl permanentGraph = graphAndUnderdoneCommits.first;
 
     DfsUtil dfsUtil = new DfsUtil(commits.size());

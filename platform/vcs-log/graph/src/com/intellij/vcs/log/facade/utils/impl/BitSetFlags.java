@@ -28,6 +28,7 @@ public class BitSetFlags implements Flags {
   @NotNull
   private final BitSet myBitSet;
 
+  // default value is false
   public BitSetFlags(int size) {
     if (size < 0)
       throw new NegativeArraySizeException("size < 0: " + size);
