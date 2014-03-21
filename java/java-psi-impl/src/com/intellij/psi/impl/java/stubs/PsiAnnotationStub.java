@@ -23,6 +23,7 @@ import com.intellij.psi.stubs.StubElement;
  */
 public interface PsiAnnotationStub extends StubElement<PsiAnnotation> {
   PsiAnnotationStub[] EMPTY_ARRAY = new PsiAnnotationStub[0];
+
   String getText();
 
   PsiAnnotation getPsiElement();

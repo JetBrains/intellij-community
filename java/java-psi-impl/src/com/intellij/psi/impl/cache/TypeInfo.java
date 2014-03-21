@@ -33,7 +33,6 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.BitUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.StringRef;
 import gnu.trove.TObjectIntHashMap;
@@ -42,6 +41,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
+
+import static com.intellij.util.BitUtil.isSet;
 
 /**
  * @author max
@@ -113,8 +114,10 @@ public class TypeInfo {
         annotationStubs.add(annotationStub);
       }
     }
-    PsiAnnotationStub[] stubs = annotationStubs == null ? PsiAnnotationStub.EMPTY_ARRAY : annotationStubs.toArray(new PsiAnnotationStub[annotationStubs.size()]);
-    return new TypeInfo(text, arrayCount, isEllipsis, stubs);
+
+    PsiAnnotationStub[] stubArray = PsiAnnotationStub.EMPTY_ARRAY;
+    if (annotationStubs != null) stubArray = annotationStubs.toArray(new PsiAnnotationStub[annotationStubs.size()]);
+    return new TypeInfo(text, arrayCount, isEllipsis, stubArray);
   }
 
   @NotNull
@@ -221,8 +224,8 @@ public class TypeInfo {
     }
 
     int frequentIndex = FREQUENT_INDEX_MASK & flags;
-    byte arrayCount = BitUtil.isSet(flags, HAS_ARRAY_COUNT) ? record.readByte() : 0;
-    boolean hasEllipsis = BitUtil.isSet(flags, HAS_ELLIPSIS);
+    byte arrayCount = isSet(flags, HAS_ARRAY_COUNT) ? record.readByte() : 0;
+    boolean hasEllipsis = isSet(flags, HAS_ELLIPSIS);
 
     StringRef text = frequentIndex == 0 ? record.readName() : StringRef.fromString(ourIndexFrequentType[frequentIndex]);
 
