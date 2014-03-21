@@ -398,8 +398,8 @@ public class TemplateState implements Disposable {
            myTemplate.getKey() +
            "\ntemplateText: " +
            myTemplate.getTemplateText() +
-           "\ntemplateText: " +
-           myTemplate.getTemplateText();
+           "\ntemplateString: " +
+           myTemplate.getString();
   }
 
   private void doReformat(final TextRange range) {
