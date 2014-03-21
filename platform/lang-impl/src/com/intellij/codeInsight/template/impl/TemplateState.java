@@ -362,11 +362,11 @@ public class TemplateState implements Disposable {
           mySegments.addSegment(segmentOffset, segmentOffset);
         }
 
-        LOG.assertTrue(myTemplateRange.isValid(), myTemplateRange.toString());
+        LOG.assertTrue(myTemplateRange.isValid(), getRangesDebugInfo());
         calcResults(false);
-        LOG.assertTrue(myTemplateRange.isValid(), myTemplateRange.toString());
+        LOG.assertTrue(myTemplateRange.isValid(), getRangesDebugInfo());
         calcResults(false);  //Fixed SCR #[vk500] : all variables should be recalced twice on start.
-        LOG.assertTrue(myTemplateRange.isValid(), myTemplateRange.toString());
+        LOG.assertTrue(myTemplateRange.isValid(), getRangesDebugInfo());
         doReformat(null);
 
         int nextVariableNumber = getNextVariableNumber(-1);
@@ -390,6 +390,16 @@ public class TemplateState implements Disposable {
         } 
       }
     });
+  }
+
+  private String getRangesDebugInfo() {
+    return myTemplateRange.toString() +
+           "\ntemplateKey: " +
+           myTemplate.getKey() +
+           "\ntemplateText: " +
+           myTemplate.getTemplateText() +
+           "\ntemplateString: " +
+           myTemplate.getString();
   }
 
   private void doReformat(final TextRange range) {

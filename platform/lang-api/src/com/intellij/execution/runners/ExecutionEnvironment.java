@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +42,8 @@ import static com.intellij.openapi.actionSystem.LangDataKeys.*;
 
 
 public class ExecutionEnvironment extends UserDataHolderBase {
+  public static final Key<Key> EXECUTION_SESSION_ID_KEY = Key.create("EXECUTION_SESSION_ID_KEY");
+  
   private static final AtomicLong myIdHolder = new AtomicLong(1L);
 
   @NotNull private final Project myProject;

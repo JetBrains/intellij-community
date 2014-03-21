@@ -34,6 +34,7 @@ import java.util.Set;
  * and invoke various types of compilations (make, compile, rebuild)
  */
 public abstract class CompilerManager {
+  @Deprecated
   public static final Key<Key> CONTENT_ID_KEY = Key.create("COMPILATION_CONTENT_ID_CUSTOM_KEY");
   public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("Compiler");
 

@@ -67,6 +67,7 @@
 
     <extensionPoint name="xml.xmlTagRuleProvider" interface="com.intellij.xml.XmlTagRuleProvider"/>
     <extensionPoint name="html.embeddedTokenTypesProvider" interface="com.intellij.lexer.HtmlEmbeddedTokenTypesProvider"/>
+    <extensionPoint name="embeddedTokenTypesProvider" interface="com.intellij.lexer.EmbeddedTokenTypesProvider"/>
     <extensionPoint name="xml.html5SchemaProvider" interface="com.intellij.xml.Html5SchemaProvider"/>
     <extensionPoint name="xml.implicitIdRefProvider" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.ImplicitIdRefProvider"/>
 

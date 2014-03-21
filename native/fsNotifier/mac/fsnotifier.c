@@ -75,8 +75,6 @@ static void * EventProcessingThread(void *data) {
     return NULL;
 }
 
-#define FS_FLAGS (MNT_LOCAL|MNT_JOURNALED)
-
 static void PrintMountedFileSystems(CFArrayRef roots) {
     int fsCount = getfsstat(NULL, 0, MNT_WAIT);
     if (fsCount == -1) return;
@@ -88,7 +86,7 @@ static void PrintMountedFileSystems(CFArrayRef roots) {
     CFMutableArrayRef mounts = CFArrayCreateMutable(NULL, 0, NULL);
 
     for (int i = 0; i < fsCount; i++) {
-        if ((fs[i].f_flags & FS_FLAGS) != FS_FLAGS) {
+        if ((fs[i].f_flags & MNT_LOCAL) != MNT_LOCAL) {
             char *mount = fs[i].f_mntonname;
             int mountLen = strlen(mount);
 

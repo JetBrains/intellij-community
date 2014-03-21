@@ -43,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.codeInsight.GrReassignedLocalVarsChecker;
 import org.jetbrains.plugins.groovy.codeInsight.GroovyTargetElementEvaluator;
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -701,7 +700,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   private static final class OurTypesCalculator implements Function<GrReferenceExpressionImpl, PsiType> {
     @Nullable
     public PsiType fun(GrReferenceExpressionImpl refExpr) {
-      if (GrUnresolvedAccessInspection.isClassReference(refExpr)) {
+      if (GrReferenceResolveUtil.isClassReference(refExpr)) {
         GrExpression qualifier = refExpr.getQualifier();
         LOG.assertTrue(qualifier != null);
         return TypesUtil.createJavaLangClassType(qualifier.getType(), refExpr.getProject(), refExpr.getResolveScope());

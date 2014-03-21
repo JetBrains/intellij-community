@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,22 +33,24 @@ import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.reflect.ConstructorAccessor;
 
 import java.lang.reflect.Constructor;
 
 public interface JavaDocElementType {
   class JavaDocCompositeElementType extends IJavaDocElementType implements ICompositeElementType {
-    private final Constructor<? extends ASTNode> myConstructor;
+    private final ConstructorAccessor myConstructor;
 
     private JavaDocCompositeElementType(@NonNls final String debugName, final Class<? extends ASTNode> nodeClass) {
       super(debugName);
-      myConstructor = ReflectionUtil.getDefaultConstructor(nodeClass);
+      Constructor<? extends ASTNode> constructor = ReflectionUtil.getDefaultConstructor(nodeClass);
+      myConstructor = ReflectionUtil.getConstructorAccessor(constructor);
     }
 
     @NotNull
     @Override
     public ASTNode createCompositeNode() {
-      return ReflectionUtil.createInstance(myConstructor);
+      return ReflectionUtil.createInstanceViaConstructorAccessor(myConstructor);
     }
   }
 

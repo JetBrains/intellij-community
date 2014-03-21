@@ -583,6 +583,9 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   public void queueUiUpdate(boolean forceScrollToEnd) {
     myForceScrollToEnd.compareAndSet(false, forceScrollToEnd);
+    if (myUpdateQueue.isDisposed()) {
+      return;
+    }
     myUpdateQueue.request();
   }
 
