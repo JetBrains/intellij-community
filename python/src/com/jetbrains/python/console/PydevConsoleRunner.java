@@ -43,6 +43,7 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.actions.SplitLineAction;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -189,6 +190,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   }
 
   public void run() {
+    FileDocumentManager.getInstance().saveAllDocuments();
+    
     myPorts = findAvailablePorts(getProject(), myConsoleType);
 
     assert myPorts != null;
