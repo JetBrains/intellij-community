@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Sergey.Vasiliev
- * Date: Nov 13, 2006
- * Time: 4:37:22 PM
- */
 package com.intellij.util.xml.converters;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
@@ -33,10 +27,8 @@ import com.intellij.psi.PsiReferenceBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.xml.ConvertContext;
-import com.intellij.util.xml.CustomReferenceConverter;
-import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.ResolvingConverter;
+import com.intellij.util.xml.*;
+import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,7 +68,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
   public static <T> void filterVariants(List<T> variants, GenericDomValue<List<T>> genericDomValue) {
     final List<T> list = genericDomValue.getValue();
     if (list != null) {
-      for (Iterator<T> i = variants.iterator(); i.hasNext();) {
+      for (Iterator<T> i = variants.iterator(); i.hasNext(); ) {
         final T variant = i.next();
         for (T existing : list) {
           if (existing.equals(variant)) {
@@ -149,7 +141,15 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
                                             final GenericDomValue<List<T>> genericDomValue,
                                             final boolean delimitersOnly) {
 
-    return new MyPsiReference(element, new TextRange(start, end), context, genericDomValue, delimitersOnly);
+    return new MyPsiReference(element, getTextRange(genericDomValue, start, end), context, genericDomValue, delimitersOnly);
+  }
+
+  protected TextRange getTextRange(GenericDomValue value, int start, int end) {
+    if (value instanceof GenericAttributeValue) {
+      return new TextRange(start, end);
+    }
+    TextRange tagRange = XmlTagUtil.getTrimmedValueRange(value.getXmlTag());
+    return new TextRange(tagRange.getStartOffset() + start - 1, tagRange.getStartOffset() + end - 1);
   }
 
   @Override
@@ -201,7 +201,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
       final Ref<IncorrectOperationException> ref = new Ref<IncorrectOperationException>();
       PsiElement element = referenceHandleElementRename(this, newElementName, getSuperElementRenameFunction(ref));
       if (!ref.isNull()) {
-         throw ref.get();
+        throw ref.get();
       }
 
       return element;
@@ -210,9 +210,10 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     @Override
     public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
       final Ref<IncorrectOperationException> ref = new Ref<IncorrectOperationException>();
-      PsiElement bindElement =  referenceBindToElement(this, element, getSuperBindToElementFunction(ref), getSuperElementRenameFunction(ref));
+      PsiElement bindElement =
+        referenceBindToElement(this, element, getSuperBindToElementFunction(ref), getSuperElementRenameFunction(ref));
       if (!ref.isNull()) {
-         throw ref.get();
+        throw ref.get();
       }
 
       return bindElement;
@@ -261,16 +262,15 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
   protected PsiElement referenceBindToElement(final PsiReference psiReference, final PsiElement element,
                                               final Function<PsiElement, PsiElement> superBindToElementFunction,
                                               final Function<String, PsiElement> superElementRenameFunction)
-      throws IncorrectOperationException {
+    throws IncorrectOperationException {
     return superBindToElementFunction.fun(element);
   }
 
   protected PsiElement referenceHandleElementRename(final PsiReference psiReference,
                                                     final String newName,
                                                     final Function<String, PsiElement> superHandleElementRename)
-      throws IncorrectOperationException {
+    throws IncorrectOperationException {
 
     return superHandleElementRename.fun(newName);
   }
-
 }
