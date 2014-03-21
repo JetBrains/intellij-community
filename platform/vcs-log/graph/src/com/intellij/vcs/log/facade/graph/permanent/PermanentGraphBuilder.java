@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.newgraph.impl;
+package com.intellij.vcs.log.facade.graph.permanent;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-import static com.intellij.vcs.log.newgraph.impl.DuplicateParentFixer.fixDuplicateParentCommits;
+import static com.intellij.vcs.log.facade.graph.permanent.DuplicateParentFixer.fixDuplicateParentCommits;
 
 public class PermanentGraphBuilder {
 

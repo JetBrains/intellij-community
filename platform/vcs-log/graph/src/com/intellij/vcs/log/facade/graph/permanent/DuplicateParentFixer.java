@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.newgraph.impl;
+package com.intellij.vcs.log.facade.graph.permanent;
 
 import com.intellij.vcs.log.GraphCommit;
 

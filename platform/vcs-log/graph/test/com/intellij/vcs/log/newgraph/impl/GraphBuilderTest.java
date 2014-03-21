@@ -18,6 +18,8 @@ package com.intellij.vcs.log.newgraph.impl;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.vcs.log.GraphCommit;
+import com.intellij.vcs.log.facade.graph.permanent.PermanentGraphBuilder;
+import com.intellij.vcs.log.facade.graph.permanent.PermanentGraphImpl;
 import com.intellij.vcs.log.newgraph.AbstractTestWithTextFile;
 import com.intellij.vcs.log.newgraph.GraphFlags;
 import com.intellij.vcs.log.newgraph.PermanentGraph;
@@ -41,7 +43,8 @@ public class GraphBuilderTest extends AbstractTestWithTextFile {
   protected void runTest(String in, String out) {
     List<GraphCommit> commits = SimpleCommitListParser.parseCommitList(in);
     GraphFlags flags = new GraphFlags(commits.size());
-    Pair<PermanentGraphImpl,Map<Integer,GraphCommit>> graphAndCommitsWithNotLoadParent = PermanentGraphBuilder.build(flags.getSimpleNodeFlags(), commits);
+    Pair<PermanentGraphImpl,Map<Integer,GraphCommit>> graphAndCommitsWithNotLoadParent = PermanentGraphBuilder
+      .build(flags.getSimpleNodeFlags(), commits);
     Map<Integer, GraphCommit> commitsWithNotLoadParent = graphAndCommitsWithNotLoadParent.second;
     PermanentGraph graph = graphAndCommitsWithNotLoadParent.first;
 

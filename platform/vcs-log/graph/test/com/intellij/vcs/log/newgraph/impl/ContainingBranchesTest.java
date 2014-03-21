@@ -17,6 +17,7 @@
 package com.intellij.vcs.log.newgraph.impl;
 
 import com.intellij.vcs.log.GraphCommit;
+import com.intellij.vcs.log.facade.graph.permanent.PermanentGraphBuilder;
 import com.intellij.vcs.log.newgraph.AbstractTestWithTextFile;
 import com.intellij.vcs.log.newgraph.GraphFlags;
 import com.intellij.vcs.log.newgraph.PermanentGraph;
