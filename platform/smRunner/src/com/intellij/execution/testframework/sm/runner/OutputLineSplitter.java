@@ -131,8 +131,9 @@ public abstract class OutputLineSplitter {
 
       myStdOutChunks.clear();
     }
+    final boolean isTCLikeFakeOutput = chunks.size() == 1;
     for (OutputChunk chunk : chunks) {
-      onLineAvailable(chunk.getText(), chunk.getKey(), false);
+      onLineAvailable(chunk.getText(), chunk.getKey(), isTCLikeFakeOutput);
     }
   }
 

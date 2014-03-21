@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl.java.stubs;
+package org.jetbrains.plugins.github.api;
 
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.stubs.StubElement;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
- * @author max
+ * @author Aleksey Pivovarov
  */
-public interface PsiAnnotationStub extends StubElement<PsiAnnotation> {
-  PsiAnnotationStub[] EMPTY_ARRAY = new PsiAnnotationStub[0];
+@SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
+class GithubAuthorizationUpdateRequest {
+  @NotNull private final List<String> addScopes;
 
-  String getText();
-
-  PsiAnnotation getPsiElement();
+  public GithubAuthorizationUpdateRequest(@NotNull List<String> newScopes) {
+    this.addScopes = newScopes;
+  }
 }

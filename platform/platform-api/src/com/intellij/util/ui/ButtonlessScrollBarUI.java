@@ -62,7 +62,9 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   private final AdjustmentListener myAdjustmentListener;
   private final MouseMotionAdapter myMouseMotionListener;
   private final MouseAdapter myMouseListener;
-  private final AWTEventListener myAWTListener;
+  private final HierarchyListener myHierarchyListener;
+  private final AWTEventListener myAWTMouseListener;
+  private boolean myAWTMouseListenerAdded;
 
   public static final int DELAY_FRAMES = 4;
   public static final int FRAMES_COUNT = 10 + DELAY_FRAMES;
@@ -126,19 +128,33 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       }
     };
 
-    myAWTListener = new AWTEventListener() {
+    myHierarchyListener = new HierarchyListener() {
       @Override
+      public void hierarchyChanged(HierarchyEvent e) {
+        if (e.getChanged() == scrollbar 
+            && (HierarchyEvent.DISPLAYABILITY_CHANGED & e.getChangeFlags()) != 0) {
+          updateAWTMotionListener(false);
+        }
+      }
+    };
+    myAWTMouseListener = new AWTEventListener() {
       public void eventDispatched(AWTEvent event) {
         if (event.getID() == MouseEvent.MOUSE_MOVED) {
-          // user is moving mouse outside of the scrollbar and fade-out hasn't started yet 
-          if (!myMouseOverScrollbar && !myMacScrollbarHidden && myMacScrollbarFadeLevel == 0) {
-            resetMacScrollbarFadeout();
+          
+            // user is moving inside the scrollpane of the scrollbar and fade-out hasn't started yet 
+          Container scrollpane = SwingUtilities.getAncestorOfClass(JScrollPane.class, scrollbar);
+          if (scrollpane != null) {
+            Point loc = ((MouseEvent)event).getLocationOnScreen();
+            SwingUtilities.convertPointFromScreen(loc, scrollpane);
+            if (scrollpane.contains(loc) && !myMacScrollbarHidden && myMacScrollbarFadeLevel == 0) {
+              resetMacScrollbarFadeout();
+            }
           }
         }
       }
     };
   }
-
+  
   protected static boolean isMacScrollbar() {
     return UIUtil.isUnderNativeMacLookAndFeel() && !Registry.is("ui.no.mac.scrollbar");
   }
@@ -252,11 +268,27 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     scrollbar.addAdjustmentListener(myAdjustmentListener);
     scrollbar.addMouseListener(myMouseListener);
     scrollbar.addMouseMotionListener(myMouseMotionListener);
-    //Toolkit.getDefaultToolkit().addAWTEventListener(myAWTListener, AWTEvent.MOUSE_MOTION_EVENT_MASK);
-
+ 
+    scrollbar.addHierarchyListener(myHierarchyListener);
+    updateAWTMotionListener(false);
+    
     resetMacScrollbarFadeout();
   }
 
+  private void updateAWTMotionListener(boolean forceRemove) {
+    boolean shouldAdd = scrollbar.isDisplayable();
+
+    if (myAWTMouseListenerAdded && (!shouldAdd || forceRemove)) {
+      Toolkit.getDefaultToolkit().removeAWTEventListener(myAWTMouseListener);
+      myAWTMouseListenerAdded = false;
+    }
+
+    if (!myAWTMouseListenerAdded && shouldAdd && !forceRemove) {
+      Toolkit.getDefaultToolkit().addAWTEventListener(myAWTMouseListener, AWTEvent.MOUSE_MOTION_EVENT_MASK);
+      myAWTMouseListenerAdded = true;
+    }
+  }
+  
   private void initRegularThumbAnimator() {
     myThumbFadeAnimator = new Animator("Regular scrollbar thumb animator", FRAMES_COUNT, FRAMES_COUNT * 50, false) {
       @Override
@@ -333,6 +365,13 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       super.uninstallListeners();
     }
 
+    scrollbar.removeAdjustmentListener(myAdjustmentListener);
+    scrollbar.removeMouseListener(myMouseListener);
+    scrollbar.removeMouseMotionListener(myMouseMotionListener);
+
+    scrollbar.removeHierarchyListener(myHierarchyListener);
+    updateAWTMotionListener(true);
+
     Disposer.dispose(myThumbFadeAnimator);
     myThumbFadeAnimator = null;
 
@@ -340,11 +379,6 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     myMouseOverScrollbarExpandAnimator = null;
     Disposer.dispose(myMacScrollbarFadeAnimator);
     myMacScrollbarFadeAnimator = null;
-
-    scrollbar.removeAdjustmentListener(myAdjustmentListener);
-    scrollbar.removeMouseListener(myMouseListener);
-    scrollbar.removeMouseMotionListener(myMouseMotionListener);
-    //Toolkit.getDefaultToolkit().removeAWTEventListener(myAWTListener);
   }
 
   @Override

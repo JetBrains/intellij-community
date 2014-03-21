@@ -101,7 +101,7 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
   layouts.layout_core(home, paths.artifacts_core)
   notifyArtifactBuilt(paths.artifacts_core)
   if (buildJps) {
-    layouts.layoutCommunityJps(home, paths.artifacts_jps)
+    layouts.layoutJps(home, paths.artifacts_jps, args.buildNumber, {})
     notifyArtifactBuilt(paths.artifacts_jps)
   }
 

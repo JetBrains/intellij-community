@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl.java.stubs;
+package com.intellij.lexer;
 
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.stubs.StubElement;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.tree.IElementType;
 
 /**
- * @author max
+ * User: avokin
+ * Date: 14/03/14
  */
-public interface PsiAnnotationStub extends StubElement<PsiAnnotation> {
-  PsiAnnotationStub[] EMPTY_ARRAY = new PsiAnnotationStub[0];
+public interface EmbeddedTokenTypesProvider {
+  ExtensionPointName<EmbeddedTokenTypesProvider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.embeddedTokenTypesProvider");
 
-  String getText();
-
-  PsiAnnotation getPsiElement();
+  String getName();
+  IElementType getElementType();
 }
