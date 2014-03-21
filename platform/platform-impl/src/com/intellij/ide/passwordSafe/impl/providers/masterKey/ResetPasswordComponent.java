@@ -25,8 +25,11 @@ import com.intellij.util.ui.UIUtil;
  */
 public class ResetPasswordComponent extends PasswordComponentBase {
 
+  private final boolean myFirstTime;
+
   public ResetPasswordComponent(MasterKeyPasswordSafe safe, boolean firstTime) {
     super(safe, "Reset");
+    myFirstTime = firstTime;
     UIUtil.setEnabled(myPasswordPanel, false, true);
     myPasswordPanel.setVisible(false);
     if (firstTime) {
@@ -46,7 +49,9 @@ public class ResetPasswordComponent extends PasswordComponentBase {
 
   @Override
   public boolean apply() {
-    if (Messages.showYesNoDialog((Project)null, "All stored passwords will be removed! Are you sure you want to proceed?", "Confirm Master Password Reset", Messages.getWarningIcon()) == Messages.YES) {
+    if (myFirstTime ||
+        Messages.showYesNoDialog((Project)null, "All stored passwords will be removed! Are you sure you want to proceed?",
+                                 "Confirm Master Password Reset", Messages.getWarningIcon()) == Messages.YES) {
       mySafe.resetMasterPassword(new String(myNewPasswordField.getPassword()), myEncryptCheckBox.isSelected());
       return true;
     }

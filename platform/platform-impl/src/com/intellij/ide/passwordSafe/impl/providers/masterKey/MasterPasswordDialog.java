@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +44,7 @@ public class MasterPasswordDialog extends DialogWrapper {
   private final Class<?> myRequestor;
   private final JPanel myRootPanel = new JPanel(new CardLayout());
   private final List<PasswordComponentBase> myComponents = ContainerUtil.newArrayList();
-  private DialogWrapperAction myCardAction;
+  private final DialogWrapperAction myCardAction;
   private int myRetriesCount;
 
   /**
@@ -148,11 +149,14 @@ public class MasterPasswordDialog extends DialogWrapper {
   @NotNull
   @Override
   protected Action[] createActions() {
-    return new Action[]{
+    Action[] result = {
       getHelpAction(),
       getOKAction(),
-      myCardAction,
       getCancelAction()};
+    if (myComponents.size() > 1) {
+      return ArrayUtil.append(result, myCardAction);
+    }
+    return result;
   }
 
   @Nullable
