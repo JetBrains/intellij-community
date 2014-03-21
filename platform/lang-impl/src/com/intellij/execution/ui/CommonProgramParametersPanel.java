@@ -69,8 +69,6 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
   protected void initComponents() {
     myProgramParametersComponent = LabeledComponent.create(new RawCommandLineEditor(),
                                                            ExecutionBundle.message("run.configuration.program.parameters"));
-
-    final JPanel panel = new JPanel(new BorderLayout());
     myWorkingDirectoryField = new TextFieldWithBrowseButton(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -91,6 +89,8 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
         super.installPathCompletion(FileChooserDescriptorFactory.createSingleFolderDescriptor());
       }
     };
+
+    final JPanel panel = new JPanel(new BorderLayout());
     panel.add(myWorkingDirectoryField, BorderLayout.CENTER);
 
     final FixedSizeButton button = new FixedSizeButton(myWorkingDirectoryField);
@@ -171,7 +171,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
 
   @Override
   public void setAnchor(JComponent anchor) {
-    this.myAnchor = anchor;
+    myAnchor = anchor;
     myProgramParametersComponent.setAnchor(anchor);
     myWorkingDirectoryComponent.setAnchor(anchor);
     myEnvVariablesComponent.setAnchor(anchor);
