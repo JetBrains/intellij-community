@@ -1,4 +1,4 @@
-package com.intellij.vcs.log.graph.render;
+package com.intellij.vcs.log.printer.idea;
 
 /**
  * @author erokhins
