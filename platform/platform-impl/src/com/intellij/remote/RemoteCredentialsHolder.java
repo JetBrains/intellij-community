@@ -23,7 +23,6 @@ import com.intellij.remote.RemoteSdkCredentials;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author michael.golubev
@@ -173,6 +172,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     }
   }
 
+  @NotNull
   public String getSerializedPassword() {
     if (myAnonymous) return "";
 
@@ -194,7 +194,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     }
   }
 
-  @Nullable
+  @NotNull
   public String getSerializedPassphrase() {
     if (myStorePassphrase) {
       return PasswordUtil.encodePassword(myPassphrase);
