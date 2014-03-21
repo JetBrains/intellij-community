@@ -68,6 +68,23 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     "ActivateHierarchyToolWindow",
     "ActivateChangesToolWindow",
 
+    "ShowBookmarks",
+    "GotoBookmark0",
+    "GotoBookmark1",
+    "GotoBookmark2",
+    "GotoBookmark3",
+    "GotoBookmark4",
+    "GotoBookmark5",
+    "GotoBookmark6",
+    "GotoBookmark7",
+    "GotoBookmark8",
+    "GotoBookmark9",
+    
+    "GotoAction",
+    "GotoFile",
+    "GotoClass",
+    "GotoSymbol",
+    
     "ShowSettings"
   };
 
@@ -90,7 +107,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
         return true;
       }
     });
-    
+
     registerKeymapActions(this);
 
     addFocusListener(this);
@@ -108,7 +125,9 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
           @Override
           public void actionPerformed(AnActionEvent e) {
             if (e.getInputEvent() instanceof KeyEvent) {
-              AnActionEvent event = new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(), new Presentation(), e.getActionManager(), e.getModifiers());
+              AnActionEvent event =
+                new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(), new Presentation(), e.getActionManager(),
+                                  e.getModifiers());
               action.update(event);
               if (event.getPresentation().isEnabled()) {
                 action.actionPerformed(event);
