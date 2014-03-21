@@ -4,7 +4,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.style.StringBufferReplaceableByStringInspection;
 
-public class StringBufferReplaceableWithStringFixTest extends IGQuickFixesTestCase {
+public class StringBufferReplaceableByStringFixTest extends IGQuickFixesTestCase {
 
   @Override
   public void setUp() throws Exception {
@@ -30,4 +30,6 @@ public class StringBufferReplaceableWithStringFixTest extends IGQuickFixesTestCa
   public void testConstructorArgument2() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
   public void testNoConstructorArgument() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
   public void testCharLiteral() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
+  public void testEscape() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
+  public void testUnescape() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
 }
