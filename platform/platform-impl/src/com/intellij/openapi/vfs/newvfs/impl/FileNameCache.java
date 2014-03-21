@@ -55,8 +55,9 @@ public class FileNameCache {
 
     Object rawName = convertToBytesIfAsciiString(name);
     IntObjectLinkedMap.MapEntry<Object> entry = new IntObjectLinkedMap.MapEntry<Object>(id, rawName);
-    synchronized (ourNameCache[stripe]) {
-      return ourNameCache[stripe].cacheEntry(entry);
+    IntSLRUCache<IntObjectLinkedMap.MapEntry<Object>> cache = ourNameCache[stripe];
+    synchronized (cache) {
+      return cache.cacheEntry(entry);
     }
   }
 
@@ -91,8 +92,9 @@ public class FileNameCache {
   @NotNull
   private static IntObjectLinkedMap.MapEntry<Object> getEntry(int id) {
     final int stripe = calcStripeIdFromNameId(id);
-    synchronized (ourNameCache[stripe]) {
-      IntObjectLinkedMap.MapEntry<Object> entry = ourNameCache[stripe].getCachedEntry(id);
+    IntSLRUCache<IntObjectLinkedMap.MapEntry<Object>> cache = ourNameCache[stripe];
+    synchronized (cache) {
+      IntObjectLinkedMap.MapEntry<Object> entry = cache.getCachedEntry(id);
       if (entry != null) {
         return entry;
       }
