@@ -144,7 +144,7 @@ public class RemoteConnectionCredentialsWrapper {
 
 
   public static String constructSshCredentialsFullPath(RemoteCredentials cred) {
-    return RemoteSdkCredentialsHolder.SSH_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getPort();
+    return RemoteCredentialsHolder.SSH_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getPort();
   }
 
   public void switchType(RemoteSdkConnectionAcceptor acceptor) {
