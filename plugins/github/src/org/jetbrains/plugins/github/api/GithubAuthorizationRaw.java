@@ -34,7 +34,7 @@ class GithubAuthorizationRaw implements DataConstructor {
 
   @SuppressWarnings("ConstantConditions")
   public GithubAuthorization createAuthorization() {
-    return new GithubAuthorization(token, scopes);
+    return new GithubAuthorization(id, token, scopes, note);
   }
 
   @SuppressWarnings("unchecked")

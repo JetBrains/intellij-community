@@ -131,7 +131,7 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
                                              @Override
                                              public String convert(@NotNull GithubAuthData auth) throws IOException {
                                                return GithubApiUtil
-                                                 .getReadOnlyToken(auth, getRepoAuthor(), getRepoName(), "Intellij tasks plugin");
+                                                 .getReadOnlyToken(auth, getRepoAuthor(), getRepoName(), "IntelliJ tasks plugin");
                                              }
                                            }
               );
