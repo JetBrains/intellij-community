@@ -373,12 +373,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     updateAWTMotionListener(true);
 
     Disposer.dispose(myThumbFadeAnimator);
-    myThumbFadeAnimator = null;
-
     Disposer.dispose(myMouseOverScrollbarExpandAnimator);
-    myMouseOverScrollbarExpandAnimator = null;
     Disposer.dispose(myMacScrollbarFadeAnimator);
-    myMacScrollbarFadeAnimator = null;
   }
 
   @Override
