@@ -319,6 +319,13 @@ public class LambdaUtil {
               return properties.getSubstitutor().substitute(getNormalizedType(parameters[finalLambdaIdx]));
             }
           }
+          final Map<PsiElement, PsiType> map = ourFunctionTypes.get();
+          if (map != null) {
+            final PsiType type = map.get(expression);
+            if (type != null) {
+              return type;
+            }
+          }
           final JavaResolveResult resolveResult = contextCall.resolveMethodGenerics();
             final PsiElement resolve = resolveResult.getElement();
             if (resolve instanceof PsiMethod) {
@@ -326,13 +333,6 @@ public class LambdaUtil {
               final int finalLambdaIdx = adjustLambdaIdx(lambdaIdx, (PsiMethod)resolve, parameters);
               if (finalLambdaIdx < parameters.length) {
                 if (!tryToSubstitute) return getNormalizedType(parameters[finalLambdaIdx]);
-                final Map<PsiElement, PsiType> map = ourFunctionTypes.get();
-                if (map != null) {
-                  final PsiType type = map.get(expression);
-                  if (type != null) {
-                    return type;
-                  }
-                }
                 return PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, new Computable<PsiType>() {
                   @Override
                   public PsiType compute() {
