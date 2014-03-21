@@ -20,7 +20,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
 import com.intellij.vcs.log.GraphCommit;
 import com.intellij.vcs.log.newgraph.SomeGraph;
-import com.intellij.vcs.log.newgraph.utils.Flags;
+import com.intellij.vcs.log.facade.utils.Flags;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;

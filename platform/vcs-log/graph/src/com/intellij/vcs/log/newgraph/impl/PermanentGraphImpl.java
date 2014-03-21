@@ -18,7 +18,7 @@ package com.intellij.vcs.log.newgraph.impl;
 
 import com.intellij.util.SmartList;
 import com.intellij.vcs.log.newgraph.PermanentGraph;
-import com.intellij.vcs.log.newgraph.utils.Flags;
+import com.intellij.vcs.log.facade.utils.Flags;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractList;

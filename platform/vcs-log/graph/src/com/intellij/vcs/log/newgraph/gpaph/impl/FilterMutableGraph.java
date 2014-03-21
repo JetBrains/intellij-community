@@ -28,7 +28,7 @@ import com.intellij.vcs.log.newgraph.gpaph.GraphWithElementsInfo;
 import com.intellij.vcs.log.newgraph.gpaph.Node;
 import com.intellij.vcs.log.newgraph.gpaph.ThickHoverController;
 import com.intellij.vcs.log.newgraph.gpaph.actions.InternalGraphAction;
-import com.intellij.vcs.log.newgraph.utils.Flags;
+import com.intellij.vcs.log.facade.utils.Flags;
 import com.intellij.vcs.log.newgraph.utils.IntToIntMap;
 import com.intellij.vcs.log.newgraph.utils.UpdatableIntToIntMap;
 import com.intellij.vcs.log.newgraph.utils.impl.ListIntToIntMap;
