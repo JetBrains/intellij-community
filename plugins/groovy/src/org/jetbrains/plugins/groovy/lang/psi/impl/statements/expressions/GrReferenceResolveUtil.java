@@ -23,12 +23,13 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -46,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.List;
 
+import static com.intellij.psi.PsiModifier.STATIC;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSPREAD_DOT;
 
 /**
@@ -79,7 +81,7 @@ public class GrReferenceResolveUtil {
         }
       }
       else {
-        if (GrUnresolvedAccessInspection.isClassReference(place)) return true;
+        if (isClassReference(place)) return true;
         if (!processQualifier(processor, qualifier, place)) return false;
       }
 
@@ -117,8 +119,8 @@ public class GrReferenceResolveUtil {
         PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
         if (resolved != null && !resolved.processDeclarations(processor, state, null, place)) return false;
         if (!(resolved instanceof PsiPackage)) {
-          qualifierType = TypesUtil.getJavaLangObject(place);
-          if (!processQualifierType(processor, qualifierType, state, place)) return false;
+          PsiType objectQualifier = TypesUtil.getJavaLangObject(place);
+          if (!processQualifierType(processor, objectQualifier, state, place)) return false;
         }
       }
     }
@@ -221,7 +223,7 @@ public class GrReferenceResolveUtil {
       }
     }
     else if (member instanceof GrMethod) {
-      if (!member.hasModifierProperty(PsiModifier.STATIC)) {
+      if (!member.hasModifierProperty(STATIC)) {
         containingClass = member.getContainingClass();
       }
     }
@@ -297,5 +299,24 @@ public class GrReferenceResolveUtil {
     PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
     results.add(new GroovyResolveResultImpl(superClass, null, null, superClassSubstitutor, true, true));
     return true;
+  }
+
+  public static boolean isClassReference(GrReferenceExpression ref) {
+    GrExpression qualifier = ref.getQualifier();
+    return "class".equals(ref.getReferenceName()) &&
+           qualifier instanceof GrReferenceExpression &&
+           ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass &&
+           !PsiUtil.isThisReference(qualifier);
+  }
+
+  public static boolean isPropertyAccessInStaticMethod(GrReferenceExpression referenceExpression) {
+    return isInStaticContext(referenceExpression) &&
+           !(referenceExpression.getParent() instanceof GrMethodCall) &&
+           referenceExpression.getQualifier() == null;
+  }
+
+  public static boolean isInStaticContext(PsiElement place) {
+    GrMember context = PsiTreeUtil.getParentOfType(place, GrMember.class, true, GrClosableBlock.class);
+    return (context instanceof GrMethod || context instanceof GrClassInitializer) && context.hasModifierProperty(STATIC);
   }
 }
