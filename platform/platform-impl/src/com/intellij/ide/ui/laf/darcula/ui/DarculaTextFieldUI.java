@@ -120,7 +120,7 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
     final int x = i.right - 4 - 16;
     final int y = i.top - 3;
     final int w = c.getWidth() - i.width() + 16*2 +7*2  - 5;
-    int h = c.getBounds().height - i.height() + 4*2 - 3;
+    int h = c.getBounds().height - i.height() + 4*2 - 1;
     if (h%2==1) h++;
     return new Rectangle(x, y, w, h);
   }
