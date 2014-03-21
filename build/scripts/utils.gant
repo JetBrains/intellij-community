@@ -874,7 +874,7 @@ binding.setVariable("buildSearchableOptions", { String target, List licenses, Cl
   ant.fail(unless: "searchable.options.exists", message: "Searchable options were not built.")
 })
 
-binding.set("reassignAltClickToMultipleCarets", {String communityHome ->
+binding.setVariable("reassignAltClickToMultipleCarets", {String communityHome ->
   String defaultKeymapContent = new File("$communityHome/platform/platform-resources/src/idea/Keymap_Default.xml").text
   defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt button1\"/>", "")
   defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt shift button1\"/>",
