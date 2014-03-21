@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.newgraph.utils.impl;
+package com.intellij.vcs.log.facade.utils;
 
 import com.intellij.util.BooleanFunction;
-import com.intellij.vcs.log.newgraph.utils.UpdatableIntToIntMap;
+import com.intellij.vcs.log.facade.utils.impl.TreeIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 
 public class TreeIntToIntMapTest extends UpdatableIntToIntMapTest {

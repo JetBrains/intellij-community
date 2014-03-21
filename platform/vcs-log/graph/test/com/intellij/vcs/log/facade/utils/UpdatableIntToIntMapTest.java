@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.newgraph.utils.impl;
+package com.intellij.vcs.log.facade.utils;
 
 import com.intellij.util.BooleanFunction;
-import com.intellij.vcs.log.newgraph.utils.UpdatableIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 

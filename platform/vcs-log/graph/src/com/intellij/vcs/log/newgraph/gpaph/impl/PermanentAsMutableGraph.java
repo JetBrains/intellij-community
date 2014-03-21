@@ -22,7 +22,7 @@ import com.intellij.vcs.log.newgraph.gpaph.GraphWithElementsInfo;
 import com.intellij.vcs.log.newgraph.gpaph.Node;
 import com.intellij.vcs.log.newgraph.gpaph.ThickHoverController;
 import com.intellij.vcs.log.newgraph.gpaph.actions.InternalGraphAction;
-import com.intellij.vcs.log.newgraph.utils.impl.IDIntToInt;
+import com.intellij.vcs.log.facade.utils.impl.IDIntToInt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

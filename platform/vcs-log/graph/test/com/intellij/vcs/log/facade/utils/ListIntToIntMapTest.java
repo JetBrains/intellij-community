@@ -13,34 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.newgraph.utils.impl;
 
-import com.intellij.vcs.log.newgraph.utils.IntToIntMap;
+package com.intellij.vcs.log.facade.utils;
 
-public class IDIntToInt implements IntToIntMap {
-  private final int size;
+import com.intellij.util.BooleanFunction;
+import com.intellij.vcs.log.facade.utils.impl.ListIntToIntMap;
+import org.jetbrains.annotations.NotNull;
 
-  public IDIntToInt(int size) {
-    this.size = size;
-  }
-
+public class ListIntToIntMapTest extends UpdatableIntToIntMapTest {
   @Override
-  public int shortSize() {
-    return size;
-  }
-
-  @Override
-  public int longSize() {
-    return size;
-  }
-
-  @Override
-  public int getLongIndex(int shortIndex) {
-    return shortIndex;
-  }
-
-  @Override
-  public int getShortIndex(int longIndex) {
-    return longIndex;
+  protected UpdatableIntToIntMap createUpdatableIntToIntMap(@NotNull BooleanFunction<Integer> thisIsVisible, int longSize) {
+    return ListIntToIntMap.newInstance(thisIsVisible, longSize, 3);
   }
 }

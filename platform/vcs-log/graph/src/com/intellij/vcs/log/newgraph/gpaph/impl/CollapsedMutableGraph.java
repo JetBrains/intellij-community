@@ -31,8 +31,8 @@ import com.intellij.vcs.log.newgraph.gpaph.fragments.FragmentGenerator;
 import com.intellij.vcs.log.newgraph.gpaph.fragments.GraphFragment;
 import com.intellij.vcs.log.newgraph.utils.DfsUtil;
 import com.intellij.vcs.log.facade.utils.Flags;
-import com.intellij.vcs.log.newgraph.utils.UpdatableIntToIntMap;
-import com.intellij.vcs.log.newgraph.utils.impl.ListIntToIntMap;
+import com.intellij.vcs.log.facade.utils.UpdatableIntToIntMap;
+import com.intellij.vcs.log.facade.utils.impl.ListIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;

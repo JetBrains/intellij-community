@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.newgraph.utils.impl;
+package com.intellij.vcs.log.facade.utils.impl;
 
 import com.intellij.util.BooleanFunction;
 import org.jetbrains.annotations.NotNull;
