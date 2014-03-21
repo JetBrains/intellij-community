@@ -1795,7 +1795,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       if (containingClass != null) {
         final PsiModifierList list = containingClass.getModifierList();
         if (list != null && !list.hasModifierProperty(ABSTRACT)) {
-          registerFix(annotation, new GrModifierFix(containingClass, ABSTRACT, false, true, GrModifierFix.MODIFIER_LIST), list);
+          registerFix(annotation, new GrModifierFix(containingClass, ABSTRACT, false, true, GrModifierFix.MODIFIER_LIST_OWNER), containingClass);
         }
       }
     }
