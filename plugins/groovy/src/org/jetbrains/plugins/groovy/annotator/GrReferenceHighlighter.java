@@ -45,6 +45,7 @@ public class GrReferenceHighlighter extends TextEditorHighlightingPass {
 
     myFile.accept(new GrDeclarationHighlightingVisitor(myInfos));
     myFile.accept(new ResolveHighlightingVisitor(myFile, myProject, myInfos));
+    myFile.accept(new InaccessibleElementVisitor(myFile, myProject, myInfos));
   }
 
   @Override
