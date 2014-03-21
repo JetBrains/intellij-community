@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.intellij.openapi.vcs.Executor.overwrite;
 import static git4idea.test.GitExecutor.*;
 
-public class GitMergeTest extends GitPlatformTest {
+public class GitCommitTest extends GitPlatformTest {
 
   /**
    * Tests that merge commit after resolving a conflict works fine if there is a file with spaces in its path.
