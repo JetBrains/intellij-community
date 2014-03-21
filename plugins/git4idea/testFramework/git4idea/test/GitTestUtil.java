@@ -106,7 +106,11 @@ public class GitTestUtil {
    */
   @NotNull
   public static GitRepository createRepository(@NotNull Project project, @NotNull String root) {
-    initRepo(root);
+    return createRepository(project, root, true);
+  }
+
+  public static GitRepository createRepository(@NotNull Project project, @NotNull String root, boolean makeInitialCommit) {
+    initRepo(root, makeInitialCommit);
     return registerRepo(project, root);
   }
 

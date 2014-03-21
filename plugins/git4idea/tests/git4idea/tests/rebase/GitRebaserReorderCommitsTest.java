@@ -19,80 +19,74 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.Git;
 import git4idea.rebase.GitRebaser;
-import git4idea.test.GitOldTest;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import git4idea.test.GitPlatformTest;
+import git4idea.test.GitTestUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.ide.BuiltInServerManager;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
-import static org.testng.Assert.assertEquals;
+import static com.intellij.openapi.vcs.Executor.touch;
+import static git4idea.test.GitExecutor.*;
 
 /**
- * NB: we don't test merge commits here, since {@link GitRebaser#reoderCommitsIfNeeded(com.intellij.openapi.vfs.VirtualFile, String, java.util.List)}
- * is not suitable for this.
- * @author Kirill Likhodedov
- * @deprecated Use {@link GitLightTest}
+ * NB: we don't test merge commits here, since {@link GitRebaser#reoderCommitsIfNeeded(VirtualFile, String, List)}
+ * doesn't handle it for now.
  */
-@Deprecated
-public class GitRebaserReorderCommitsTest extends GitOldTest {
+public class GitRebaserReorderCommitsTest extends GitPlatformTest {
 
   private GitRebaser myRebaser;
-  private VirtualFile myRoot;
   private String myFirstCommit;
 
-  @BeforeMethod @Override protected void setUp(Method testMethod) throws Exception {
-    super.setUp(testMethod);
+  @Override protected void setUp() throws Exception {
+    super.setUp();
+    GitTestUtil.createRepository(myProject, myProjectPath, false);
     myRebaser = new GitRebaser(myProject, ServiceManager.getService(Git.class), null);
-    myRoot = myRepo.getVFRootDir();
     myFirstCommit = makeCommit();
+    GitTestUtil.setDefaultBuiltInServerPort();
+    BuiltInServerManager.getInstance().waitForStart();
   }
 
-  @Test
-  public void reorderingNothingShouldDoNothing() throws Exception {
-    myRebaser.reoderCommitsIfNeeded(myRoot, myFirstCommit, Collections.<String>emptyList());
+  public void testReorderingNothingShouldDoNothing() throws Exception {
+    myRebaser.reoderCommitsIfNeeded(myProjectRoot, myFirstCommit, Collections.<String>emptyList());
     assertCommits(myFirstCommit);
   }
 
-  @Test
-  public void reorderingOneShouldDoNothing() throws Exception {
+  public void testReorderingOneShouldDoNothing() throws Exception {
     String hash = makeCommit();
-    myRebaser.reoderCommitsIfNeeded(myRoot, myFirstCommit, Collections.singletonList(hash));
+    myRebaser.reoderCommitsIfNeeded(myProjectRoot, myFirstCommit, Collections.singletonList(hash));
     assertCommits(myFirstCommit, hash);
   }
 
-  @Test
-  public void reorderingAllShouldDoNothing() throws Exception {
+  public void testReorderingAllShouldDoNothing() throws Exception {
     String hash1 = makeCommit();
     String hash2 = makeCommit();
-    myRebaser.reoderCommitsIfNeeded(myRoot, myFirstCommit, Arrays.asList(hash1, hash2));
+    myRebaser.reoderCommitsIfNeeded(myProjectRoot, myFirstCommit, Arrays.asList(hash1, hash2));
     assertCommits(myFirstCommit, hash1, hash2);
   }
 
-  @Test
-  public void reorderingOldestShouldDoNothing() throws Exception {
+  public void testReorderingOldestShouldDoNothing() throws Exception {
     String[] hashes = makeCommits(3);
-    myRebaser.reoderCommitsIfNeeded(myRoot, myFirstCommit, Arrays.asList(hashes[0], hashes[1]));
+    myRebaser.reoderCommitsIfNeeded(myProjectRoot, myFirstCommit, Arrays.asList(hashes[0], hashes[1]));
     assertCommits(myFirstCommit, hashes[0], hashes[1], hashes[2]);
   }
 
-  @Test
-  public void reorderingOneCommit() throws Exception {
+  public void testReorderingOneCommit() throws Exception {
     String[] hashes = makeCommits(3);
-    myRebaser.reoderCommitsIfNeeded(myRoot, myFirstCommit, Collections.singletonList(hashes[2]));
+    myRebaser.reoderCommitsIfNeeded(myProjectRoot, myFirstCommit, Collections.singletonList(hashes[2]));
     assertCommits(myFirstCommit, hashes[2], hashes[0], hashes[1]);
   }
 
-  @Test
-  public void reorderingTwoCommits() throws Exception {
+  public void testReorderingTwoCommits() throws Exception {
     String[] hashes = makeCommits(3);
-    myRebaser.reoderCommitsIfNeeded(myRoot, myFirstCommit, Arrays.asList(hashes[2], hashes[1]));
+    myRebaser.reoderCommitsIfNeeded(myProjectRoot, myFirstCommit, Arrays.asList(hashes[2], hashes[1]));
     assertCommits(myFirstCommit, hashes[2], hashes[1], hashes[0]);
   }
 
-  private String[] makeCommits(int number) throws IOException {
+  private static String[] makeCommits(int number) throws IOException {
     String[] hashes = new String[number];
     for (int i = 0; i < hashes.length; i++) {
       hashes[i] = makeCommit();
@@ -100,17 +94,18 @@ public class GitRebaserReorderCommitsTest extends GitOldTest {
     return hashes;
   }
 
-  private String makeCommit() throws IOException {
-    VirtualFile file = createFileInCommand(Math.random() + ".txt", "initial" + Math.random());
-    myRepo.addCommit();
-    return myRepo.lastCommit();
+  @NotNull
+  private static String makeCommit() throws IOException {
+    touch(Math.random() + ".txt", "initial" + Math.random());
+    addCommit("some commit");
+    return last();
   }
 
-  private void assertCommits(String... commits) throws IOException {
-    final String[] hashes = myRepo.run("rev-list", "--reverse", "HEAD").split("\n");
+  private static void assertCommits(String... commits) throws IOException {
+    final String[] hashes = git("rev-list --reverse HEAD").split("\n");
     assertEquals(commits.length, hashes.length);
     for (int i = 0; i < commits.length; i++) {
-      assertEquals(hashes[i], commits[i], "Commit #" + i + " doesn't  match");
+      assertEquals("Commit #" + i + " doesn't  match", commits[i], hashes[i]);
     }
   }
 
