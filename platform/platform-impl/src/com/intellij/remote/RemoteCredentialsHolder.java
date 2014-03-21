@@ -38,6 +38,8 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   public static final String PRIVATE_KEY_FILE = "PRIVATE_KEY_FILE";
   public static final String KNOWN_HOSTS_FILE = "MY_KNOWN_HOSTS_FILE";
   public static final String PASSPHRASE = "PASSPHRASE";
+  
+  public static final String SSH_PREFIX = "ssh://";
 
   private String myHost;
   private int myPort;
@@ -50,6 +52,10 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   private String myPassphrase;
   private boolean myStorePassword;
   private boolean myStorePassphrase;
+
+  public static String getCredentialsString(@NotNull RemoteCredentials cred) {
+    return SSH_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getPort();
+  }
 
   @Override
   public String getHost() {
