@@ -970,7 +970,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   private static void registerFix(Annotation annotation, LocalQuickFix fix, PsiElement place) {
     final InspectionManager manager = InspectionManager.getInstance(place.getProject());
-    assert !place.getTextRange().isEmpty();
+    assert !place.getTextRange().isEmpty() : place.getContainingFile().getName();
 
     final ProblemDescriptor descriptor = manager.createProblemDescriptor(place, place, annotation.getMessage(),
                                                                          annotation.getHighlightType(), true, LocalQuickFix.EMPTY_ARRAY);
