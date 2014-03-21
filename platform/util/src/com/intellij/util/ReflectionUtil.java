@@ -392,6 +392,15 @@ public class ReflectionUtil {
       throw new RuntimeException(e);
     }
   }
+  @NotNull
+  public static <T> T createInstanceViaConstructorAccessor(@NotNull ConstructorAccessor constructorAccessor) {
+    try {
+      return (T)constructorAccessor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   @NotNull
   public static <T> T createInstance(@NotNull Constructor<T> constructor, @NotNull Object... args) {
