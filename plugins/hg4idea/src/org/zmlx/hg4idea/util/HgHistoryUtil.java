@@ -41,12 +41,30 @@ import org.zmlx.hg4idea.provider.HgCommittedChangeList;
 import java.io.File;
 import java.util.*;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgHistoryUtil {
 
   private HgHistoryUtil() {
+  }
+
+  @NotNull
+  public static List<? extends VcsCommitMetadata> loadMetadata(@NotNull final Project project,
+                                                               @NotNull final VirtualFile root, int limit,
+                                                               List<String> parameters) throws VcsException {
+
+    final VcsLogObjectsFactory factory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
+    List<HgCommittedChangeList> result = getCommittedChangeList(project, root, limit, false, parameters);
+    return ContainerUtil.mapNotNull(result, new Function<HgCommittedChangeList, VcsCommitMetadata>() {
+      @Override
+      public VcsCommitMetadata fun(HgCommittedChangeList record) {
+        HgRevisionNumber revNumber = (HgRevisionNumber)record.getRevisionNumber();
+        return factory.createCommitMetadata(factory.createHash(revNumber.getChangeset()), getParentHashes(factory, revNumber),
+                                            record.getCommitDate().getTime(), root,
+                                            revNumber.getSubject(),
+                                            revNumber.getAuthor(), revNumber.getEmail(), revNumber.getCommitMessage(),
+                                            record.getCommitterName(),
+                                            "", record.getCommitDate().getTime());
+      }
+    });
   }
 
   /**
@@ -56,15 +74,14 @@ public class HgHistoryUtil {
    * and it can occupy too much memory. The estimate is ~600Kb for 1000 commits.</p>
    */
   @NotNull
-  public static List<VcsFullCommitDetails> history(@NotNull final Project project,
-                                                   @NotNull final VirtualFile root, int limit,
-                                                   List<String> parameters)
-    throws VcsException {
+  public static List<? extends VcsFullCommitDetails> history(@NotNull final Project project, @NotNull final VirtualFile root, int limit,
+                                                             List<String> parameters) throws VcsException {
+    final VcsLogObjectsFactory factory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
     List<HgCommittedChangeList> result = getCommittedChangeList(project, root, limit, true, parameters);
     return ContainerUtil.mapNotNull(result, new Function<HgCommittedChangeList, VcsFullCommitDetails>() {
       @Override
       public VcsFullCommitDetails fun(HgCommittedChangeList record) {
-        return createCommit(project, root, record);
+        return createCommit(root, record, factory);
       }
     });
   }
@@ -176,20 +193,13 @@ public class HgHistoryUtil {
   }
 
   @NotNull
-  private static VcsFullCommitDetails createCommit(@NotNull Project project, @NotNull VirtualFile root,
-                                                     @NotNull final HgCommittedChangeList record) {
+  private static VcsFullCommitDetails createCommit(@NotNull VirtualFile root,
+                                                   @NotNull final HgCommittedChangeList record, @NotNull VcsLogObjectsFactory factory) {
 
-    final VcsLogObjectsFactory factory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
     HgRevisionNumber revNumber = (HgRevisionNumber)record.getRevisionNumber();
-
-    List<Hash> parents = ContainerUtil.map(revNumber.getParents(), new Function<HgRevisionNumber, Hash>() {
-      @Override
-      public Hash fun(HgRevisionNumber parent) {
-        return factory.createHash(parent.getChangeset());
-      }
-    });
     final Collection<Change> changes = record.getChanges();
-    return factory.createFullDetails(factory.createHash(revNumber.getChangeset()), parents, record.getCommitDate().getTime(), root,
+    return factory.createFullDetails(factory.createHash(revNumber.getChangeset()), getParentHashes(factory, revNumber),
+                                     record.getCommitDate().getTime(), root,
                                      revNumber.getSubject(),
                                      revNumber.getAuthor(), revNumber.getEmail(), revNumber.getCommitMessage(), record.getCommitterName(),
                                      "", record.getCommitDate().getTime(), new ThrowableComputable<Collection<Change>, Exception>() {
@@ -199,6 +209,16 @@ public class HgHistoryUtil {
         }
       }
     );
+  }
+
+  @NotNull
+  private static List<Hash> getParentHashes(@NotNull final VcsLogObjectsFactory factory, @NotNull HgRevisionNumber revNumber) {
+    return ContainerUtil.map(revNumber.getParents(), new Function<HgRevisionNumber, Hash>() {
+      @Override
+      public Hash fun(HgRevisionNumber parent) {
+        return factory.createHash(parent.getChangeset());
+      }
+    });
   }
 
   @Nullable

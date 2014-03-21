@@ -21,7 +21,6 @@ import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.PathMacros;
-import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
@@ -30,21 +29,21 @@ import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.MacroAwareTextBrowseFolderListener;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
+import com.intellij.util.SmartList;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.List;
 
 public class CommonProgramParametersPanel extends JPanel implements PanelWithAnchor {
@@ -55,7 +54,6 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
   protected JComponent myAnchor;
 
   private Module myModuleContext = null;
-  private boolean myHaveModuleContext = false;
 
   public CommonProgramParametersPanel() {
     super();
@@ -66,29 +64,27 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     updateUI();
   }
 
+  @Nullable
+  protected Project getProject() {
+    return myModuleContext != null ? myModuleContext.getProject() : null;
+  }
+
   protected void initComponents() {
     myProgramParametersComponent = LabeledComponent.create(new RawCommandLineEditor(),
                                                            ExecutionBundle.message("run.configuration.program.parameters"));
-    myWorkingDirectoryField = new TextFieldWithBrowseButton(new ActionListener() {
+
+    FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+    //noinspection DialogTitleCapitalization
+    fileChooserDescriptor.setTitle(ExecutionBundle.message("select.working.directory.message"));
+    myWorkingDirectoryField = new TextFieldWithBrowseButton();
+    myWorkingDirectoryField.addBrowseFolderListener(new MacroAwareTextBrowseFolderListener(fileChooserDescriptor, getProject()) {
       @Override
       public void actionPerformed(ActionEvent e) {
-        FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-        fileChooserDescriptor.setTitle(ExecutionBundle.message("select.working.directory.message"));
-        fileChooserDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, myModuleContext);
-        Project project = myModuleContext != null ? myModuleContext.getProject() : null;
-        FileChooser.chooseFile(fileChooserDescriptor, project, myWorkingDirectoryComponent, null, new Consumer<VirtualFile>() {
-          @Override
-          public void consume(VirtualFile file) {
-            setWorkingDirectory(file.getPresentableUrl());
-          }
-        });
+        myFileChooserDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, myModuleContext);
+        setProject(getProject());
+        super.actionPerformed(e);
       }
-    }) {
-      @Override
-      protected void installPathCompletion(FileChooserDescriptor fileChooserDescriptor) {
-        super.installPathCompletion(FileChooserDescriptorFactory.createSingleFolderDescriptor());
-      }
-    };
+    });
 
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(myWorkingDirectoryField, BorderLayout.CENTER);
@@ -98,11 +94,13 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     button.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final List<String> macros = new ArrayList<String>(PathMacros.getInstance().getUserMacroNames());
-        if (myHaveModuleContext) macros.add("MODULE_DIR");
+        final List<String> macros = new SmartList<String>(PathMacros.getInstance().getUserMacroNames());
+        if (myModuleContext != null) {
+          macros.add(PathMacroUtil.MODULE_DIR_MACRO_NAME);
+        }
 
         final JList list = new JBList(ArrayUtil.toStringArray(macros));
-        final JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list).setItemChoosenCallback(new Runnable() {
+        JBPopupFactory.getInstance().createListPopupBuilder(list).setItemChoosenCallback(new Runnable() {
           @Override
           public void run() {
             final Object value = list.getSelectedValue();
@@ -110,8 +108,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
               setWorkingDirectory("$" + value + "$");
             }
           }
-        }).setMovable(false).setResizable(false).createPopup();
-        popup.showUnderneathOf(button);
+        }).setMovable(false).setResizable(false).createPopup().showUnderneathOf(button);
       }
     });
     panel.add(button, BorderLayout.EAST);
@@ -157,7 +154,6 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
 
   public void setModuleContext(Module moduleContext) {
     myModuleContext = moduleContext;
-    myHaveModuleContext = true;
   }
 
   public LabeledComponent<RawCommandLineEditor> getProgramParametersComponent() {
