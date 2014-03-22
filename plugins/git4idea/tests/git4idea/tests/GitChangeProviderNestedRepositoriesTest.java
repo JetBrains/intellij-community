@@ -17,6 +17,7 @@ package git4idea.tests;
 
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -74,11 +75,11 @@ public class GitChangeProviderNestedRepositoriesTest extends GitChangeProviderTe
 
   @Test
   public void testReproduceChangeListsRotten() throws Exception {
-    editFileInCommand(myProject, myFiles.get("a.txt"), "123");
+    VcsTestUtil.editFileInCommand(myProject, myFiles.get("a.txt"), "123");
     VirtualFile in1 = myChildFiles.get("in1.txt");
-    editFileInCommand(myProject, in1, "321");
+    VcsTestUtil.editFileInCommand(myProject, in1, "321");
     VirtualFile in2 = myChildFiles.get("in2.txt");
-    editFileInCommand(myProject, in2, "321*");
+    VcsTestUtil.editFileInCommand(myProject, in2, "321*");
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);

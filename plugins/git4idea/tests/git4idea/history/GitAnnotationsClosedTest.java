@@ -20,10 +20,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -74,7 +71,7 @@ public class GitAnnotationsClosedTest extends GitOldTest {
     final VirtualFile[] files = {first, first, second, first, second};
 
     for (int i = 0; i < content1.length; i++) {
-      editFileInCommand(myProject, files[i], content1[i]);
+      VcsTestUtil.editFileInCommand(myProject, files[i], content1[i]);
       myRepo.addCommit(messages[i]);
     }
 
@@ -89,7 +86,7 @@ public class GitAnnotationsClosedTest extends GitOldTest {
   public void testClosedByCommitFromIdea() throws Exception {
     annotateFirst(first);
 
-    editFileInCommand(myProject, first, "1\n2+\n3-ttt\n");
+    VcsTestUtil.editFileInCommand(myProject, first, "1\n2+\n3-ttt\n");
     Assert.assertFalse(myFirstClosed);
 
     myVcsDirtyScopeManager.markEverythingDirty();
@@ -112,7 +109,7 @@ public class GitAnnotationsClosedTest extends GitOldTest {
   public void testClosedByExternalCommit() throws Exception {
     annotateFirst(first);
 
-    editFileInCommand(myProject, first, "1\n2+\n3-ttt\n");
+    VcsTestUtil.editFileInCommand(myProject, first, "1\n2+\n3-ttt\n");
     Assert.assertFalse(myFirstClosed);
 
     myRepo.addCommit("external_commit");
@@ -156,7 +153,7 @@ public class GitAnnotationsClosedTest extends GitOldTest {
     myBrotherRepo.checkout("master");
     final VirtualFile child = myBrotherRepo.getVFRootDir().findChild("a.txt");
     Assert.assertNotNull(child);
-    editFileInCommand(myProject, child, "1\n2+\n3---\n");
+    VcsTestUtil.editFileInCommand(myProject, child, "1\n2+\n3---\n");
     myBrotherRepo.addCommit("brother_commit");
     myBrotherRepo.push();
 
@@ -171,14 +168,14 @@ public class GitAnnotationsClosedTest extends GitOldTest {
   @Test
   public void testAnnotationsAndRenaming() throws Exception {
     final String newName = "e.txt";
-    renameFileInCommand(myProject, first, newName);
+    VcsTestUtil.renameFileInCommand(myProject, first, newName);
     final VirtualFile renamed = myRepo.getVFRootDir().findChild(newName);
     Assert.assertNotNull(renamed);
     sleep(500);
     myRepo.run("status");
     annotateFirst(renamed);
     annotateSecond();
-    renameFileInCommand(myProject, second, "f.txt");
+    VcsTestUtil.renameFileInCommand(myProject, second, "f.txt");
 
     Assert.assertFalse(myFirstClosed);
     Assert.assertFalse(mySecondClosed);

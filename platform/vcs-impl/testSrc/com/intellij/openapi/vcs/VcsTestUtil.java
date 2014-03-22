@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.notification.Notification;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -19,6 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.*;
 
 public class VcsTestUtil {
@@ -70,6 +72,84 @@ public class VcsTestUtil {
       }
     }.execute();
     return result.get();
+  }
+
+  public static void renameFileInCommand(@NotNull Project project, @NotNull final VirtualFile file, @NotNull final String newName) {
+    new WriteCommandAction.Simple(project) {
+      @Override
+      protected void run() throws Throwable {
+        try {
+          file.rename(this, newName);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }.execute().throwException();
+  }
+
+  public static void deleteFileInCommand(@NotNull Project project, @NotNull final VirtualFile file) {
+    new WriteCommandAction.Simple(project) {
+      @Override
+      protected void run() throws Throwable {
+        try {
+          file.delete(this);
+        }
+        catch(IOException ex) {
+          throw new RuntimeException(ex);
+        }
+      }
+    }.execute();
+  }
+
+  public static void editFileInCommand(@NotNull Project project, @NotNull final VirtualFile file, @NotNull final String newContent) {
+    assertTrue(file.isValid());
+    file.getTimeStamp();
+    new WriteCommandAction.Simple(project) {
+      @Override
+      protected void run() throws Throwable {
+        try {
+          final long newTs = Math.max(System.currentTimeMillis(), file.getTimeStamp() + 1100);
+          file.setBinaryContent(newContent.getBytes(), -1, newTs);
+          final File file1 = new File(file.getPath());
+          FileUtil.writeToFile(file1, newContent.getBytes());
+          file.refresh(false, false);
+          assertTrue(file1 + " / " + newTs, file1.setLastModified(newTs));
+        }
+        catch(IOException ex) {
+          throw new RuntimeException(ex);
+        }
+      }
+    }.execute();
+  }
+
+  public static VirtualFile copyFileInCommand(@NotNull Project project, @NotNull final VirtualFile file,
+                                              @NotNull final VirtualFile newParent, @NotNull final String newName) {
+    return new WriteCommandAction<VirtualFile>(project) {
+      @Override
+      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
+        try {
+          result.setResult(file.copy(this, newParent, newName));
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }.execute().getResultObject();
+  }
+
+  public static void moveFileInCommand(@NotNull  Project project, @NotNull final VirtualFile file, @NotNull final VirtualFile newParent) {
+    new WriteCommandAction.Simple(project) {
+      @Override
+      protected void run() throws Throwable {
+        try {
+          file.move(this, newParent);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }.execute();
   }
 
   public static <T> void assertEqualCollections(@NotNull String message, @NotNull Collection<T> actual, @NotNull Collection<T> expected) {

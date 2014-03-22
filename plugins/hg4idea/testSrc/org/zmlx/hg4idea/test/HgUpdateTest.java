@@ -15,6 +15,7 @@ package org.zmlx.hg4idea.test;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.testng.annotations.BeforeMethod;
@@ -200,7 +201,7 @@ public class HgUpdateTest extends HgCollaborativeTest {
     VirtualFile commonFile = projectRepoVirtualFile.findChild("com").findChild("a.txt");
     assertNotNull(commonFile);
     
-    editFileInCommand(myProject, commonFile, "conflicting content");
+    VcsTestUtil.editFileInCommand(myProject, commonFile, "conflicting content");
     runHg(projectRepo, "commit", "-m", "adding conflicting history to local repository");
     
     PreUpdateInformation preUpdateInformation = new PreUpdateInformation().getPreUpdateInformation();
@@ -227,7 +228,7 @@ public class HgUpdateTest extends HgCollaborativeTest {
 
     HgRevisionNumber parentBeforeUpdate = new HgWorkingCopyRevisionsCommand(myProject).parents(projectRepoVirtualFile).get(0);
 
-    editFileInCommand(myProject, projectRepoVirtualFile.findFileByRelativePath("com/a.txt"), "modified file contents");
+    VcsTestUtil.editFileInCommand(myProject, projectRepoVirtualFile.findFileByRelativePath("com/a.txt"), "modified file contents");
 
     assertUpdateThroughPluginFails();
 

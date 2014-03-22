@@ -18,7 +18,6 @@ package com.intellij.testFramework.vcs;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diff.LineTokenizer;
@@ -45,8 +44,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static junit.framework.Assert.assertTrue;
 
 /**
  * @author yole
@@ -248,64 +245,15 @@ public abstract class AbstractVcsTestCase {
   }
 
   protected void renameFileInCommand(final VirtualFile file, final String newName) {
-    renameFileInCommand(myProject, file, newName);
-  }
-
-  public static void renameFileInCommand(final Project project, final VirtualFile file, final String newName) {
-    new WriteCommandAction.Simple(project) {
-      @Override
-      protected void run() throws Throwable {
-        try {
-          file.rename(this, newName);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }.execute().throwException();
+    VcsTestUtil.renameFileInCommand(myProject, file, newName);
   }
 
   public void deleteFileInCommand(final VirtualFile file) {
-    deleteFileInCommand(myProject, file);
-  }
-
-  public static void deleteFileInCommand(final Project project, final VirtualFile file) {
-    new WriteCommandAction.Simple(project) {
-      @Override
-      protected void run() throws Throwable {
-        try {
-          file.delete(this);
-        }
-        catch(IOException ex) {
-          throw new RuntimeException(ex);
-        }
-      }
-    }.execute();
+    VcsTestUtil.deleteFileInCommand(myProject, file);
   }
 
   public void editFileInCommand(final VirtualFile file, final String newContent) {
-    editFileInCommand(myProject, file, newContent);
-  }
-
-  public static void editFileInCommand(final Project project, final VirtualFile file, final String newContent) {
-    assertTrue(file.isValid());
-    file.getTimeStamp();
-    new WriteCommandAction.Simple(project) {
-      @Override
-      protected void run() throws Throwable {
-        try {
-          final long newTs = Math.max(System.currentTimeMillis(), file.getTimeStamp() + 1100);
-          file.setBinaryContent(newContent.getBytes(), -1, newTs);
-          final File file1 = new File(file.getPath());
-          FileUtil.writeToFile(file1, newContent.getBytes());
-          file.refresh(false, false);
-          assertTrue(file1 + " / " + newTs, file1.setLastModified(newTs));
-        }
-        catch(IOException ex) {
-          throw new RuntimeException(ex);
-        }
-      }
-    }.execute();
+    VcsTestUtil.editFileInCommand(myProject, file, newContent);
   }
 
   protected VirtualFile copyFileInCommand(final VirtualFile file, final String toName) {
@@ -325,42 +273,11 @@ public abstract class AbstractVcsTestCase {
   }
 
   protected VirtualFile copyFileInCommand(final VirtualFile file, final VirtualFile newParent) {
-    return copyFileInCommand(myProject, file, newParent, file.getName());
-  }
-                                          
-  public static VirtualFile copyFileInCommand(final Project project,
-                                              final VirtualFile file,
-                                              final VirtualFile newParent,
-                                              final String newName) {
-    return new WriteCommandAction<VirtualFile>(project) {
-      @Override
-      protected void run(Result<VirtualFile> result) throws Throwable {
-        try {
-          result.setResult(file.copy(this, newParent, newName));
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }.execute().getResultObject();
+    return VcsTestUtil.copyFileInCommand(myProject, file, newParent, file.getName());
   }
 
   protected void moveFileInCommand(final VirtualFile file, final VirtualFile newParent) {
-    moveFileInCommand(myProject, file, newParent);
-  }
-
-  public static void moveFileInCommand(final Project project, final VirtualFile file, final VirtualFile newParent) {
-    new WriteCommandAction.Simple(project) {
-      @Override
-      protected void run() throws Throwable {
-        try {
-          file.move(this, newParent);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }.execute();
+    VcsTestUtil.moveFileInCommand(myProject, file, newParent);
   }
 
   protected void verifyChange(final Change c, final String beforePath, final String afterPath) {
