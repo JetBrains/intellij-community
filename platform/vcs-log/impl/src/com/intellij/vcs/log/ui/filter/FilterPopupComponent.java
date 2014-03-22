@@ -101,7 +101,7 @@ abstract class FilterPopupComponent<Filter extends VcsLogFilter> extends JPanel 
 
   protected void setValue(@NotNull String value, @NotNull String tooltip) {
     myFilterValueLabel.setText(value);
-    setToolTipText(tooltip);
+    setToolTipText(tooltip.equals(value) ? null : tooltip);
   }
 
   @NotNull
