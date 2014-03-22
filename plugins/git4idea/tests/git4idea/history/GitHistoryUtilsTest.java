@@ -44,7 +44,6 @@ import static com.intellij.openapi.vcs.Executor.overwrite;
 import static com.intellij.openapi.vcs.Executor.touch;
 import static git4idea.GitUtil.getShortHash;
 import static git4idea.test.GitExecutor.*;
-import static git4idea.test.GitTestRepository.createFile;
 import static git4idea.test.GitTestUtil.USER_EMAIL;
 import static git4idea.test.GitTestUtil.USER_NAME;
 
@@ -154,7 +153,7 @@ public class GitHistoryUtilsTest extends GitPlatformTest {
     List<TestCommit> commits = new ArrayList<TestCommit>();
 
     File source = mkdir("source");
-    File initialFile = createFile(source, "PostHighlightingPass.java", "Initial content");
+    File initialFile = touch("source/PostHighlightingPass.java", "Initial content");
     String initMessage = "Created PostHighlightingPass.java in source";
     addCommit(initMessage);
     String hash = last();
@@ -414,15 +413,6 @@ public class GitHistoryUtilsTest extends GitPlatformTest {
     assertEquals(actualParents.size(), expectedParents.size());
     for (Iterator<String> ait = actualParents.iterator(), eit = expectedParents.iterator(); ait.hasNext(); ) {
       assertTrue(eit.next().startsWith(ait.next()));
-    }
-  }
-
-  private static void assertCommitsEqualToTestRevisions(Collection<GitHeavyCommit> actualCommits, Collection<GitTestRevision> expectedRevisions) throws IOException {
-    assertEquals(actualCommits.size(), expectedRevisions.size());
-    for (Iterator hit = actualCommits.iterator(), myIt = expectedRevisions.iterator(); hit.hasNext(); ) {
-      GitHeavyCommit commit = (GitHeavyCommit)hit.next();
-      GitTestRevision revision = (GitTestRevision)myIt.next();
-      assertCommitEqualToTestRevision(commit, revision);
     }
   }
 
