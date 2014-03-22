@@ -16,13 +16,17 @@
 package org.jetbrains.plugins.groovy.console;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.console.*;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -39,6 +43,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
@@ -193,9 +198,20 @@ public abstract class GroovyShellActionBase extends DumbAwareAction {
     }
 
     @Override
-    protected LanguageConsoleView createConsoleView() {
-      LanguageConsoleView res = new LanguageConsoleViewImpl(createConsole(getProject(), getConsoleTitle()));
+    protected List<AnAction> fillToolBarActions(DefaultActionGroup toolbarActions,
+                                                final Executor defaultExecutor,
+                                                final RunContentDescriptor contentDescriptor) {
+      BuildAndRestartConsoleAction rebuildAction = new BuildAndRestartConsoleAction(myModule, getProject(), defaultExecutor, contentDescriptor, GroovyShellActionBase.this);
+      toolbarActions.add(rebuildAction);
+      List<AnAction> actions = super.fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor);
+      actions.add(rebuildAction);
+      Disposer.register(getConsoleView(), rebuildAction);
+      return actions;
+    }
 
+    @Override
+    protected LanguageConsoleView createConsoleView() {
+      LanguageConsoleViewImpl res = new LanguageConsoleViewImpl(createConsole(getProject(), getConsoleTitle()));
       GroovyFileImpl file = (GroovyFileImpl)res.getConsole().getFile();
       assert file.getContext() == null;
       file.putUserData(GROOVY_SHELL_FILE, Boolean.TRUE);
