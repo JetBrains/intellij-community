@@ -36,6 +36,8 @@
     <treeGenerator implementation="de.plushnikov.intellij.plugin.extension.LombokLightMethodTreeGenerator"/>
 
     <lang.structureViewExtension implementation="de.plushnikov.intellij.plugin.extension.LombokStructureViewExtension"/>
+
+    <daemon.highlightInfoFilter implementation="de.plushnikov.intellij.plugin.extension.LombokHighlightErrorFilter"/>
   </extensions>
 
   <extensions defaultExtensionNs="Lombook Plugin">
@@ -156,7 +158,8 @@
 		<ul>
 		<li>0.8.4
 				<ol>
-				    <li>Fixed issue #42 : Added Extension to populate Structure view</li>
+				    <li>Fixed #42 : Added Extension to populate Structure view</li>
+				    <li>Fixed issue 13(on GoogleCode): @SneakyThrows does not hide Unhandled Exception Error</li>
 				</ol>
 			</li>
 		<li>0.8.3
