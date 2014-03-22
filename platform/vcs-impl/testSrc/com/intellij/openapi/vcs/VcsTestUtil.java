@@ -21,15 +21,9 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
-/**
- * @author Nadya Zabrodina
- */
 public class VcsTestUtil {
 
-  // TODO: option - create via IDEA or via java.io. In latter case no need in Project parameter.
-  public static VirtualFile createFile(@NotNull Project project,
-                                       @NotNull final VirtualFile parent,
-                                       @NotNull final String name,
+  public static VirtualFile createFile(@NotNull Project project, @NotNull final VirtualFile parent, @NotNull final String name,
                                        @Nullable final String content) {
     final Ref<VirtualFile> result = new Ref<VirtualFile>();
     new WriteCommandAction.Simple(project) {
@@ -51,7 +45,6 @@ public class VcsTestUtil {
   }
 
   /**
-   * TODO: option - create via IDEA or via java.io. In latter case no need in Project parameter.
    * Creates directory inside a write action and returns the resulting reference to it.
    * If the directory already exists, does nothing.
    *

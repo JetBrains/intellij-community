@@ -24,13 +24,11 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
@@ -147,50 +145,11 @@ public abstract class AbstractVcsTestCase {
   }
 
   public VirtualFile createFileInCommand(final VirtualFile parent, final String name, @Nullable final String content) {
-    final Ref<VirtualFile> result = new Ref<VirtualFile>();
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        try {
-          VirtualFile file = parent.createChildData(this, name);
-          if (content != null) {
-            file.setBinaryContent(CharsetToolkit.getUtf8Bytes(content));
-          }
-          result.set(file);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }.execute();
-    return result.get();
+    return VcsTestUtil.createFile(myProject, parent, name, content);
   }
 
-  /**
-   * Creates directory inside a write action and returns the resulting reference to it.
-   * If the directory already exists, does nothing.
-   * @param parent Parent directory.
-   * @param name   Name of the directory.
-   * @return reference to the created or already existing directory.
-   */
   public VirtualFile createDirInCommand(final VirtualFile parent, final String name) {
-    final Ref<VirtualFile> result = new Ref<VirtualFile>();
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        try {
-          VirtualFile dir = parent.findChild(name);
-          if (dir == null) {
-            dir = parent.createChildDirectory(this, name);
-          }
-          result.set(dir);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }.execute();
-    return result.get();
+    return VcsTestUtil.createDir(myProject, parent, name);
   }
 
   protected void clearDirInCommand(final VirtualFile dir, final Processor<VirtualFile> filter) {
