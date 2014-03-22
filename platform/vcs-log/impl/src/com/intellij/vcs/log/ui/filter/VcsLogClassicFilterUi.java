@@ -54,7 +54,12 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
                                @NotNull DataPack initialDataPack) {
     myUi = ui;
 
-    myTextFilter = new SearchTextFieldWithStoredHistory("Vcs.Log.Text.Filter.History");
+    myTextFilter = new SearchTextFieldWithStoredHistory("Vcs.Log.Text.Filter.History") {
+      @Override
+      protected void onFieldCleared() {
+        applyFilters();
+      }
+    };
     myTextFilter.getTextEditor().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
