@@ -272,10 +272,6 @@ public abstract class AbstractVcsTestCase {
     return res.get();
   }
 
-  protected VirtualFile copyFileInCommand(final VirtualFile file, final VirtualFile newParent) {
-    return VcsTestUtil.copyFileInCommand(myProject, file, newParent, file.getName());
-  }
-
   protected void moveFileInCommand(final VirtualFile file, final VirtualFile newParent) {
     VcsTestUtil.moveFileInCommand(myProject, file, newParent);
   }
