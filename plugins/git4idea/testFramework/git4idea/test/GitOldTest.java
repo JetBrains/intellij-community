@@ -133,31 +133,4 @@ public abstract class GitOldTest extends AbstractVcsTestCase {
     setStandardConfirmation(GitVcs.NAME, op, VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY);
   }
 
-  protected String tos(FilePath fp) {
-    return FileUtil.getRelativePath(myProjectDir, fp.getIOFile());
-  }
-
-  protected String tos(Change change) {
-    switch (change.getType()) {
-      case NEW: return "A: " + tos(change.getAfterRevision());
-      case DELETED: return "D: " + tos(change.getBeforeRevision());
-      case MOVED: return "M: " + tos(change.getBeforeRevision()) + " -> " + tos(change.getAfterRevision());
-      case MODIFICATION: return "M: " + tos(change.getAfterRevision());
-      default: return "~: " +  tos(change.getBeforeRevision()) + " -> " + tos(change.getAfterRevision());
-    }
-  }
-
-  protected String tos(ContentRevision revision) {
-    return tos(revision.getFile());
-  }
-
-  protected String tos(Map<FilePath, Change> changes) {
-    StringBuilder stringBuilder = new StringBuilder("[");
-    for (Change change : changes.values()) {
-      stringBuilder.append(tos(change)).append(", ");
-    }
-    stringBuilder.append("]");
-    return stringBuilder.toString();
-  }
-
 }

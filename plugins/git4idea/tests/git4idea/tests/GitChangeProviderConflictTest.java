@@ -19,11 +19,6 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.testng.annotations.Test;
 
-/**
- * @author Kirill Likhodedov
- * @deprecated Use {@link GitLightTest}
- */
-@Deprecated
 public class GitChangeProviderConflictTest extends GitChangeProviderTest {
 
   /**
@@ -65,21 +60,21 @@ public class GitChangeProviderConflictTest extends GitChangeProviderTest {
   @Test
   public void testConflictCC() throws Exception {
     modifyFileInBranches("z.txt", FileAction.CREATE, FileAction.CREATE);
-    VirtualFile zfile = myRepo.getVFRootDir().findChild("z.txt");
+    VirtualFile zfile = myProjectRoot.findChild("z.txt");
     assertChanges(zfile, FileStatus.MERGED_WITH_CONFLICTS);
   }
 
   @Test
   public void testConflictRD() throws Exception {
     modifyFileInBranches("a.txt", FileAction.RENAME, FileAction.DELETE);
-    VirtualFile newfile = myRepo.getVFRootDir().findChild("a.txt_master_new"); // renamed in master
+    VirtualFile newfile = myProjectRoot.findChild("a.txt_master_new"); // renamed in master
     assertChanges(newfile, FileStatus.MERGED_WITH_CONFLICTS);
   }
 
   @Test
   public void testConflictDR() throws Exception {
     modifyFileInBranches("a.txt", FileAction.DELETE, FileAction.RENAME);
-    VirtualFile newFile = myRepo.getVFRootDir().findChild("a.txt_feature_new"); // deleted in master, renamed in feature
+    VirtualFile newFile = myProjectRoot.findChild("a.txt_feature_new"); // deleted in master, renamed in feature
     assertChanges(newFile, FileStatus.MERGED_WITH_CONFLICTS);
   }
 

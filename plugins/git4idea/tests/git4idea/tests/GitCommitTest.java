@@ -17,7 +17,6 @@ package git4idea.tests;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -41,8 +40,6 @@ public class GitCommitTest extends GitPlatformTest {
    */
   @Test
   public void testMergeCommitWithSpacesInPath() throws IOException {
-    addSilently();
-
     createRepository(myProjectPath);
     cd(myProjectPath);
 
@@ -84,7 +81,4 @@ public class GitCommitTest extends GitPlatformTest {
     assertTrue(changeListManager.getChangesIn(myProjectRoot).isEmpty());
   }
 
-  private void addSilently() {
-    doActionSilently(VcsConfiguration.StandardConfirmation.ADD);
-  }
 }

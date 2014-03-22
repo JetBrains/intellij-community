@@ -91,6 +91,8 @@ public abstract class GitPlatformTest extends UsefulTestCase {
     myGit = ServiceManager.getService(myProject, Git.class);
 
     initChangeListManager();
+    addSilently();
+    removeSilently();
   }
 
   private void initChangeListManager() {
@@ -139,6 +141,14 @@ public abstract class GitPlatformTest extends UsefulTestCase {
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     changeListManager.ensureUpToDate(false);
+  }
+
+  protected void addSilently() {
+    doActionSilently(VcsConfiguration.StandardConfirmation.ADD);
+  }
+
+  protected void removeSilently() {
+    doActionSilently(VcsConfiguration.StandardConfirmation.REMOVE);
   }
 
 }

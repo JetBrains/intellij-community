@@ -27,17 +27,14 @@ import org.testng.annotations.Test;
 import static com.intellij.openapi.vcs.FileStatus.ADDED;
 import static com.intellij.openapi.vcs.FileStatus.DELETED;
 import static com.intellij.openapi.vcs.FileStatus.MODIFIED;
+import static git4idea.test.GitExecutor.add;
 
-/**
- * @author Kirill Likhodedov
- * @deprecated Use {@link GitLightTest}
- */
-@Deprecated
 public class GitChangeProviderVersionedTest extends GitChangeProviderTest {
 
   @Test
   public void testCreateFile() throws Exception {
     VirtualFile file = create(myRootDir, "new.txt");
+    add(file.getPath());
     assertChanges(file, ADDED);
   }
 
@@ -68,7 +65,7 @@ public class GitChangeProviderVersionedTest extends GitChangeProviderTest {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            final VirtualFile dir = myRepo.getVFRootDir().findChild("dir");
+            final VirtualFile dir = myProjectRoot.findChild("dir");
             myDirtyScope.addDirtyDirRecursively(new FilePathImpl(dir));
             FileUtil.delete(VfsUtil.virtualToIoFile(dir));
           }
@@ -86,7 +83,7 @@ public class GitChangeProviderVersionedTest extends GitChangeProviderTest {
     // But the order is likely preserved if it meets the natural order of the items inserted into the dirty scope.
     // That's why the test moves from .../repo/dir/new.txt to .../repo/new.txt - to make the old path appear later than the new one.
     // This is not consistent though.
-    final VirtualFile dir= myRepo.getVFRootDir().findChild("dir");
+    final VirtualFile dir= myProjectRoot.findChild("dir");
     final VirtualFile file = create(dir, "new.txt");
     move(file, myRootDir);
     assertChanges(file, ADDED);
@@ -101,6 +98,7 @@ public class GitChangeProviderVersionedTest extends GitChangeProviderTest {
     edit(cfile, "new cfile content");
     delete(dfile);
     VirtualFile newfile = create(myRootDir, "newfile.txt");
+    add();
 
     assertChanges(new VirtualFile[] {afile, cfile, dfile, newfile}, new FileStatus[] {MODIFIED, MODIFIED, DELETED, ADDED});
   }

@@ -84,8 +84,16 @@ public class GitExecutor extends Executor {
     cd(repository.getRoot().getPath());
   }
 
+  public static void add() {
+    add(".");
+  }
+
+  public static void add(@NotNull String path) {
+    git("add " + path);
+  }
+
   public static void addCommit(@NotNull String message) {
-    git("add .");
+    add();
     commit(message);
   }
 

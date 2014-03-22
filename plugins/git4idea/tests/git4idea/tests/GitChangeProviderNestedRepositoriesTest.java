@@ -54,21 +54,23 @@ public class GitChangeProviderNestedRepositoriesTest extends GitChangeProviderTe
 
   @BeforeMethod
   public void setUp() throws Exception {
-    final File repoRoot = myRepo.getRootDir();
+    File repoRoot = new File(myProjectPath);
     myChildRepoDir = new File(repoRoot, "child");
     myChildRepoDir.mkdir();
     myChildRepo = GitTestRepository.init(myChildRepoDir);
-    myChildRepo.setName(MAIN_USER_NAME, MAIN_USER_EMAIL);
+    //myChildRepo.setName(MAIN_USER_NAME, MAIN_USER_EMAIL);
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myChildRepo.getRootDir());
     myChildRepo.refresh();
 
-    myChildFiles = GitTestUtil.createFileStructure(myProject, myChildRepo.getVFRootDir(), "in1.txt", "in2.txt", "dirr/inin1.txt", "dirr/inin2.txt");
+    myChildFiles =
+      GitTestUtil.createFileStructure(myProject, myChildRepo.getVFRootDir(), "in1.txt", "in2.txt", "dirr/inin1.txt", "dirr/inin2.txt");
     myChildRepo.addCommit();
     myChildRepo.refresh();
 
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    myVcsManager.setDirectoryMappings(Arrays.asList(new VcsDirectoryMapping(myRepo.getRootDir().getPath(), GitVcs.getKey().getName()),
-                                                    new VcsDirectoryMapping(myChildRepo.getRootDir().getPath(), GitVcs.getKey().getName())));
+    myVcsManager.setDirectoryMappings(Arrays.asList(new VcsDirectoryMapping(myProjectPath, GitVcs.getKey().getName()),
+                                                    new VcsDirectoryMapping(myChildRepo.getRootDir().getPath(),
+                                                                            GitVcs.getKey().getName())));
     myChangeListManager = ChangeListManager.getInstance(myProject);
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
   }
@@ -89,7 +91,7 @@ public class GitChangeProviderNestedRepositoriesTest extends GitChangeProviderTe
     Change change2 = myChangeListManager.getChange(in2);
     myChangeListManager.moveChangesTo(localChangeList, change1, change2);
 
-    myDirtyScopeManager.filesDirty(Collections.singletonList(in1), Collections.singletonList(myRepo.getVFRootDir()));
+    myDirtyScopeManager.filesDirty(Collections.singletonList(in1), Collections.singletonList(myRootDir));
     myChangeListManager.ensureUpToDate(false);
     LocalChangeList list = myChangeListManager.getChangeList(in1);
     Assert.assertNotNull(list);

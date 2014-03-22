@@ -16,38 +16,40 @@
 package git4idea.tests;
 
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope;
-import com.intellij.testFramework.vcs.MockChangeListManagerGate;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.vcs.MockChangeListManagerGate;
 import com.intellij.testFramework.vcs.MockChangelistBuilder;
 import com.intellij.testFramework.vcs.MockDirtyScope;
 import git4idea.GitVcs;
 import git4idea.status.GitChangeProvider;
-import git4idea.test.GitOldTest;
+import git4idea.test.GitPlatformTest;
 import git4idea.test.GitTestUtil;
-import org.testng.annotations.BeforeMethod;
 
-import java.lang.reflect.Method;
+import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.testng.Assert.*;
+import static com.intellij.openapi.vcs.Executor.touch;
+import static com.intellij.openapi.vcs.VcsTestUtil.*;
+import static git4idea.test.GitExecutor.*;
 
 /**
  * Tests GitChangeProvider functionality. Scenario is the same for all tests:
  * 1. Modifies files on disk (creates, edits, deletes, etc.)
  * 2. Manually adds them to a dirty scope.
  * 3. Calls ChangeProvider.getChanges() and checks that the changes are there.
- * @author Kirill Likhodedov
- * @deprecated Use {@link GitLightTest}
  */
-@Deprecated
-public class GitChangeProviderTest extends GitOldTest {
+public abstract class GitChangeProviderTest extends GitPlatformTest {
 
   protected GitChangeProvider myChangeProvider;
   protected VcsModifiableDirtyScope myDirtyScope;
@@ -55,33 +57,37 @@ public class GitChangeProviderTest extends GitOldTest {
   protected VirtualFile afile;
   protected VirtualFile myRootDir;
   protected VirtualFile mySubDir;
+  protected GitVcs myVcs;
 
-  @BeforeMethod
   @Override
-  protected void setUp(Method testMethod) throws Exception {
-    super.setUp(testMethod);
-    myChangeProvider = (GitChangeProvider) GitVcs.getInstance(myProject).getChangeProvider();
+  protected void setUp() throws Exception {
+    super.setUp();
+    myVcs = GitVcs.getInstance(myProject);
+    assertNotNull(myVcs);
+    myChangeProvider = (GitChangeProvider) myVcs.getChangeProvider();
 
-    myFiles = GitTestUtil.createFileStructure(myProject, myRepo.getVFRootDir(), "a.txt", "b.txt", "dir/c.txt", "dir/subdir/d.txt");
-    myRepo.addCommit();
-    myRepo.refresh();
+    GitTestUtil.createRepository(myProject, myProjectPath, false);
+    myFiles = GitTestUtil.createFileStructure(myProject, myProjectRoot, "a.txt", "b.txt", "dir/c.txt", "dir/subdir/d.txt");
+    addCommit("initial");
 
     afile = myFiles.get("a.txt"); // the file is commonly used, so save it in a field.
-    myRootDir = myRepo.getVFRootDir();
+    myRootDir = myProjectRoot;
     mySubDir = myRootDir.findChild("dir");
 
-    myDirtyScope = new MockDirtyScope(myProject, GitVcs.getInstance(myProject));
+    myDirtyScope = new MockDirtyScope(myProject, myVcs);
+
+    cd(myProjectPath);
   }
 
   protected void modifyFileInBranches(String filename, FileAction masterAction, FileAction featureAction) throws Exception {
-    myRepo.createBranch("feature");
+    git("branch feature");
     performActionOnFileAndRecordToIndex(filename, "feature", featureAction);
-    myRepo.commit();
-    myRepo.checkout("master");
+    commit("commit to feature");
+    checkout("master");
     performActionOnFileAndRecordToIndex(filename, "master", masterAction);
-    myRepo.commit();
-    myRepo.merge("feature");
-    myRepo.refresh();
+    commit("commit to master");
+    git("merge feature");
+    refresh();
   }
 
   protected enum FileAction {
@@ -89,26 +95,28 @@ public class GitChangeProviderTest extends GitOldTest {
   }
 
   private void performActionOnFileAndRecordToIndex(String filename, String branchName, FileAction action) throws Exception {
-    VirtualFile file = myRepo.getVFRootDir().findChild(filename);
+    VirtualFile file = myRootDir.findChild(filename);
+    assertNotNull("VirtualFile is null: " + filename, file);
     switch (action) {
       case CREATE:
-        final VirtualFile createdFile = createFileInCommand(filename, "initial content in branch " + branchName);
+        File f = touch(filename, "initial content in branch " + branchName);
+        final VirtualFile createdFile = VfsUtil.findFileByIoFile(f, true);
         dirty(createdFile);
-        myRepo.add(filename);
+        add(filename);
         break;
       case MODIFY:
-        editFileInCommand(file, "new content in branch " + branchName);
+        overwrite(VfsUtilCore.virtualToIoFile(file), "new content in branch " + branchName);
         dirty(file);
-        myRepo.add(filename);
+        add(filename);
         break;
       case DELETE:
         dirty(file);
-        myRepo.rm(filename);
+        git("rm " + filename);
         break;
       case RENAME:
         String newName = filename + "_" + branchName.replaceAll("\\s", "_") + "_new";
         dirty(file);
-        myRepo.mv(filename, newName);
+        mv(filename, newName);
         myRootDir.refresh(false, true);
         dirty(myRootDir.findChild(newName));
         break;
@@ -127,11 +135,11 @@ public class GitChangeProviderTest extends GitOldTest {
       FilePath fp = new FilePathImpl(virtualFiles[i]);
       FileStatus status = fileStatuses[i];
       if (status == null) {
-        assertFalse(result.containsKey(fp), "File [" + tos(fp) + " shouldn't be in the change list, but it was.");
+        assertFalse("File [" + tos(fp) + " shouldn't be in the change list, but it was.", result.containsKey(fp));
         continue;
       }
-      assertTrue(result.containsKey(fp), "File [" + tos(fp) + "] didn't change. Changes: " + tos(result));
-      assertEquals(result.get(fp).getFileStatus(), status, "File statuses don't match for file [" + tos(fp) + "]");
+      assertTrue("File [" + tos(fp) + "] didn't change. Changes: " + tos(result), result.containsKey(fp));
+      assertEquals("File statuses don't match for file [" + tos(fp) + "]", result.get(fp).getFileStatus(), status);
     }
   }
 
@@ -181,35 +189,65 @@ public class GitChangeProviderTest extends GitOldTest {
   }
 
   private VirtualFile create(VirtualFile parent, String name, boolean dir) {
-    final VirtualFile file = dir ? createDirInCommand(parent, name) : createFileInCommand(parent, name, "content" + Math.random());
+    final VirtualFile file = dir ?
+                             VcsTestUtil.createDir(myProject, parent, name) :
+                             createFile(myProject, parent, name, "content" + Math.random());
     dirty(file);
     return file;
   }
 
   protected void edit(VirtualFile file, String content) {
-    editFileInCommand(file, content);
+    editFileInCommand(myProject, file, content);
     dirty(file);
   }
 
   protected void move(VirtualFile file, VirtualFile newParent) {
     dirty(file);
-    moveFileInCommand(file, newParent);
+    moveFileInCommand(myProject, file, newParent);
     dirty(file);
   }
 
   protected VirtualFile copy(VirtualFile file, VirtualFile newParent) {
     dirty(file);
-    VirtualFile newFile = copyFileInCommand(file, newParent);
+    VirtualFile newFile = copyFileInCommand(myProject, file, newParent, file.getName());
     dirty(newFile);
     return newFile;
   }
 
   protected void delete(VirtualFile file) {
     dirty(file);
-    deleteFileInCommand(file);
+    deleteFileInCommand(myProject, file);
   }
 
   private void dirty(VirtualFile file) {
     myDirtyScope.addDirtyFile(new FilePathImpl(file));
   }
+
+  protected String tos(FilePath fp) {
+    return FileUtil.getRelativePath(new File(myProjectPath), fp.getIOFile());
+  }
+
+  protected String tos(Change change) {
+    switch (change.getType()) {
+      case NEW: return "A: " + tos(change.getAfterRevision());
+      case DELETED: return "D: " + tos(change.getBeforeRevision());
+      case MOVED: return "M: " + tos(change.getBeforeRevision()) + " -> " + tos(change.getAfterRevision());
+      case MODIFICATION: return "M: " + tos(change.getAfterRevision());
+      default: return "~: " +  tos(change.getBeforeRevision()) + " -> " + tos(change.getAfterRevision());
+    }
+  }
+
+  protected String tos(ContentRevision revision) {
+    return tos(revision.getFile());
+  }
+
+  protected String tos(Map<FilePath, Change> changes) {
+    StringBuilder stringBuilder = new StringBuilder("[");
+    for (Change change : changes.values()) {
+      stringBuilder.append(tos(change)).append(", ");
+    }
+    stringBuilder.append("]");
+    return stringBuilder.toString();
+  }
+
 }
