@@ -127,23 +127,18 @@ public class VcsLogFilterer {
   }
 
   private void applyGraphFilters(@NotNull final DataPack dataPack, @Nullable final VcsLogBranchFilter branchFilter) {
-    myUI.getTable().executeWithoutRepaint(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          dataPack.getGraphFacade().setVisibleBranches(branchFilter != null ? getMatchingHeads(dataPack, branchFilter) : null);
-        }
-        catch (InvalidRequestException e) {
-          if (!myLogDataHolder.isFullLogShowing()) {
-            myLogDataHolder.showFullLog(EmptyRunnable.getInstance());
-            throw new ProcessCanceledException();
-          }
-          else {
-            throw e;
-          }
-        }
+    try {
+      dataPack.getGraphFacade().setVisibleBranches(branchFilter != null ? getMatchingHeads(dataPack, branchFilter) : null);
+    }
+    catch (InvalidRequestException e) {
+      if (!myLogDataHolder.isFullLogShowing()) {
+        myLogDataHolder.showFullLog(EmptyRunnable.getInstance());
+        throw new ProcessCanceledException();
       }
-    });
+      else {
+        throw e;
+      }
+    }
   }
 
   @NotNull
