@@ -40,4 +40,19 @@ public class InspectionTest extends InspectionTestCase {
   public void testDelegateOnStaticFieldOrMethod() throws Exception {
     doTest();
   }
+
+  //TODO make this test work
+  public void testSneakyThrowsSingle() throws Exception {
+    doTest();
+  }
+
+  //TODO make this test work
+  public void testSneakyThrowsPlain() throws Exception {
+    doTest();
+  }
+
+  //TODO make this test work
+  public void testSneakyThrowsMultiple() throws Exception {
+    doTest();
+  }
 }

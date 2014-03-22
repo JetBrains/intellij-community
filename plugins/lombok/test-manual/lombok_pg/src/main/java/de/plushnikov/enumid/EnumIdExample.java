@@ -20,6 +20,7 @@ public class EnumIdExample {
     public static void main(String[] args) {
         Status x = Status.COMPLETED;
         x = Status.findByCode(0);
+        System.out.println(Status.COMPLETED.getCode());
         System.out.println(x);
     }
 }
