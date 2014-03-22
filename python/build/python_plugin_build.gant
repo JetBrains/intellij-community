@@ -86,6 +86,9 @@ target(name: "compile", description: "Compile module python") {
     fileset(dir: "${ideaPlugins}/terminal/lib") {
       include(name: "*.jar")
     }
+    fileset(dir: "${ideaPlugins}/IntelliLang/lib") {
+      include(name: "*.jar")
+    }
   }
 
   ant.path(id: "sourcepath") {
