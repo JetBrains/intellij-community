@@ -32,13 +32,13 @@ class GitCrlfProblemsDetectorTest extends GitPlatformTest {
     super.setUp();
     cd myProjectRoot
     try {
-      myOldGlobalAutoCrlfValue = git ("config --global core.autocrlf")
-      git ("config --global --unset core.autocrlf")
+      myOldGlobalAutoCrlfValue = git ("config --global core.autocrlf", true)
+      git ("config --global --unset core.autocrlf", true)
     } catch (Exception e) {
       System.out.println("Couldn't operate with global config: " + e.getMessage())
     }
-    myOldSystemAutoCrlfValue = git ("config --system core.autocrlf")
-    git ("config --system --unset core.autocrlf")
+    myOldSystemAutoCrlfValue = git ("config --system core.autocrlf", true)
+    git ("config --system --unset core.autocrlf", true)
 
     createRepository(myProjectRoot.getPath())
   }

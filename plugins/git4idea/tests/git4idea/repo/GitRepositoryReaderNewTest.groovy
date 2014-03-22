@@ -49,7 +49,7 @@ public class GitRepositoryReaderNewTest extends GitPlatformTest {
     conflict(myRepository, "feature")
     2.times { commit(myRepository) }
     git("checkout HEAD^")
-    git("rebase feature")
+    git("rebase feature", true)
 
     File gitDir = new File(myRepository.getRoot().getPath(), ".git")
     def reader = new GitRepositoryReader(gitDir)

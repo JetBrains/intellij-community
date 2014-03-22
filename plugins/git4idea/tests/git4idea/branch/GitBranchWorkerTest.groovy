@@ -253,7 +253,7 @@ class GitBranchWorkerTest extends GitPlatformTest {
 
     assertNotNull "Local changes were not shown in the dialog", changes
     if (newGitVersion()) {
-      assertEquals "Incorrect set of local changes was shown in the dialog",
+      assertSameElements "Incorrect set of local changes was shown in the dialog",
                    localChanges,
                    changes.collect({
                      FileUtil.getRelativePath(myUltimate.root.path, it.afterRevision.file.path, '/'.toCharacter()) }
@@ -318,7 +318,7 @@ class GitBranchWorkerTest extends GitPlatformTest {
       localChanges.add("local${i}.txt")
     }
     localChangesOverwrittenByWithoutConflict(repository, "feature", localChanges)
-    myPlatformFacade.getChangeListManager(myProject).ensureUpToDate(false)
+    updateChangeListManager()
 
     myRepositories.each {
       if (it != repository) {
