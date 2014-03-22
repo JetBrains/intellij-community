@@ -16,7 +16,7 @@
 package git4idea.test
 
 import git4idea.repo.GitRepository
-import static git4idea.test.GitExecutor.*;
+import static GitExecutor.*;
 /**
  * Create popular scenarios used in multiple tests, for example:
  *  - create a branch and commit something there;

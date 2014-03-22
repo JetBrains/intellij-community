@@ -38,7 +38,7 @@ import cucumber.annotation.Order;
 import git4idea.commands.Git;
 import git4idea.commands.GitHttpAuthService;
 import git4idea.config.GitVcsSettings;
-import git4idea.remote.GitHttpAuthTestService;
+import git4idea.test.GitHttpAuthTestService;
 import git4idea.repo.GitRepository;
 import git4idea.test.GitExecutor;
 import git4idea.test.GitTestUtil;

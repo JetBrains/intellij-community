@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 
 /**
- * <p>TestDialogManager instead of showing the dialog, gives the control to a {@link git4idea.test.TestDialogHandler} which can specify the dialog exit code
+ * <p>TestDialogManager instead of showing the dialog, gives the control to a {@link TestDialogHandler} which can specify the dialog exit code
  *    (thus simulation different user choices) or even change other elements in the dialog.</p>
  * <p>To use it a test should register the {@link TestDialogHandler} implementation. For example:
  * <pre><code>

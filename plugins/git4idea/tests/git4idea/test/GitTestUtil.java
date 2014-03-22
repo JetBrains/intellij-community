@@ -85,18 +85,18 @@ public class GitTestUtil {
 
   public static void initRepo(@NotNull String repoRoot, boolean makeInitialCommit) {
     cd(repoRoot);
-    git("init");
+    GitExecutor.git("init");
     setupUsername();
     if (makeInitialCommit) {
       touch("initial.txt");
-      git("add initial.txt");
-      git("commit -m initial");
+      GitExecutor.git("add initial.txt");
+      GitExecutor.git("commit -m initial");
     }
   }
 
   public static void setupUsername() {
-    git("config user.name '" + USER_NAME + "'");
-    git("config user.email '" + USER_EMAIL + "'");
+    GitExecutor.git("config user.name '" + USER_NAME + "'");
+    GitExecutor.git("config user.email '" + USER_EMAIL + "'");
   }
 
   /**

@@ -18,10 +18,7 @@ package git4idea.test;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.TestVcsNotifier;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,8 +36,6 @@ import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
-
-import static git4idea.test.GitExecutor.*;
 
 public abstract class GitPlatformTest extends UsefulTestCase {
 
@@ -81,7 +76,7 @@ public abstract class GitPlatformTest extends UsefulTestCase {
     myProjectPath = myProjectRoot.getPath();
 
     myGitSettings = GitVcsSettings.getInstance(myProject);
-    myGitSettings.getAppSettings().setPathToGit(GIT_EXECUTABLE);
+    myGitSettings.getAppSettings().setPathToGit(GitExecutor.GIT_EXECUTABLE);
 
     myDialogManager = (TestDialogManager)ServiceManager.getService(DialogManager.class);
     myVcsNotifier = (TestVcsNotifier)ServiceManager.getService(myProject, VcsNotifier.class);
@@ -123,10 +118,10 @@ public abstract class GitPlatformTest extends UsefulTestCase {
   protected void prepareRemoteRepo(@NotNull GitRepository source) {
     final String target = "parent.git";
     final String targetName = "origin";
-    cd(myProjectRoot);
-    git("clone --bare '%s' %s", source.getRoot().getPath(), target);
-    cd(source);
-    git("remote add %s '%s'", targetName, myProjectRoot + "/" + target);
+    Executor.cd(myProjectRoot);
+    GitExecutor.git("clone --bare '%s' %s", source.getRoot().getPath(), target);
+    GitExecutor.cd(source);
+    GitExecutor.git("remote add %s '%s'", targetName, myProjectRoot + "/" + target);
   }
 
   protected void refresh() {

@@ -21,6 +21,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.Executor;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitCommit;
@@ -81,8 +82,8 @@ public class GitTestImpl implements Git {
   @NotNull
   @Override
   public GitCommandResult config(@NotNull GitRepository repository, String... params) {
-    cd(repository);
-    String output = git("config " + join(params, " "));
+    GitExecutor.cd(repository);
+    String output = GitExecutor.git("config " + join(params, " "));
     int exitCode = output.trim().isEmpty() ? 1 : 0;
     return new GitCommandResult(!output.contains("fatal") && exitCode == 0, exitCode, Collections.<String>emptyList(),
                                 Arrays.asList(StringUtil.splitByLines(output)), null);
@@ -98,14 +99,14 @@ public class GitTestImpl implements Git {
   @Override
   public GitCommandResult checkAttr(@NotNull final GitRepository repository, @NotNull Collection<String> attributes,
                                     @NotNull Collection<VirtualFile> files) {
-    cd(repository);
+    GitExecutor.cd(repository);
     Collection<String> relativePaths = Collections2.transform(files, new Function<VirtualFile, String>() {
       @Override
       public String apply(VirtualFile input) {
         return FileUtil.getRelativePath(repository.getRoot().getPath(), input.getPath(), '/');
       }
     });
-    String output = git("check-attr %s -- %s", join(attributes, " "), join(relativePaths, " "));
+    String output = GitExecutor.git("check-attr %s -- %s", join(attributes, " "), join(relativePaths, " "));
     return commandResult(output);
   }
 
@@ -293,8 +294,8 @@ public class GitTestImpl implements Git {
   }
 
   private static GitCommandResult execute(String workingDir, String operation, GitLineHandlerListener... listeners) {
-    cd(workingDir);
-    String out = git(operation);
+    Executor.cd(workingDir);
+    String out = GitExecutor.git(operation);
     feedOutput(out, listeners);
     return commandResult(out);
   }

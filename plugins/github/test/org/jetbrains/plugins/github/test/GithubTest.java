@@ -24,7 +24,7 @@ import com.intellij.testFramework.VfsTestUtil;
 import git4idea.commands.GitHttpAuthService;
 import git4idea.commands.GitHttpAuthenticator;
 import git4idea.config.GitConfigUtil;
-import git4idea.remote.GitHttpAuthTestService;
+import git4idea.test.GitHttpAuthTestService;
 import git4idea.repo.GitRepository;
 import git4idea.test.GitExecutor;
 import git4idea.test.GitPlatformTest;

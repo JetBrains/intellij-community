@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.remote;
+package git4idea.test;
 
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
