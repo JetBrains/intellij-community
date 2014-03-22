@@ -96,6 +96,7 @@ target(name: "compile", description: "Compile module python") {
       include(name: "pydevSrc")
       include(name: "openapi/src")
       include(name: "psi-api/src")
+      include(name: "IntelliLang-python/src")
     }
   }
   //The task requires the following libraries from IntelliJ IDEA distribution:
