@@ -34,6 +34,8 @@
 
     <renameHandler implementation="de.plushnikov.intellij.plugin.extension.LombokElementRenameHandler" order="FIRST"/>
     <treeGenerator implementation="de.plushnikov.intellij.plugin.extension.LombokLightMethodTreeGenerator"/>
+
+    <lang.structureViewExtension implementation="de.plushnikov.intellij.plugin.extension.LombokStructureViewExtension"/>
   </extensions>
 
   <extensions defaultExtensionNs="Lombook Plugin">
@@ -154,7 +156,7 @@
 		<ul>
 		<li>0.8.4
 				<ol>
-				    <li>....</li>
+				    <li>Fixed issue #42 : Added Extension to populate Structure view</li>
 				</ol>
 			</li>
 		<li>0.8.3
