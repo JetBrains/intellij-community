@@ -36,6 +36,7 @@ public abstract class VagrantSupport {
   @Nullable
   public abstract Pair<String, String> getVagrantInstanceParameters(@NotNull Project project);
 
+  @Nullable
   public abstract Pair<String, RemoteCredentials> getVagrantSettings(Project project);
 
   public abstract RemoteCredentials getCredentials(@NotNull String folder);
