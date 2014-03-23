@@ -69,6 +69,10 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
   private boolean myToolWindowDisposed = false;
   private final List<TreeSelectionListener> myPendingListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
+  private final String TOOLWINDOW_WEIGHT_PROPERTY = "idea.toolwindow.defaultWeight";
+  private final float DEFAULT_WEIGHT = 0.33f;
+
+
   public UIDesignerToolWindowManager(final Project project, final FileEditorManager fileEditorManager) {
     myProject = project;
     myFileEditorManager = fileEditorManager;
@@ -90,8 +94,32 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
     }
   }
 
+  /**
+   * Pulls in the weight property listed in idea.properties. If it isn't a
+   * valid number that can be parsed into a float, the original, default
+   * weight is returned.
+   *
+   * @return The user-set weight value, or the default weight if the user-set
+   *         value is invalid.
+   */
+  private float getToolWindowWeight() {
+    final String toolWindowWeightProp = System.getProperty(TOOLWINDOW_WEIGHT_PROPERTY);
+
+    if (toolWindowWeightProp == null) {
+      return DEFAULT_WEIGHT;
+    }
+
+    try {
+      return Float.parseFloat(toolWindowWeightProp);
+    }
+    // if value is invalid, return the original default value
+    catch (NumberFormatException e) {
+      return DEFAULT_WEIGHT;
+    }
+  }
+
   private void initToolWindow() {
-    myToolWindowPanel = new MyToolWindowPanel();
+    myToolWindowPanel = new MyToolWindowPanel(getToolWindowWeight());
     myComponentTree = new ComponentTree(myProject);
     for (TreeSelectionListener listener : myPendingListeners) {
       myComponentTree.addTreeSelectionListener(listener);
@@ -249,8 +277,8 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
   }
 
   private class MyToolWindowPanel extends Splitter implements DataProvider {
-    MyToolWindowPanel() {
-      super(true, 0.33f);
+    MyToolWindowPanel(float weight) {
+      super(true, weight);
     }
 
     @Nullable
