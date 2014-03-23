@@ -179,8 +179,13 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   }
 
   public void run() {
-    FileDocumentManager.getInstance().saveAllDocuments();
-    
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        FileDocumentManager.getInstance().saveAllDocuments();
+      }
+    });
+
     myPorts = findAvailablePorts(getProject(), myConsoleType);
 
     assert myPorts != null;
