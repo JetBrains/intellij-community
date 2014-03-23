@@ -22,6 +22,7 @@ import com.intellij.remote.RemoteCredentials;
 import com.intellij.remote.RemoteSdkCredentials;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
