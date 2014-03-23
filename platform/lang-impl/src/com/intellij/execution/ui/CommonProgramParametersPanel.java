@@ -33,10 +33,12 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.MacroAwareTextBrowseFolderListener;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.TextAccessor;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
@@ -48,17 +50,28 @@ import java.util.List;
 
 public class CommonProgramParametersPanel extends JPanel implements PanelWithAnchor {
   private LabeledComponent<RawCommandLineEditor> myProgramParametersComponent;
-  private LabeledComponent<JPanel> myWorkingDirectoryComponent;
-  private TextFieldWithBrowseButton myWorkingDirectoryField;
+  private LabeledComponent<JComponent> myWorkingDirectoryComponent;
+  protected TextFieldWithBrowseButton myWorkingDirectoryField;
   private EnvironmentVariablesComponent myEnvVariablesComponent;
   protected JComponent myAnchor;
 
   private Module myModuleContext = null;
 
   public CommonProgramParametersPanel() {
+    this(true);
+  }
+
+  public CommonProgramParametersPanel(boolean init) {
     super();
+
     setLayout(new VerticalFlowLayout(VerticalFlowLayout.MIDDLE, 0, 5, true, false));
 
+    if (init) {
+      init();
+    }
+  }
+
+  protected void init() {
     initComponents();
     copyDialogCaption(myProgramParametersComponent);
     updateUI();
@@ -86,34 +99,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
       }
     });
 
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(myWorkingDirectoryField, BorderLayout.CENTER);
-
-    final FixedSizeButton button = new FixedSizeButton(myWorkingDirectoryField);
-    button.setIcon(AllIcons.RunConfigurations.Variables);
-    button.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final List<String> macros = new SmartList<String>(PathMacros.getInstance().getUserMacroNames());
-        if (myModuleContext != null) {
-          macros.add(PathMacroUtil.MODULE_DIR_MACRO_NAME);
-        }
-
-        final JList list = new JBList(ArrayUtil.toStringArray(macros));
-        JBPopupFactory.getInstance().createListPopupBuilder(list).setItemChoosenCallback(new Runnable() {
-          @Override
-          public void run() {
-            final Object value = list.getSelectedValue();
-            if (value instanceof String) {
-              setWorkingDirectory("$" + value + "$");
-            }
-          }
-        }).setMovable(false).setResizable(false).createPopup().showUnderneathOf(button);
-      }
-    });
-    panel.add(button, BorderLayout.EAST);
-
-    myWorkingDirectoryComponent = LabeledComponent.create(panel, ExecutionBundle.message("run.configuration.working.directory.label"));
+    myWorkingDirectoryComponent = LabeledComponent.create(createComponentWithMacroBrowse(myWorkingDirectoryField), ExecutionBundle.message("run.configuration.working.directory.label"));
     myEnvVariablesComponent = new EnvironmentVariablesComponent();
 
     myEnvVariablesComponent.setLabelLocation(BorderLayout.WEST);
@@ -125,6 +111,36 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     setPreferredSize(new Dimension(10, 10));
 
     setAnchor(myEnvVariablesComponent.getLabel());
+  }
+
+  protected JComponent createComponentWithMacroBrowse(@NotNull final TextFieldWithBrowseButton textAccessor) {
+    final FixedSizeButton button = new FixedSizeButton(textAccessor);
+    button.setIcon(AllIcons.RunConfigurations.Variables);
+    button.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        List<String> macros = new SmartList<String>(PathMacros.getInstance().getUserMacroNames());
+        if (myModuleContext != null) {
+          macros.add(PathMacroUtil.MODULE_DIR_MACRO_NAME);
+        }
+
+        final JList list = new JBList(ArrayUtil.toStringArray(macros));
+        JBPopupFactory.getInstance().createListPopupBuilder(list).setItemChoosenCallback(new Runnable() {
+          @Override
+          public void run() {
+            final Object value = list.getSelectedValue();
+            if (value instanceof String) {
+              textAccessor.setText('$' + ((String)value) + '$');
+            }
+          }
+        }).setMovable(false).setResizable(false).createPopup().showUnderneathOf(button);
+      }
+    });
+
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(textAccessor, BorderLayout.CENTER);
+    panel.add(button, BorderLayout.EAST);
+    return panel;
   }
 
   protected void addComponents() {
@@ -174,11 +190,16 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
   }
 
   public void applyTo(CommonProgramRunConfigurationParameters configuration) {
-    configuration.setProgramParameters(myProgramParametersComponent.getComponent().getText());
-    configuration.setWorkingDirectory(myWorkingDirectoryField.getText());
+    configuration.setProgramParameters(fromTextField(myProgramParametersComponent.getComponent(), configuration));
+    configuration.setWorkingDirectory(fromTextField(myWorkingDirectoryField, configuration));
 
     configuration.setEnvs(myEnvVariablesComponent.getEnvs());
     configuration.setPassParentEnvs(myEnvVariablesComponent.isPassParentEnvs());
+  }
+
+  @Nullable
+  protected String fromTextField(@NotNull TextAccessor textAccessor, @NotNull CommonProgramRunConfigurationParameters configuration) {
+    return textAccessor.getText();
   }
 
   public void reset(CommonProgramRunConfigurationParameters configuration) {
