@@ -45,6 +45,8 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.tasks.trello.TrelloUtil.TRELLO_API_BASE_URL;
+
 /**
  * @author Mikhail Golubev
  */
@@ -117,7 +119,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
   @Nullable
   @Override
   public Task findTask(String id) throws Exception {
-    String url = TrelloUtil.TRELLO_API_BASE_URL + "/cards/" + id + "?actions=commentCard";
+    String url = TRELLO_API_BASE_URL + "/cards/" + id + "?actions=commentCard&fields=" + encodeUrl(TrelloCard.REQUIRED_FIELDS) ;
     try {
       return new TrelloTask(makeRequestAndDeserializeJsonResponse(url, TrelloCard.class), this);
     }
@@ -183,7 +185,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
   @NotNull
   public TrelloUser fetchUserByToken() throws Exception {
     try {
-      String url = TrelloUtil.TRELLO_API_BASE_URL + "/members/me";
+      String url = TRELLO_API_BASE_URL + "/members/me?fields=" + encodeUrl(TrelloUser.REQUIRED_FIELDS);
       return makeRequestAndDeserializeJsonResponse(url, TrelloUser.class);
     }
     catch (Exception e) {
@@ -197,7 +199,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
 
   @NotNull
   public TrelloBoard fetchBoardById(@NotNull String id) throws Exception {
-    String url = TrelloUtil.TRELLO_API_BASE_URL + "/boards/" + id;
+    String url = TRELLO_API_BASE_URL + "/boards/" + id + "?fields=" + encodeUrl(TrelloBoard.REQUIRED_FIELDS);
     try {
       return makeRequestAndDeserializeJsonResponse(url, TrelloBoard.class);
     }
@@ -209,7 +211,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
 
   @NotNull
   public TrelloList fetchListById(@NotNull String id) throws Exception {
-    String url = TrelloUtil.TRELLO_API_BASE_URL + "/lists/" + id;
+    String url = TRELLO_API_BASE_URL + "/lists/" + id + "?fields=" + encodeUrl(TrelloList.REQUIRED_FIELDS);
     try {
       return makeRequestAndDeserializeJsonResponse(url, TrelloList.class);
     }
@@ -224,7 +226,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
     if (myCurrentBoard == null) {
       throw new IllegalStateException("Board not set");
     }
-    String url = TrelloUtil.TRELLO_API_BASE_URL + "/boards/" + myCurrentBoard.getId() + "/lists";
+    String url = TRELLO_API_BASE_URL + "/boards/" + myCurrentBoard.getId() + "/lists?fields=" + encodeUrl(TrelloList.REQUIRED_FIELDS);
     return makeRequestAndDeserializeJsonResponse(url, TrelloUtil.LIST_OF_LISTS_TYPE);
   }
 
@@ -233,7 +235,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
     if (myCurrentUser == null) {
       throw new IllegalStateException("User not set");
     }
-    String url = TrelloUtil.TRELLO_API_BASE_URL + "/members/me/boards?filter=open";
+    String url = TRELLO_API_BASE_URL + "/members/me/boards?filter=open&fields=" + encodeUrl(TrelloBoard.REQUIRED_FIELDS);
     return makeRequestAndDeserializeJsonResponse(url, TrelloUtil.LIST_OF_BOARDS_TYPE);
   }
 
@@ -243,19 +245,19 @@ public final class TrelloRepository extends BaseRepositoryImpl {
     // choose most appropriate card provider
     String baseUrl;
     if (myCurrentList != null) {
-      baseUrl = TrelloUtil.TRELLO_API_BASE_URL + "/lists/" + myCurrentList.getId() + "/cards";
+      baseUrl = TRELLO_API_BASE_URL + "/lists/" + myCurrentList.getId() + "/cards";
       fromList = true;
     }
     else if (myCurrentBoard != null) {
-      baseUrl = TrelloUtil.TRELLO_API_BASE_URL + "/boards/" + myCurrentBoard.getId() + "/cards";
+      baseUrl = TRELLO_API_BASE_URL + "/boards/" + myCurrentBoard.getId() + "/cards";
     }
     else if (myCurrentUser != null) {
-      baseUrl = TrelloUtil.TRELLO_API_BASE_URL + "/members/me/cards";
+      baseUrl = TRELLO_API_BASE_URL + "/members/me/cards";
     }
     else {
       throw new IllegalStateException("Not configured");
     }
-    String allCardsUrl = baseUrl + "?filter=all";
+    String allCardsUrl = baseUrl + "?filter=all&fields=" + encodeUrl(TrelloCard.REQUIRED_FIELDS);
     List<TrelloCard> cards = makeRequestAndDeserializeJsonResponse(allCardsUrl, TrelloUtil.LIST_OF_CARDS_TYPE);
     LOG.debug("Total " + cards.size() + " cards downloaded");
     if (!myIncludeAllCards) {
@@ -355,7 +357,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
   @Nullable
   @Override
   public CancellableConnection createCancellableConnection() {
-    GetMethod method = new GetMethod(TrelloUtil.TRELLO_API_BASE_URL + "/members/me/cards?limit=1");
+    GetMethod method = new GetMethod(TRELLO_API_BASE_URL + "/members/me/cards?limit=1");
     configureHttpMethod(method);
     return new HttpTestConnection<GetMethod>(method) {
       @Override
