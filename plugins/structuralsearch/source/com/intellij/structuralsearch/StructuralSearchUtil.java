@@ -33,7 +33,6 @@ public class StructuralSearchUtil {
   private StructuralSearchUtil() {
   }
 
-  @Nullable
   public static StructuralSearchProfile getProfileByPsiElement(@NotNull PsiElement element) {
     return getProfileByLanguage(element.getLanguage());
   }
@@ -58,7 +57,6 @@ public class StructuralSearchUtil {
            :  StructuralSearchProfile.EP_NAME.getExtensions();
   }
 
-  @Nullable
   public static StructuralSearchProfile getProfileByLanguage(@NotNull Language language) {
 
     for (StructuralSearchProfile profile : getProfiles()) {
@@ -71,8 +69,7 @@ public class StructuralSearchUtil {
         return profile;
       }
     }
-
-    return null;
+    throw new RuntimeException("No StructuralSearchProfile for language " + language);
   }
 
   /*public static List<StructuralSearchProfile> getAllProfiles() {
@@ -91,7 +88,6 @@ public class StructuralSearchUtil {
     return name.charAt(0)=='$' && name.charAt(name.length()-1)=='$';
   }
 
-  @Nullable
   public static StructuralSearchProfile getProfileByFileType(FileType fileType) {
 
     for (StructuralSearchProfile profile : getProfiles()) {
@@ -104,8 +100,7 @@ public class StructuralSearchUtil {
         return profile;
       }
     }
-
-    return null;
+    throw new RuntimeException("No StructuralSearchProfile for fileType " + fileType);
   }
 
   @NotNull
