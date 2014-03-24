@@ -528,7 +528,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         return;
       }
 
-      if (isMacScrollbar()) {
+      if (isMacOverlayScrollbar()) {
         if (!isMirrored()) {
           super.paintThumb(g, c, thumbBounds);
         }
@@ -554,14 +554,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected int adjustThumbWidth(int width) {
-      if (isMacScrollbar() || UISettings.getInstance().PRESENTATION_MODE) return super.adjustThumbWidth(width);
+      if (isMacOverlayScrollbar() || UISettings.getInstance().PRESENTATION_MODE) return super.adjustThumbWidth(width);
       return width - 2;
     }
 
     @Override
     protected int getThickness() {
       if (UISettings.getInstance().PRESENTATION_MODE) return super.getThickness();
-      return super.getThickness() + (isMacScrollbar() ? 2 : 7);
+      return super.getThickness() + (isMacOverlayScrollbar() ? 2 : 7);
     }
 
     @Override
@@ -618,7 +618,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected Color adjustColor(Color c) {
-      if (isMacScrollbar()) return super.adjustColor(c);
+      if (isMacOverlayScrollbar()) return super.adjustColor(c);
       
       if (UIUtil.isUnderDarcula()) {
         return c;

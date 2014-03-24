@@ -64,8 +64,10 @@ public class JBScrollPane extends JScrollPane {
     if (c == null) return null;
 
     if (!(c instanceof JViewport)) {
-      c = c.getParent();
-      if (!(c instanceof JViewport)) return null;
+      // if asked for a viewport child, take a viewport.
+      // If not (e.g asked for a scrollbar), go straight to JLayeredPane  
+      Container vp = c.getParent();
+      if (vp instanceof JViewport) c = vp;
     }
     
     c = c.getParent();
