@@ -576,6 +576,7 @@ public class MatcherImpl {
             public void run() {
               PsiElement file = finalFile;
               if (!file.isValid()) return;
+//TODO JAVA SPECIFIC
               if (file instanceof PsiIdentifier) {
                 // Searching in previous results
                 file = file.getParent();
@@ -641,6 +642,7 @@ public class MatcherImpl {
         elementToStartMatching = element;
       }
     } else {
+//TODO JAVA SPECIFIC
       if (targetNode instanceof PsiIdentifier) {
         targetNode = targetNode.getParent();
         final PsiElement parent = targetNode.getParent();
@@ -660,6 +662,7 @@ public class MatcherImpl {
         targetNode = targetNode.getParent();
 
         if (options.isLooseMatching()) {
+//TODO JAVA SPECIFIC
           element = updateCurrentNode(element);
           targetNode = updateCurrentNode(targetNode);
         }
@@ -677,6 +680,7 @@ public class MatcherImpl {
     return matchCount > 0 ? sink.getMatches().get(0) : null;
   }
 
+//TODO JAVA SPECIFIC
   private static PsiElement updateCurrentNode(PsiElement targetNode) {
     if (targetNode instanceof PsiCodeBlock && ((PsiCodeBlock)targetNode).getStatements().length == 1) {
       PsiElement targetNodeParent = targetNode.getParent();
