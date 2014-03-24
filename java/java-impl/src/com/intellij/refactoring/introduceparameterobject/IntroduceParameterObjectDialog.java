@@ -259,7 +259,7 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
         IntroduceParameterObjectDialog.this.doCancelAction();
       }
     };
-    myParamsPanel.add(paramsPanel, BorderLayout.CENTER);
+    myParamsPanel.add(paramsPanel, BorderLayout.NORTH);
     return myWholePanel;
   }
 
