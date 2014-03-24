@@ -4,9 +4,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.tasks.config.BaseRepositoryEditor;
-import com.intellij.tasks.impl.RemoteFetchTask;
+import com.intellij.tasks.impl.TaskUiUtil;
 import com.intellij.tasks.redmine.model.RedmineProject;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.FormBuilder;
@@ -71,12 +70,7 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
   protected JComponent createCustomPanel() {
     myProjectLabel = new JBLabel("Project:", SwingConstants.RIGHT);
     myProjectCombo = new ComboBox(300);
-    myProjectCombo.setRenderer(new ListCellRendererWrapper<RedmineProject>() {
-      @Override
-      public void customize(JList list, RedmineProject redmineProject, int index, boolean selected, boolean hasFocus) {
-        setText(redmineProject == null ? "Set URL and password/token first" : redmineProject.getName());
-      }
-    });
+    myProjectCombo.setRenderer(new TaskUiUtil.SimpleComboBoxRenderer("Set URL and password/token first"));
     myAPIKeyLabel = new JBLabel("API Token:", SwingConstants.RIGHT);
     myAPIKey = new JTextField();
     return FormBuilder.createFormBuilder()
@@ -92,7 +86,7 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
     myAPIKeyLabel.setAnchor(anchor);
   }
 
-  private class FetchProjectsTask extends RemoteFetchTask.ComboBoxUpdater<RedmineProject> {
+  private class FetchProjectsTask extends TaskUiUtil.ComboBoxUpdater<RedmineProject> {
     private FetchProjectsTask() {
       super(RedmineRepositoryEditor.this.myProject, "Downloading Redmine projects...", myProjectCombo);
     }

@@ -788,7 +788,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         continue;
       }
       try {
-        Task[] tasks = repository.getIssues(request, offset, limit, withClosed);
+        Task[] tasks = repository.getIssues(request, offset, limit, withClosed, cancelled);
         myBadRepositories.remove(repository);
         if (issues == null) issues = new ArrayList<Task>(tasks.length);
         if (!repository.isSupported(TaskRepository.NATIVE_SEARCH) && request != null) {

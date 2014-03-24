@@ -18,7 +18,7 @@ package com.intellij.uiDesigner;
 
 import com.intellij.ProjectTopics;
 import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.lang.properties.PropertiesUtilBase;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
@@ -96,7 +96,7 @@ public class StringDescriptorManager {
       propertiesFile = myPropertiesFileCache.get(cacheKey);
     }
     if (propertiesFile == null || !propertiesFile.getContainingFile().isValid()) {
-      propertiesFile = PropertiesUtil.getPropertiesFile(propFileName, myModule, locale);
+      propertiesFile = PropertiesUtilBase.getPropertiesFile(propFileName, myModule, locale);
       synchronized (myPropertiesFileCache) {
         myPropertiesFileCache.put(cacheKey, propertiesFile);
       }

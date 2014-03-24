@@ -89,4 +89,9 @@ public class RedmineProject {
   public Date getUpdated() {
     return updated;
   }
+
+  @Override
+  public final String toString() {
+    return getName();
+  }
 }
