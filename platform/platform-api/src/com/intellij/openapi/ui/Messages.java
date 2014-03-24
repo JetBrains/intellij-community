@@ -172,8 +172,7 @@ public class Messages {
   public static boolean canShowMacSheetPanel() {
     return SystemInfo.isMac
            && !isApplicationInUnitTestOrHeadless()
-           && Registry.is("ide.mac.message.dialogs.as.sheets")
-           && !SystemInfo.isJavaVersionAtLeast("1.8");
+           && Registry.is("ide.mac.message.dialogs.as.sheets");
            //&& !DialogWrapper.isMultipleModalDialogs();
   }
 

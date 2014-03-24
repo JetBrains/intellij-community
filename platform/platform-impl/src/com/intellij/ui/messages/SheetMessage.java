@@ -17,16 +17,16 @@ package com.intellij.ui.messages;
 
 import com.apple.eawt.FullScreenUtilities;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.ui.Animator;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 
 /**
@@ -52,13 +52,15 @@ public class SheetMessage {
                       final String focusedButton,
                       final String defaultButton)
   {
-    myWindow = new JDialog(owner, "This should not be shown", Dialog.ModalityType.APPLICATION_MODAL) {
-      @Override
-      public void paint(Graphics g) {
-        super.paint(g);
+    myWindow = new JDialog(owner, "This should not be shown", Dialog.ModalityType.APPLICATION_MODAL);
+    myWindow.getRootPane().putClientProperty("apple.awt.draggableWindowBackground", Boolean.FALSE);
 
+    myWindow.addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowActivated(WindowEvent e) {
+        super.windowActivated(e);
       }
-    };
+    });
 
     myParent = owner;
 
@@ -68,8 +70,8 @@ public class SheetMessage {
 
     imageHeight = 0;
     registerMoveResizeHandler();
-    myWindow.setFocusableWindowState(true);
     myWindow.setFocusable(true);
+    myWindow.setFocusableWindowState(true);
 
     startAnimation(true);
     myWindow.setSize(myController.SHEET_NC_WIDTH, myController.SHEET_NC_HEIGHT);
