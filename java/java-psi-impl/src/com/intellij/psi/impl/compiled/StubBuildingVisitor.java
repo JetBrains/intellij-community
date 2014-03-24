@@ -326,7 +326,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     if (reader == null) return;
 
     final StubBuildingVisitor<T> classVisitor = new StubBuildingVisitor<T>(innerSource, myInnersStrategy, myResult, access, innerName);
-    reader.accept(classVisitor, ClassReader.SKIP_FRAMES);
+    reader.accept(classVisitor, ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES);
   }
 
   private static boolean isCorrectName(String name) {
