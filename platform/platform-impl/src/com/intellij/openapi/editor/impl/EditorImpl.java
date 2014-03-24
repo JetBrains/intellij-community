@@ -4271,6 +4271,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
 
           if (!myMousePressedInsideSelection) {
+            if (myCaretModel.supportsMultipleCarets()) {
+              oldSelectionStart = logicalPositionToOffset(myLastMousePressedLocation);
+              oldVisLeadSelectionStart = logicalToVisualPosition(myLastMousePressedLocation);
+            }
             // There is a possible case that lead selection position should be adjusted in accordance with the mouse move direction.
             // E.g. consider situation when user selects the whole line by clicking at 'line numbers' area. 'Line end' is considered
             // to be lead selection point then. However, when mouse is dragged down we want to consider 'line start' to be
