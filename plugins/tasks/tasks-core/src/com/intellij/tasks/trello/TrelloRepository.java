@@ -248,7 +248,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
     else {
       throw new IllegalStateException("Not configured");
     }
-    String allCardsUrl = baseUrl + "?actions=commentCard&filter=all";
+    String allCardsUrl = baseUrl + "?filter=all";
     List<TrelloCard> cards = makeRequestAndDeserializeJsonResponse(allCardsUrl, TrelloUtil.LIST_OF_CARDS_TYPE);
     LOG.debug("Total " + cards.size() + " cards downloaded");
     List<TrelloCard> filtered = ContainerUtil.filter(cards, new Condition<TrelloCard>() {
