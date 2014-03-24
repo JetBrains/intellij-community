@@ -28,9 +28,11 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.PropertiesResourceBundleUtil;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -373,7 +375,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     myVfsListener = new VirtualFileAdapter() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {
-        if (PropertiesUtil.isPropertiesFile(event.getFile(), myProject)) {
+        if (PropertiesImplUtil.isPropertiesFile(event.getFile(), myProject)) {
           recreateEditorsPanel();
         }
       }
@@ -390,7 +392,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
       @Override
       public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
-        if (PropertiesUtil.isPropertiesFile(event.getFile(), myProject)) {
+        if (PropertiesImplUtil.isPropertiesFile(event.getFile(), myProject)) {
           if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
             recreateEditorsPanel();
           }
@@ -426,7 +428,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       @Override
       public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
         final PsiFile file = event.getFile();
-        PropertiesFile propertiesFile = PropertiesUtil.getPropertiesFile(file);
+        PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
         if (propertiesFile == null) return;
         if (!propertiesFile.getResourceBundle().equals(myResourceBundle)) return;
         updateEditorsFromProperties();
@@ -474,7 +476,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
             }
             else {
               String rawValue = property.getValue();
-              value = rawValue == null ? "" : ResourceBundleUtil.fromPropertyValueToValueEditor(rawValue);
+              value = rawValue == null ? "" : PropertiesResourceBundleUtil.fromPropertyValueToValueEditor(rawValue);
             }
             final Document document = editor.getDocument();
             CommandProcessor.getInstance().executeCommand(null, new Runnable() {

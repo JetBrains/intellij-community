@@ -139,7 +139,7 @@ public class PropertiesReferenceManager {
 
   private boolean processFile(VirtualFile file, BundleNameEvaluator evaluator, PropertiesFileProcessor processor) {
     final PsiFile psiFile = myPsiManager.findFile(file);
-    PropertiesFile propertiesFile = PropertiesUtil.getPropertiesFile(psiFile);
+    PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(psiFile);
     if (propertiesFile != null) {
       final String qName = evaluator.evaluateBundleName(psiFile);
       if (qName != null) {

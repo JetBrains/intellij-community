@@ -15,8 +15,7 @@
  */
 package com.intellij.lang.properties.editor;
 
-import gnu.trove.TIntHashSet;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.lang.properties.psi.PropertiesResourceBundleUtil;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -65,12 +64,12 @@ public class ResourceBundleUtilTest {
       assertEquals(
         "Expected property value differs from the one converted from value editor text",
         entry[0],
-        ResourceBundleUtil.fromValueEditorToPropertyValue(entry[1])
+        PropertiesResourceBundleUtil.fromValueEditorToPropertyValue(entry[1])
       );
       assertEquals(
         "Expected value editor text differs from the one converted from property value",
         entry[1],
-        ResourceBundleUtil.fromPropertyValueToValueEditor(entry[0])
+        PropertiesResourceBundleUtil.fromPropertyValueToValueEditor(entry[0])
       );
     }
   }

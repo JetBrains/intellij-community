@@ -18,7 +18,7 @@ package com.intellij.codeInspection.i18n;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.template.macro.MacroUtil;
 import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
 import com.intellij.lang.properties.references.I18nUtil;
@@ -252,7 +252,7 @@ public class JavaI18nUtil extends I18nUtil {
 
   public static boolean isPropertyRef(final PsiLiteralExpression expression, final String key, final String resourceBundleName) {
     if (resourceBundleName == null) {
-      return !PropertiesUtil.findPropertiesByKey(expression.getProject(), key).isEmpty();
+      return !PropertiesImplUtil.findPropertiesByKey(expression.getProject(), key).isEmpty();
     }
     else {
       final List<PropertiesFile> propertiesFiles = propertiesFilesByBundleName(resourceBundleName, expression);
