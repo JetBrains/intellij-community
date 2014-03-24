@@ -33,10 +33,15 @@ class PyDevFrontEnd:
         # Store certain global objects that IPython modifies
         _displayhook = sys.displayhook
         _excepthook = sys.excepthook
-    
+
+        class ClosablePyDevTerminalInteractiveShell(TerminalInteractiveShell):
+            '''Override ask_exit() method for correct exit, exit(), etc. handling.'''
+            def ask_exit(self):
+                sys.exit()
+
         # Create and initialize our IPython instance.
-        shell = TerminalInteractiveShell.instance()
-    
+        shell = ClosablePyDevTerminalInteractiveShell.instance()
+
         shell.showtraceback = _showtraceback
         # IPython is ready, now clean up some global state...
         
@@ -55,12 +60,12 @@ class PyDevFrontEnd:
             import builtins as __builtin__
         __builtin__._ip = shell
         __builtin__.get_ipython = get_ipython
-        
+
         # We want to print to stdout/err as usual.
         io.stdout = original_stdout
         io.stderr = original_stderr
-    
-        
+
+
         self._curr_exec_lines = []
         self.ipython = shell
 
