@@ -124,8 +124,6 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       Map<ModuleBuildTarget, String> generationOutputs = myForStubs ? getStubGenerationOutputs(chunk, context) : finalOutputs;
       String compilerOutput = generationOutputs.get(chunk.representativeTarget());
 
-      String finalOutput = FileUtil.toSystemDependentName(finalOutputs.get(chunk.representativeTarget()));
-
       Collection<String> classpath = generateClasspath(context, chunk);
       if (LOG.isDebugEnabled()) {
         LOG.debug("Optimized class loading: " + optimizeClassLoading);
@@ -133,7 +131,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       }
 
       final File tempFile = GroovycOSProcessHandler.fillFileWithGroovycParameters(
-        compilerOutput, toCompilePaths, finalOutput, class2Src, encoding, patchers,
+        compilerOutput, toCompilePaths, finalOutputs.values(), class2Src, encoding, patchers,
         optimizeClassLoading ? StringUtil.join(classpath, File.pathSeparator) : ""
       );
       final GroovycOSProcessHandler handler = runGroovyc(context, chunk, tempFile, settings, classpath, optimizeClassLoading);
