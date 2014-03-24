@@ -43,6 +43,7 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.actions.SplitLineAction;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -189,6 +190,13 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   }
 
   public void run() {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        FileDocumentManager.getInstance().saveAllDocuments();
+      }
+    });
+
     myPorts = findAvailablePorts(getProject(), myConsoleType);
 
     assert myPorts != null;
@@ -333,10 +341,10 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     commandLine.getParametersList().set(3, "0");
 
     myCommandLine = commandLine.getCommandLineString();
-    
+
     try {
       RemoteSdkCredentials remoteCredentials = data.getRemoteSdkCredentials();
-      
+
       RemoteSshProcess remoteProcess =
         manager.createRemoteProcess(getProject(), remoteCredentials, commandLine, true);
 
@@ -346,7 +354,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       remoteProcess.addLocalTunnel(myPorts[0], remoteCredentials.getHost(), remotePorts.first);
       remoteProcess.addRemoteTunnel(remotePorts.second, "localhost", myPorts[1]);
 
-      
+
       myPydevConsoleCommunication = new PydevConsoleCommunication(getProject(), myPorts[0], remoteProcess, myPorts[1]);
       return remoteProcess;
     }

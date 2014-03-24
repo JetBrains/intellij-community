@@ -30,7 +30,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertGStringToStringIntention;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
@@ -958,7 +957,7 @@ public class ExpressionGenerator extends Generator {
       return;
     }
 
-    if (GrUnresolvedAccessInspection.isClassReference(referenceExpression)) {
+    if (GrReferenceResolveUtil.isClassReference(referenceExpression)) {
       LOG.assertTrue(qualifier != null);
       qualifier.accept(this);
       builder.append(".class");

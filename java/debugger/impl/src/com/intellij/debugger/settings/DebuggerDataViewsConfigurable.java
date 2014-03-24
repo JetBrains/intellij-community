@@ -83,7 +83,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
 
   public JComponent createComponent() {
     if (myProject == null) {
-      myProject = JavaDebuggerSupport.getCurrentProject();
+      myProject = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
     }
     final JPanel panel = new JPanel(new GridBagLayout());
 

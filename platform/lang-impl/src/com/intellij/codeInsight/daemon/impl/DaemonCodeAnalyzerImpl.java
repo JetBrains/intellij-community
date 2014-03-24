@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -562,6 +562,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
                                 new Processor<HighlightInfo>() {
                                   @Override
                                   public boolean process(@NotNull HighlightInfo info) {
+                                    if (info.getSeverity() == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY) {
+                                      return true;
+                                    }
                                     if (!foundInfoList.isEmpty()) {
                                       HighlightInfo foundInfo = foundInfoList.get(0);
                                       int compare = foundInfo.getSeverity().compareTo(info.getSeverity());

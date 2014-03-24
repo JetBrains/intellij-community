@@ -12,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.graph.GraphFacade;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
@@ -41,10 +42,16 @@ public class VcsLogFilterer {
 
   @NotNull
   public AbstractVcsLogTableModel applyFiltersAndUpdateUi(@NotNull DataPack dataPack, @NotNull VcsLogFilterCollection filters) {
+    resetFilters(dataPack);
     List<VcsLogDetailsFilter> detailsFilters = filters.getDetailsFilters();
-
     applyGraphFilters(dataPack, filters.getBranchFilter());
     return applyDetailsFilter(dataPack, detailsFilters);
+  }
+
+  private static void resetFilters(@NotNull DataPack dataPack) {
+    GraphFacade facade = dataPack.getGraphFacade();
+    facade.setVisibleBranches(null);
+    facade.setFilter(null);
   }
 
   private AbstractVcsLogTableModel applyDetailsFilter(DataPack dataPack, List<VcsLogDetailsFilter> detailsFilters) {
@@ -120,23 +127,18 @@ public class VcsLogFilterer {
   }
 
   private void applyGraphFilters(@NotNull final DataPack dataPack, @Nullable final VcsLogBranchFilter branchFilter) {
-    myUI.getTable().executeWithoutRepaint(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          dataPack.getGraphFacade().setVisibleBranches(branchFilter != null ? getMatchingHeads(dataPack, branchFilter) : null);
-        }
-        catch (InvalidRequestException e) {
-          if (!myLogDataHolder.isFullLogShowing()) {
-            myLogDataHolder.showFullLog(EmptyRunnable.getInstance());
-            throw new ProcessCanceledException();
-          }
-          else {
-            throw e;
-          }
-        }
+    try {
+      dataPack.getGraphFacade().setVisibleBranches(branchFilter != null ? getMatchingHeads(dataPack, branchFilter) : null);
+    }
+    catch (InvalidRequestException e) {
+      if (!myLogDataHolder.isFullLogShowing()) {
+        myLogDataHolder.showFullLog(EmptyRunnable.getInstance());
+        throw new ProcessCanceledException();
       }
-    });
+      else {
+        throw e;
+      }
+    }
   }
 
   @NotNull

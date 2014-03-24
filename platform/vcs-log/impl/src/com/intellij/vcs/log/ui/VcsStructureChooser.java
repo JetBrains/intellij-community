@@ -68,7 +68,7 @@ import java.util.List;
  *         Time: 12:04 PM
  */
 public class VcsStructureChooser extends DialogWrapper {
-  private final static int MAX_FOLDERS = 10;
+  private final static int MAX_FOLDERS = 100;
   public static final Border BORDER = IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT);
   public static final String DEFAULT_TEXT = "<html>Selected:</html>";
   public static final String CAN_NOT_ADD_TEXT = "<html>Selected: <font color=red>(You have added " + MAX_FOLDERS + " elements. No more is allowed.)</font></html>";

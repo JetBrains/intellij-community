@@ -356,7 +356,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     }
   }
 
-  public static Project getCurrentProject() {
+  public static Project getContextProjectForEditorFieldsInDebuggerConfigurables() {
     //todo[nik] improve
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     if (project != null) {

@@ -98,7 +98,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
 
   public JComponent createComponent() {
     if (myProject == null) {
-      myProject = JavaDebuggerSupport.getCurrentProject();
+      myProject = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
     }
     final JPanel panel = new JPanel(new GridBagLayout());
 

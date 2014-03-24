@@ -35,11 +35,20 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.Random;
+import java.util.UUID;
 
 public final class NettyUtil {
   public static final int DEFAULT_CONNECT_ATTEMPT_COUNT = 20;
   public static final int MIN_START_TIME = 100;
 
+  static {
+    // IDEA-120811
+    String id = UUID.randomUUID().toString();
+    System.setProperty("io.netty.machineId", id.substring(id.length() - 8));
+    System.setProperty("io.netty.processId", Integer.toString(new Random().nextInt(65535)));
+  }
+  
   public static void log(Throwable throwable, Logger log) {
     if (isAsWarning(throwable)) {
       log.warn(throwable);

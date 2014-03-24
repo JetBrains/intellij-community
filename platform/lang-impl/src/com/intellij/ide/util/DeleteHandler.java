@@ -137,7 +137,12 @@ public class DeleteHandler {
             }
           }, elements, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true).run();
         }
-      });
+      }) {
+        @Override
+        protected boolean isDelete() {
+          return true;
+        }
+      };
       if (needConfirmation) {
         dialog.show();
         if (!dialog.isOK() || exit.get()) return;

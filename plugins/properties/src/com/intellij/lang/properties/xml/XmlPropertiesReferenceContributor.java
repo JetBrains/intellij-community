@@ -15,7 +15,7 @@
  */
 package com.intellij.lang.properties.xml;
 
-import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.pom.references.PomService;
@@ -37,9 +37,9 @@ public class XmlPropertiesReferenceContributor extends PsiReferenceContributor {
       @NotNull
       @Override
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-        PropertiesFile propertiesFile = PropertiesUtil.getPropertiesFile(element.getContainingFile());
+        PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(element.getContainingFile());
         if (propertiesFile == null) return PsiReference.EMPTY_ARRAY;
-        XmlProperty property = new XmlProperty(PsiTreeUtil.getParentOfType(element, XmlTag.class), (XmlPropertiesFile)propertiesFile);
+        XmlProperty property = new XmlProperty(PsiTreeUtil.getParentOfType(element, XmlTag.class), (XmlPropertiesFileImpl)propertiesFile);
         return new PsiReference[] { new PsiReferenceBase.Immediate<PsiElement>(element, PomService.convertToPsi(property))};
       }
     });

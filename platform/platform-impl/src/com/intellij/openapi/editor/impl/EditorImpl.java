@@ -358,6 +358,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (myDocument.isInBulkUpdate()) return; // bulkUpdateFinished() will repaint anything
         int textLength = myDocument.getTextLength();
 
+        clearTextWidthCache();
+
         int start = Math.min(Math.max(highlighter.getAffectedAreaStartOffset(), 0), textLength);
         int end = Math.min(Math.max(highlighter.getAffectedAreaEndOffset(), 0), textLength);
 
@@ -1271,7 +1273,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       else {
         if (x >= px) {
-          if ((x - px) * 2 < charWidth) column++;
+          if (c != '\n' && (x - px) * 2 < charWidth) column++;
         }
         else {
           int diff = px - x;
@@ -1688,6 +1690,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myScrollPane == null) {
       return;
     }
+
+    clearTextWidthCache();
 
     stopOptimizedScrolling();
     mySelectionModel.removeBlockSelection();
@@ -4266,6 +4270,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
 
           if (!myMousePressedInsideSelection) {
+            if (myCaretModel.supportsMultipleCarets()) {
+              oldSelectionStart = logicalPositionToOffset(myLastMousePressedLocation);
+              oldVisLeadSelectionStart = logicalToVisualPosition(myLastMousePressedLocation);
+            }
             // There is a possible case that lead selection position should be adjusted in accordance with the mouse move direction.
             // E.g. consider situation when user selects the whole line by clicking at 'line numbers' area. 'Line end' is considered
             // to be lead selection point then. However, when mouse is dragged down we want to consider 'line start' to be

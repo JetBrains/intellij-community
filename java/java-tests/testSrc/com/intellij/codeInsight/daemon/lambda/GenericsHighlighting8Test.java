@@ -743,6 +743,14 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIDEA122401() throws Exception {
+    doTest();
+  }
+
+  public void testCaptureInsideNestedCalls() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

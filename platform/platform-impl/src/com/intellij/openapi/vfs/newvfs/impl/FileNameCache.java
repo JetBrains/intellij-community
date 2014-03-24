@@ -16,13 +16,12 @@
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
-import com.intellij.util.containers.IntObjectLinkedMap;
 import com.intellij.util.IntSLRUCache;
+import com.intellij.util.containers.IntObjectLinkedMap;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
-import com.intellij.util.text.StringFactory;
+import com.intellij.util.text.ByteArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,12 +30,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public class FileNameCache {
   private static final PersistentStringEnumerator ourNames = FSRecords.getNames();
-  @SuppressWarnings("unchecked") private static final IntSLRUCache<IntObjectLinkedMap.MapEntry<Object>>[] ourNameCache = new IntSLRUCache[16];
+  @SuppressWarnings("unchecked") private static final IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>>[] ourNameCache = new IntSLRUCache[16];
   static {
     final int protectedSize = 40000 / ourNameCache.length;
     final int probationalSize = 20000 / ourNameCache.length;
     for(int i = 0; i < ourNameCache.length; ++i) {
-      ourNameCache[i] = new IntSLRUCache<IntObjectLinkedMap.MapEntry<Object>>(protectedSize, probationalSize);
+      ourNameCache[i] = new IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>>(protectedSize, probationalSize);
     }
   }
 
@@ -47,16 +46,18 @@ public class FileNameCache {
   }
 
   @NotNull
-  private static IntObjectLinkedMap.MapEntry<Object> cacheData(String name, int id, int stripe) {
+  private static IntObjectLinkedMap.MapEntry<CharSequence> cacheData(String name, int id, int stripe) {
     if (name == null) {
       ourNames.markCorrupted();
       throw new RuntimeException("VFS name enumerator corrupted");
     }
 
-    Object rawName = convertToBytesIfAsciiString(name);
-    IntObjectLinkedMap.MapEntry<Object> entry = new IntObjectLinkedMap.MapEntry<Object>(id, rawName);
-    synchronized (ourNameCache[stripe]) {
-      return ourNameCache[stripe].cacheEntry(entry);
+    CharSequence rawName = convertToBytesIfAsciiString(name);
+    IntObjectLinkedMap.MapEntry<CharSequence> entry = new IntObjectLinkedMap.MapEntry<CharSequence>(id, rawName);
+    IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>> cache = ourNameCache[stripe];
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (cache) {
+      return cache.cacheEntry(entry);
     }
   }
 
@@ -73,7 +74,7 @@ public class FileNameCache {
   }
 
   @NotNull
-  private static Object convertToBytesIfAsciiString(@NotNull String name) {
+  private static CharSequence convertToBytesIfAsciiString(@NotNull String name) {
     int length = name.length();
     if (length == 0) return "";
 
@@ -85,14 +86,16 @@ public class FileNameCache {
     for (int i = 0; i < length; i++) {
       bytes[i] = (byte)name.charAt(i);
     }
-    return bytes;
+    return new ByteArrayCharSequence(bytes);
   }
 
   @NotNull
-  private static IntObjectLinkedMap.MapEntry<Object> getEntry(int id) {
+  private static IntObjectLinkedMap.MapEntry<CharSequence> getEntry(int id) {
     final int stripe = calcStripeIdFromNameId(id);
-    synchronized (ourNameCache[stripe]) {
-      IntObjectLinkedMap.MapEntry<Object> entry = ourNameCache[stripe].getCachedEntry(id);
+    IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>> cache = ourNameCache[stripe];
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (cache) {
+      IntObjectLinkedMap.MapEntry<CharSequence> entry = cache.getCachedEntry(id);
       if (entry != null) {
         return entry;
       }
@@ -102,57 +105,20 @@ public class FileNameCache {
   }
 
   @NotNull
-  public static String getVFileName(int nameId) {
-    IntObjectLinkedMap.MapEntry<Object> entry = getEntry(nameId);
-    Object name = entry.value;
-    if (name instanceof String) {
-      //noinspection StringEquality
-      return (String)name;
-    }
-
-    byte[] bytes = (byte[])name;
-    int length = bytes.length;
-    char[] chars = new char[length];
-    for (int i = 0; i < length; i++) {
-      chars[i] = (char)bytes[i];
-    }
-    return StringFactory.createShared(chars);
+  public static CharSequence getVFileName(int nameId) {
+    return getEntry(nameId).value;
   }
 
-  static int compareNameTo(int nameId, @NotNull String name, boolean ignoreCase) {
-    IntObjectLinkedMap.MapEntry<Object> entry = getEntry(nameId);
-    Object rawName = entry.value;
-    if (rawName instanceof String) {
-      String thisName = (String)rawName;
-      return VirtualFileSystemEntry.compareNames(thisName, name, ignoreCase);
-    }
-
-    byte[] bytes = (byte[])rawName;
-    int bytesLength = bytes.length;
-
-    int d = bytesLength - name.length();
-    if (d != 0) return d;
-
-    return compareBytes(bytes, name, bytesLength, ignoreCase);
-  }
-
-  private static int compareBytes(@NotNull byte[] name1, @NotNull String name2, int len, boolean ignoreCase) {
-    for (int i = 0; i < len; i++) {
-      char c1 = (char)name1[i];
-      char c2 = name2.charAt(i);
-      int d = StringUtil.compare(c1, c2, ignoreCase);
-      if (d != 0) return d;
-    }
-    return 0;
+  static int compareNameTo(int nameId, @NotNull CharSequence name, boolean ignoreCase) {
+    return VirtualFileSystemEntry.compareNames(getEntry(nameId).value, name, ignoreCase);
   }
 
   @NotNull
   static char[] appendPathOnFileSystem(int nameId, @Nullable VirtualFileSystemEntry parent, int accumulatedPathLength, @NotNull int[] positionRef) {
-    IntObjectLinkedMap.MapEntry<Object> entry = getEntry(nameId);
-    Object o = entry.value;
-    int nameLength = o instanceof String ? ((String)o).length() : ((byte[])o).length;
-    boolean appendSlash = SystemInfo.isWindows && parent == null && nameLength == 2 &&
-                          (o instanceof String ? ((String)o).charAt(1) : (char)((byte[])o)[1]) == ':';
+    IntObjectLinkedMap.MapEntry<CharSequence> entry = getEntry(nameId);
+    CharSequence o = entry.value;
+    int nameLength = o.length();
+    boolean appendSlash = SystemInfo.isWindows && parent == null && nameLength == 2 && o.charAt(1) == ':';
 
     char[] chars;
     if (parent != null) {
@@ -167,18 +133,7 @@ public class FileNameCache {
       chars = new char[rootPathLength];
     }
 
-    if (o instanceof String) {
-      positionRef[0] = VirtualFileSystemEntry.copyString(chars, positionRef[0], (String)o);
-    }
-    else {
-      byte[] bytes = (byte[])o;
-      int pos = positionRef[0];
-      //noinspection ForLoopReplaceableByForEach
-      for (int i = 0, len = bytes.length; i < len; i++) {
-        chars[pos++] = (char)bytes[i];
-      }
-      positionRef[0] = pos;
-    }
+    positionRef[0] = VirtualFileSystemEntry.copyString(chars, positionRef[0], o);
 
     if (appendSlash) {
       chars[positionRef[0]++] = '/';

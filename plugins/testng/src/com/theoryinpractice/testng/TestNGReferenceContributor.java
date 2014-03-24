@@ -28,7 +28,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiElementPattern;
@@ -132,6 +131,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
             final PsiAnnotationMemberValue memberValue = dataProviderAnnotation.findDeclaredAttributeValue("name");
             if (memberValue != null) {
               list.add(LookupValueFactory.createLookupValue(StringUtil.unquoteString(memberValue.getText()), null));
+            } else {
               list.add(LookupValueFactory.createLookupValue(method.getName(), null));
             }
           }

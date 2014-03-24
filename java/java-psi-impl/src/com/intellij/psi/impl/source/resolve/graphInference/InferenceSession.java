@@ -245,12 +245,12 @@ public class InferenceSession {
     return prepareSubstitution();
   }
 
-  private static void collectAdditionalConstraints(PsiParameter[] parameters,
-                                                   PsiExpression[] args,
-                                                   PsiMethod parentMethod,
-                                                   PsiSubstitutor siteSubstitutor,
-                                                   Set<ConstraintFormula> additionalConstraints,
-                                                   boolean varargs) {
+  private void collectAdditionalConstraints(PsiParameter[] parameters,
+                                            PsiExpression[] args,
+                                            PsiMethod parentMethod,
+                                            PsiSubstitutor siteSubstitutor,
+                                            Set<ConstraintFormula> additionalConstraints,
+                                            boolean varargs) {
     for (int i = 0; i < args.length; i++) {
       if (args[i] != null) {
         PsiType parameterType = getParameterType(parameters, i, siteSubstitutor, varargs);
@@ -267,7 +267,8 @@ public class InferenceSession {
             final JavaResolveResult result = callExpression.resolveMethodGenerics();
             if (result instanceof MethodCandidateInfo) {
               final PsiMethod method = ((MethodCandidateInfo)result).getElement();
-              LOG.assertTrue(method != null);
+              //need to get type parameters for 2 level nested expressions (they won't be covered by expression constraints on this level?!) 
+              initBounds(method.getTypeParameters());
               final PsiExpression[] newArgs = argumentList.getExpressions();
               final PsiParameter[] newParams = method.getParameterList().getParameters();
               if (newParams.length > 0) {
@@ -346,10 +347,7 @@ public class InferenceSession {
     if (PsiPolyExpressionUtil.isMethodCallPolyExpression(context, method)) {
       PsiType returnType = method.getReturnType();
       if (!PsiType.VOID.equals(returnType) && returnType != null) {
-        PsiType targetType = PsiTypesUtil.getExpectedTypeByParent(context);
-        if (targetType == null) {
-          targetType = getTargetType(context);
-        }
+        PsiType targetType = getTargetType(context);
         if (targetType != null) {
           registerConstraints(PsiUtil.isRawSubstitutor(method, mySiteSubstitutor) ? returnType : mySiteSubstitutor.substitute(returnType), targetType);
         }
@@ -465,7 +463,11 @@ public class InferenceSession {
     return false;
   }
   
-  private static PsiType getTargetType(final PsiExpression context) {
+  public static PsiType getTargetType(final PsiExpression context) {
+    PsiType targetType = PsiTypesUtil.getExpectedTypeByParent(context);
+    if (targetType != null) {
+      return targetType;
+    }
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(context.getParent());
     if (parent instanceof PsiExpressionList) {
       PsiElement gParent = parent.getParent();
@@ -495,11 +497,7 @@ public class InferenceSession {
         }
       }
     } else if (parent instanceof PsiConditionalExpression) {
-      PsiType targetType = PsiTypesUtil.getExpectedTypeByParent((PsiExpression)parent);
-      if (targetType == null) {
-        targetType = getTargetType((PsiExpression)parent);
-      }
-      return targetType;
+      return getTargetType((PsiExpression)parent);
     }
     else if (parent instanceof PsiLambdaExpression) {
       if (PsiUtil.skipParenthesizedExprUp(parent.getParent()) instanceof PsiExpressionList) {

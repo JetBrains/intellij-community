@@ -82,7 +82,6 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   public boolean isIgnored(@NotNull VirtualFile file) {
     if (myFileTypeRegistry.isFileIgnored(file)) return true;
-    if (myExclusionManager != null && myExclusionManager.isExcluded(file)) return true;
     VirtualFile dir = file.isDirectory() ? file : file.getParent();
     if (dir == null) return false;
 
@@ -203,8 +202,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
         return info != null && info.getModule() != null;
       }
       else {
-        return (myExclusionManager == null || !myExclusionManager.isExcluded(file))
-               && !myFileTypeRegistry.isFileIgnored(file);
+        return !myFileTypeRegistry.isFileIgnored(file);
       }
     }
   }

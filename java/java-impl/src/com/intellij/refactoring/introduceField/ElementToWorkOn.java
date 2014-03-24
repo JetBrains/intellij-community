@@ -17,6 +17,7 @@ package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
@@ -90,7 +91,7 @@ public class ElementToWorkOn {
         final int offset = editor.getCaretModel().getOffset();
         final PsiElement[] statementsInRange = IntroduceVariableBase.findStatementsAtOffset(editor, file, offset);
 
-        if (statementsInRange.length == 1 && (PsiUtilCore.hasErrorElementChild(statementsInRange[0]) || !PsiUtil.isStatement(statementsInRange[0]))) {
+        if (statementsInRange.length == 1 && IntroduceVariableBase.selectLineAtCaret(offset, statementsInRange)) {
           editor.getSelectionModel().selectLineAtCaret();
           final ElementToWorkOn elementToWorkOn = getElementToWorkOn(editor, file, refactoringName, helpId, project, localVar, expr);
           if (elementToWorkOn == null || elementToWorkOn.getLocalVariable() == null && elementToWorkOn.getExpression() == null || !processor.accept(elementToWorkOn)) {
@@ -114,6 +115,7 @@ public class ElementToWorkOn {
             expr = expressions.get(0);
           }
           else {
+            final int selection = IntroduceVariableBase.preferredSelection(statementsInRange, expressions);
             IntroduceTargetChooser.showChooser(editor, expressions, new Pass<PsiExpression>() {
               @Override
               public void pass(final PsiExpression selectedValue) {
@@ -123,7 +125,7 @@ public class ElementToWorkOn {
                 }
                 processor.pass(getElementToWorkOn(editor, file, refactoringName, helpId, project, var, selectedValue));
               }
-            }, new PsiExpressionTrimRenderer.RenderFunction());
+            }, new PsiExpressionTrimRenderer.RenderFunction(), "Expressions", selection, ScopeHighlighter.NATURAL_RANGER);
             return;
           }
         }

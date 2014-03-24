@@ -485,12 +485,6 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
     if (element instanceof PsiModifierListOwner) {
       final EntryPointsManager entryPointsManager = EntryPointsManager.getInstance(project);
       if (entryPointsManager.isEntryPoint(element)) return true;
-      //if (AnnotationUtil
-      //  .checkAnnotatedUsingPatterns((PsiModifierListOwner)element, entryPointsManager.ADDITIONAL_ANNOTATIONS) ||
-      //  AnnotationUtil
-      //  .checkAnnotatedUsingPatterns((PsiModifierListOwner)element, entryPointsManager.getAdditionalAnnotations())) {
-      //  return true;
-      //}
     }
     for (EntryPoint extension : myExtensions) {
       if (extension.isEntryPoint(element)) {

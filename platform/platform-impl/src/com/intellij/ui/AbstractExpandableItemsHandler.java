@@ -19,8 +19,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.Alarm;
+import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -270,28 +272,15 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       return;
     }
 
-    JLayeredPane layeredPane = myComponent.getRootPane().getLayeredPane();
-    Point layeredPanePoint = SwingUtilities.convertPoint(myComponent, location.x + myTipComponent.getPreferredSize().width, 0, layeredPane);
-    boolean fitIntoLayeredPane = layeredPanePoint.x < layeredPane.getWidth();
-
-    if (fitIntoLayeredPane) {
-      myHint = new LightweightHint(myTipComponent);
-    }
-    else {
-      MenuElement[] selectedPath = MenuSelectionManager.defaultManager().getSelectedPath();
-      if (selectedPath.length > 0) {
-        // do not show heavyweight hints when menu is shown to avoid their overlapping
-        return;
-      }
-      myHint = new HeavyweightHint(myTipComponent, false);
-    }
+    myHint = new ExpansionHint(myTipComponent);
     myHint.show(myComponent, location.x, location.y, myComponent, new HintHint(myComponent, location));
+
     repaintKeyItem();
   }
 
   private void repaintHint(Point location) {
     if (myHint != null && myKey != null && myComponent.isShowing()) {
-      myHint.updateBounds(location.x, location.y);
+      myHint.setLocation(new RelativePoint(myComponent, location));
       myTipComponent.repaint();
       repaintKeyItem();
     }
@@ -332,12 +321,11 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     g.translate(-(visibleRect.x + visibleRect.width - cellBounds.x), 0);
     doPaintTooltipImage(renderer, cellBounds, height, g, key);
 
-
     if (isPaintBorder()) {
       g.translate(visibleRect.x + visibleRect.width - cellBounds.x, 0);
       g.setColor(getBorderColor());
       int rightX = size.width - 1;
-      final int h = size.height;
+      int h = size.height;
       UIUtil.drawLine(g, 0, 0, rightX, 0);
       UIUtil.drawLine(g, rightX, 0, rightX, h - 1);
       UIUtil.drawLine(g, 0, h - 1, rightX, h - 1);
@@ -354,7 +342,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   }
 
   protected Color getBorderColor() {
-    return Color.GRAY;
+    return UIUtil.getListSelectionBackground();
   }
 
   protected Dimension getImageSize(final int width, final int height) {
@@ -392,7 +380,14 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
     @Override
     public Dimension getPreferredSize() {
-      return new Dimension(myImage.getWidth(), myImage.getHeight());
+      int w =  myImage.getWidth();
+      int h = myImage.getHeight();
+
+      if (myImage instanceof JBHiDPIScaledImage) {
+        w /= 2; h /= 2;
+      }
+
+      return new Dimension(w, h);
     }
 
     @Override

@@ -18,7 +18,7 @@ package com.intellij.lang.properties.projectView;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -54,7 +54,7 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
         for (AbstractTreeNode child : children) {
           Object f = child.getValue();
           if (f instanceof PsiFile) {
-            PropertiesFile propertiesFile = PropertiesUtil.getPropertiesFile((PsiFile)f);
+            PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile((PsiFile)f);
             if (propertiesFile != null) {
               ResourceBundle bundle = propertiesFile.getResourceBundle();
               Collection<PropertiesFile> files = childBundles.get(bundle);
@@ -78,7 +78,7 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
         for (AbstractTreeNode child : children) {
           Object f = child.getValue();
           if (f instanceof PsiFile) {
-            PropertiesFile propertiesFile = PropertiesUtil.getPropertiesFile((PsiFile)f);
+            PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile((PsiFile)f);
             if (propertiesFile != null) {
               ResourceBundle bundle = propertiesFile.getResourceBundle();
               if (childBundles.get(bundle).size() != 1) {

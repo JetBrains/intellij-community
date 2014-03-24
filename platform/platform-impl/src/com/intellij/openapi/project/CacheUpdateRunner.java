@@ -142,7 +142,7 @@ class CacheUpdateRunner {
     try {
       int threadsCount = Registry.intValue("caches.indexerThreadsCount");
       if (threadsCount <= 0) {
-        threadsCount = Math.min(PROC_COUNT, 4);
+        threadsCount = Math.max(1, Math.min(PROC_COUNT - 1, 4));
       }
       if (threadsCount == 1) {
         Runnable process = new MyRunnable(innerIndicator, queue, isFinished, progressUpdater, processInReadAction);

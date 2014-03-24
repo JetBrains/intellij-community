@@ -160,6 +160,27 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
                       "line");
   }
 
+  public void testAltOnOffWhileDragging() throws Exception {
+    init("line1\n" +
+         "line2\n" +
+         "line3",
+         TestFileType.TEXT);
+    setEditorVisibleSize(1000, 1000);
+
+    mouse().clickAt(0, 1).dragTo(1, 2);
+    checkResultByText("l<selection>ine1\n" +
+                      "li<caret></selection>ne2\n" +
+                      "line3");
+    mouse().alt().dragTo(1, 3);
+    checkResultByText("l<selection>in<caret></selection>e1\n" +
+                      "l<selection>in<caret></selection>e2\n" +
+                      "line3");
+    mouse().dragTo(2, 4).release();
+    checkResultByText("l<selection>ine1\n" +
+                      "line2\n" +
+                      "line<caret></selection>3");
+  }
+
   public void testTyping() throws Exception {
     init("some<caret> text<caret>\n" +
          "some <selection><caret>other</selection> <selection>text<caret></selection>\n" +

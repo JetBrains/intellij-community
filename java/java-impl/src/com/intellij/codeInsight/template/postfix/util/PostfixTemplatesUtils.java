@@ -37,13 +37,21 @@ public abstract class PostfixTemplatesUtils {
   }
 
   public static void createSimpleStatement(@NotNull PsiElement context, @NotNull Editor editor, @NotNull String text) {
+    createStatement(context, editor, text + " ", "");
+  }
+
+  public static void createStatement(@NotNull PsiElement context, @NotNull Editor editor, @NotNull String prefix, @NotNull String suffix) {
+    createStatement(context, editor, prefix, suffix, 0);
+  }
+
+  public static void createStatement(@NotNull PsiElement context, @NotNull Editor editor, @NotNull String prefix, @NotNull String suffix, int offset) {
     PsiExpression expr = PostfixTemplate.getTopmostExpression(context);
     PsiElement parent = expr != null ? expr.getParent() : null;
     assert parent instanceof PsiStatement;
     PsiElementFactory factory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
-    PsiStatement assertStatement = factory.createStatementFromText(text + " " + expr.getText() + ";", parent);
-    PsiElement replace = parent.replace(assertStatement);
-    editor.getCaretModel().moveToOffset(replace.getTextRange().getEndOffset());
+    PsiStatement statement = factory.createStatementFromText(prefix + expr.getText() + suffix + ";", parent);
+    PsiElement replace = parent.replace(statement);
+    editor.getCaretModel().moveToOffset(replace.getTextRange().getEndOffset() + offset);
   }
 
   @Contract("null -> false")
@@ -69,6 +77,11 @@ public abstract class PostfixTemplatesUtils {
   @Contract("null -> false")
   public static boolean isBoolean(@Nullable PsiType type) {
     return type != null && (PsiType.BOOLEAN.equals(type) || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(type)));
+  }
+
+  @Contract("null -> false")
+  public static boolean isNonVoid(@Nullable PsiType type) {
+    return type != null && !PsiType.VOID.equals(type);
   }
 
   @Contract("null -> false")

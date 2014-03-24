@@ -58,6 +58,47 @@ public class RootsChangedTest extends ModuleTestCase {
     super.tearDown();
   }
 
+  public void testEventsAfterFileModifications() throws Exception {
+    final File root = FileUtil.createTempDirectory(getTestName(true), "");
+    File dir1 = new File(root, "dir1");
+    assertTrue(dir1.mkdirs());
+    final VirtualFile vDir1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir1);
+
+    final Module moduleA = createModule("a.iml");
+    final ModifiableRootModel model = ModuleRootManager.getInstance(moduleA).getModifiableModel();
+    myModuleRootListener.reset();
+    
+    model.addContentEntry(vDir1.getUrl());
+    model.commit();
+
+    assertEventsCount(1);
+    assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir1);
+    
+    vDir1.delete(null);
+    assertEventsCount(1);
+    assertEmpty(ModuleRootManager.getInstance(moduleA).getContentRoots());
+ 
+    File dir2 = new File(root, "dir2");
+    dir2.mkdirs();
+    final VirtualFile vDir2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir2);
+
+    vDir2.rename(null, "dir1");
+    assertEventsCount(1);
+    assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir2);
+
+    // when the existing root is renamed, it remains a root
+    vDir2.rename(null, "dir2");
+    assertEventsCount(0);
+    assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir2);
+ 
+    // and event if it is moved, it's still a root
+    File subdir = new File(root, "subdir");
+    subdir.mkdirs();
+    vDir2.move(null, LocalFileSystem.getInstance().refreshAndFindFileByIoFile(subdir));
+    assertEventsCount(0);
+    assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir2);
+  }
+
   public void testProjectLibraryChangeEvent() throws Exception {
     final LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
     verifyLibraryTableEditing(projectLibraryTable);

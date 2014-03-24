@@ -19,136 +19,168 @@ import com.intellij.ide.passwordSafe.MasterPasswordUnavailableException;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * The dialog used to prompt for the master password to the password database
  */
 public class MasterPasswordDialog extends DialogWrapper {
-  /**
-   * The number of time the password is asked
-   */
-  private final static int NUMBER_OF_RETRIES = 3;
-  /**
-   * The user code for reset action
-   */
-  private final static int RESET_USER_CODE = NEXT_USER_EXIT_CODE;
-  /**
-   * The user code for change action
-   */
-  private final static int CHANGE_USER_CODE = NEXT_USER_EXIT_CODE + 1;
-  /**
-   * The master password
-   */
-  private JPasswordField myMasterPasswordPasswordField;
-  /**
-   * The root panel
-   */
-  private JPanel myPanel;
-  /**
-   * If selected, the password will be remembered and not asked again
-   */
-  private JCheckBox myEncryptMasterPasswordWithCheckBox;
+  private final static int NUMBER_OF_RETRIES = 5;
 
   /**
-   * The constructor
-   *
-   * @param project the current project
-   * @param safe
+   * @noinspection FieldCanBeLocal
    */
-  protected MasterPasswordDialog(@Nullable Project project, MasterKeyPasswordSafe safe) {
-    super(project, false);
-    setTitle("Master Password");
-    if (!safe.isOsProtectedPasswordSupported()) {
-      myEncryptMasterPasswordWithCheckBox.setVisible(false);
-    }
-    init();
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  protected JComponent createCenterPanel() {
-    return myPanel;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  protected String getDimensionServiceKey() {
-    return getClass().getName();
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @NotNull
-  @Override
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), new DialogWrapperExitAction("C&hange Password", CHANGE_USER_CODE),
-      new DialogWrapperExitAction("&Reset Password", RESET_USER_CODE), getCancelAction()};
-  }
-
-  @Override
-  public JComponent getPreferredFocusedComponent() {
-    return myMasterPasswordPasswordField;
-  }
+  private final Class<?> myRequestor;
+  private final JPanel myRootPanel = new JPanel(new CardLayout());
+  private final List<PasswordComponentBase> myComponents = ContainerUtil.newArrayList();
+  private final DialogWrapperAction myCardAction;
+  private int myRetriesCount;
 
   /**
    * Ask password from user and set it to password safe instance
    *
-   * @param project the current project
-   * @param safe    the password safe
+   * @param project   the current project
+   * @param safe      the password safe
+   * @param requestor
    * @throws PasswordSafeException if the master password is not provided.
    */
-  public static void askPassword(@Nullable Project project, MasterKeyPasswordSafe safe) throws PasswordSafeException {
+  public static void askPassword(@Nullable Project project, @NotNull MasterKeyPasswordSafe safe, @NotNull Class<?> requestor)
+    throws PasswordSafeException {
     // trying empty password: people who have set up empty password, don't want to get disturbed by the prompt.
     if (safe.setMasterPassword("")) {
       return;
     }
 
-    String error = null;
-    retries:
-    for (int count = 0; count < NUMBER_OF_RETRIES; count++) {
-      MasterPasswordDialog d = new MasterPasswordDialog(project, safe);
-      if (error != null) {
-        d.setErrorText(error);
+    if (!enterMasterPasswordDialog(project, safe, requestor).showAndGet()) {
+      throw new MasterPasswordUnavailableException("Cancelled by user");
+    }
+  }
+
+  public static MasterPasswordDialog resetMasterPasswordDialog(@Nullable Project project,
+                                                               @NotNull MasterKeyPasswordSafe safe,
+                                                               @NotNull Class<?> requestor) {
+    return new MasterPasswordDialog(project, requestor, new ResetPasswordComponent(safe, true));
+  }
+
+  public static MasterPasswordDialog changeMasterPasswordDialog(@Nullable Project project,
+                                                                @NotNull MasterKeyPasswordSafe safe,
+                                                                Class<?> requestor) {
+    return new MasterPasswordDialog(project, requestor, new ChangePasswordComponent(safe), new ResetPasswordComponent(safe, false));
+  }
+
+  public static MasterPasswordDialog enterMasterPasswordDialog(@Nullable Project project,
+                                                               @NotNull MasterKeyPasswordSafe safe,
+                                                               @NotNull Class<?> requestor) {
+    return new MasterPasswordDialog(project, requestor, new EnterPasswordComponent(safe, requestor), new ResetPasswordComponent(safe, false));
+  }
+
+  protected MasterPasswordDialog(@Nullable Project project, Class<?> requestor, PasswordComponentBase... components) {
+    super(project, false);
+    myRequestor = requestor;
+    setResizable(false);
+    assert components.length > 0;
+    myComponents.addAll(Arrays.asList(components));
+    for (PasswordComponentBase component : myComponents) {
+      myRootPanel.add(component.getComponent(), component.getTitle());
+    }
+    myCardAction = new DialogWrapperAction("") {
+      @Override
+      protected void doAction(ActionEvent e) {
+        show(getNextComponent(getSelectedComponent()));
       }
-      d.show();
-      switch (d.getExitCode()) {
-        case OK_EXIT_CODE:
-          boolean rc;
-          String pw = new String(d.myMasterPasswordPasswordField.getPassword());
-          if (d.myEncryptMasterPasswordWithCheckBox.isSelected()) {
-            rc = safe.changeMasterPassword(pw, pw, true);
-          }
-          else {
-            rc = safe.setMasterPassword(pw);
-          }
-          if (rc) {
-            return;
-          }
-          else {
-            error = "Invalid master password, please retry or reset.";
-            continue retries;
-          }
-        case CANCEL_EXIT_CODE:
-          throw new MasterPasswordUnavailableException("The master password request were cancelled.");
-        case CHANGE_USER_CODE:
-          if (!ChangeMasterKeyDialog.changePassword(project, safe)) {
-            throw new MasterPasswordUnavailableException("The master password request were cancelled.");
-          }
-          return;
-        case RESET_USER_CODE:
-          if (!ResetPasswordDialog.resetPassword(project, safe)) {
-            throw new MasterPasswordUnavailableException("The master password request were cancelled.");
-          }
-          return;
+    };
+    show(myComponents.get(0));
+    init();
+  }
+
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return getSelectedComponent().getPreferredFocusedComponent();
+  }
+
+  @Nullable
+  @Override
+  protected String getHelpId() {
+    return getSelectedComponent().getHelpId();
+  }
+
+  private CardLayout getLayout() {
+    return (CardLayout)myRootPanel.getLayout();
+  }
+
+  private PasswordComponentBase getSelectedComponent() {
+    for (PasswordComponentBase component : myComponents) {
+      if (component.getComponent().isVisible()) return component;
+    }
+    throw new AssertionError("no visible components");
+  }
+
+  @NotNull
+  private PasswordComponentBase getNextComponent(@NotNull PasswordComponentBase component) {
+    int idx = myComponents.indexOf(component);
+    int next = idx < myComponents.size() - 1 ? idx + 1 : 0;
+    return myComponents.get(next);
+  }
+
+  private void show(@NotNull PasswordComponentBase component) {
+    setTitle(component.getTitle() + " Master Password");
+    getLayout().show(myRootPanel, component.getTitle());
+    myCardAction.putValue(Action.NAME, getNextComponent(component).getTitle() + "...");
+    component.getPreferredFocusedComponent().requestFocus();
+  }
+
+  @Override
+  protected JComponent createCenterPanel() {
+    return myRootPanel;
+  }
+
+  @NotNull
+  @Override
+  protected Action[] createActions() {
+    Action[] result = {
+      getHelpAction(),
+      getOKAction(),
+      getCancelAction()};
+    if (myComponents.size() > 1) {
+      return ArrayUtil.append(result, myCardAction);
+    }
+    return result;
+  }
+
+  @Nullable
+  @Override
+  protected ValidationInfo doValidate() {
+    return getSelectedComponent().doValidate();
+  }
+
+  @Override
+  protected void doOKAction() {
+    PasswordComponentBase component = getSelectedComponent();
+    if (component.apply()) {
+      super.doOKAction();
+    }
+    else {
+      ValidationInfo info = component.validatePassword();
+      if (info != null) {
+        setErrorText(info.message + " " + StringUtil.repeat(".", myRetriesCount));
+        if (info.component != null) {
+          info.component.requestFocus();
+        }
+        if (++myRetriesCount > NUMBER_OF_RETRIES) {
+          super.doCancelAction();
+        }
       }
     }
   }

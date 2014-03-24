@@ -15,9 +15,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -51,7 +49,7 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
 
   @Override
   public boolean isAddBreakpointButtonVisible() {
-    return true;
+    return false;
   }
 
   @Override
@@ -73,14 +71,13 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
 
   @Override
   public String getDisplayText(XLineBreakpoint<P> breakpoint) {
-    BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(JavaDebuggerSupport.getCurrentProject()).getBreakpointManager();
-      BreakpointWithHighlighter javaBreakpoint = (BreakpointWithHighlighter)breakpointManager.findBreakpoint(breakpoint);
-      if (javaBreakpoint != null) {
-        return javaBreakpoint.getDescription();
-      }
-      else {
-        return super.getDisplayText(breakpoint);
-      }
+    BreakpointWithHighlighter javaBreakpoint = (BreakpointWithHighlighter)BreakpointManager.findBreakpoint(breakpoint);
+    if (javaBreakpoint != null) {
+      return javaBreakpoint.getDescription();
+    }
+    else {
+      return super.getDisplayText(breakpoint);
+    }
   }
 
   @Override

@@ -49,7 +49,7 @@ public class GradleBuildClasspathManager {
 
   public GradleBuildClasspathManager(@NotNull Project project) {
     myProject = project;
-    reload();
+    allFilesCache = ContainerUtil.newArrayList();
   }
 
   @NotNull
@@ -66,24 +66,34 @@ public class GradleBuildClasspathManager {
 
     final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
     final JarFileSystem jarFileSystem = JarFileSystem.getInstance();
-    for (ExternalProjectBuildClasspathPojo projectBuildClasspathPojo : localSettings.getProjectBuildClasspath().values()) {
-      List<VirtualFile> projectBuildClasspath = ContainerUtil.newArrayList();
-      for (String path : projectBuildClasspathPojo.getProjectBuildClasspath()) {
-        final VirtualFile virtualFile = localFileSystem.refreshAndFindFileByPath(path);
-        if (virtualFile != null) {
-          ContainerUtil.addIfNotNull(
-            projectBuildClasspath, virtualFile.isDirectory() ? virtualFile : jarFileSystem.getJarRootForLocalFile(virtualFile));
-        }
-      }
-
-      for (ExternalModuleBuildClasspathPojo moduleBuildClasspathPojo : projectBuildClasspathPojo.getModulesBuildClasspath().values()) {
-        List<VirtualFile> moduleBuildClasspath = ContainerUtil.newArrayList(projectBuildClasspath);
-        for (String path : moduleBuildClasspathPojo.getEntries()) {
-          final VirtualFile virtualFile = localFileSystem.refreshAndFindFileByPath(path);
-          if (virtualFile != null) {
-            ContainerUtil.addIfNotNull(moduleBuildClasspath, jarFileSystem.getJarRootForLocalFile(virtualFile));
+    for (final ExternalProjectBuildClasspathPojo projectBuildClasspathPojo : localSettings.getProjectBuildClasspath().values()) {
+      final List<VirtualFile> projectBuildClasspath = ContainerUtil.newArrayList();
+      ExternalSystemApiUtil.executeOnEdt(true, new Runnable() {
+        @Override
+        public void run() {
+          for (String path : projectBuildClasspathPojo.getProjectBuildClasspath()) {
+            final VirtualFile virtualFile = localFileSystem.refreshAndFindFileByPath(path);
+            if (virtualFile != null) {
+              ContainerUtil.addIfNotNull(
+                projectBuildClasspath, virtualFile.isDirectory() ? virtualFile : jarFileSystem.getJarRootForLocalFile(virtualFile));
+            }
           }
         }
+      });
+
+      for (final ExternalModuleBuildClasspathPojo moduleBuildClasspathPojo : projectBuildClasspathPojo.getModulesBuildClasspath().values()) {
+        final List<VirtualFile> moduleBuildClasspath = ContainerUtil.newArrayList(projectBuildClasspath);
+        ExternalSystemApiUtil.executeOnEdt(true, new Runnable() {
+          @Override
+          public void run() {
+            for (String path : moduleBuildClasspathPojo.getEntries()) {
+              final VirtualFile virtualFile = localFileSystem.refreshAndFindFileByPath(path);
+              if (virtualFile != null) {
+                ContainerUtil.addIfNotNull(moduleBuildClasspath, jarFileSystem.getJarRootForLocalFile(virtualFile));
+              }
+            }
+          }
+        });
 
         map.put(moduleBuildClasspathPojo.getPath(), moduleBuildClasspath);
       }

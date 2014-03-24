@@ -879,10 +879,10 @@ public class FSRecords implements Forceable {
   public static class NameId {
     public static final NameId[] EMPTY_ARRAY = new NameId[0];
     public final int id;
-    public final String name;
+    public final CharSequence name;
     public final int nameId;
 
-    public NameId(int id, int nameId, @NotNull String name) {
+    public NameId(int id, int nameId, @NotNull CharSequence name) {
       this.id = id;
       this.nameId = nameId;
       this.name = name;

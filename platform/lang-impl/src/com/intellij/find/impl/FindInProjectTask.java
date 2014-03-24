@@ -224,6 +224,8 @@ class FindInProjectTask {
     SearchScope customScope = myFindModel.getCustomScope();
     final GlobalSearchScope globalCustomScope = toGlobal(customScope);
 
+    final ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(myProject);
+
     class EnumContentIterator implements ContentIterator {
       final Set<PsiFile> myFiles = new LinkedHashSet<PsiFile>();
 
@@ -238,7 +240,8 @@ class FindInProjectTask {
               return;
             }
 
-            if (skipIndexed && isCoveredByIdIndex(virtualFile)) {
+            if (skipIndexed && isCoveredByIdIndex(virtualFile) && 
+                (fileIndex.isInContent(virtualFile) || fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInLibrarySource(virtualFile))) {
               return;
             }
 
@@ -259,7 +262,7 @@ class FindInProjectTask {
       }
     }
 
-    EnumContentIterator iterator = new EnumContentIterator();
+    final EnumContentIterator iterator = new EnumContentIterator();
 
     if (customScope instanceof LocalSearchScope) {
       for (VirtualFile file : getLocalScopeFiles((LocalSearchScope)customScope)) {
@@ -267,6 +270,15 @@ class FindInProjectTask {
       }
     }
     else if (myPsiDirectory != null) {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          if (myPsiDirectory.isValid()) {
+            addFilesUnderDirectory(myPsiDirectory, iterator);
+          }
+        }
+      });
+
       myFileIndex.iterateContentUnderDirectory(myPsiDirectory.getVirtualFile(), iterator);
     }
     else {
@@ -424,4 +436,17 @@ class FindInProjectTask {
     });
   }
 
+  private void addFilesUnderDirectory(@NotNull PsiDirectory directory, @NotNull ContentIterator iterator) {
+    for (PsiElement child : directory.getChildren()) {
+      if (child instanceof PsiFile) {
+        VirtualFile virtualFile = ((PsiFile)child).getVirtualFile();
+        if (virtualFile != null) {
+          iterator.processFile(virtualFile);
+        }
+      }
+      else if (myFindModel.isWithSubdirectories() && child instanceof PsiDirectory) {
+        addFilesUnderDirectory((PsiDirectory)child, iterator);
+      }
+    }
+  }
 }

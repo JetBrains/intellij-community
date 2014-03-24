@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,21 @@ package com.siyeh.ig.naming;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 public class InstanceMethodNamingConventionInspectionBase extends ConventionInspection {
   private static final int DEFAULT_MIN_LENGTH = 4;
   private static final int DEFAULT_MAX_LENGTH = 32;
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreNativeMethods = true;
 
   @Override
   @NotNull
@@ -50,6 +56,13 @@ public class InstanceMethodNamingConventionInspectionBase extends ConventionInsp
       return InspectionGadgetsBundle.message("instance.method.name.convention.problem.descriptor.long");
     }
     return InspectionGadgetsBundle.message("instance.method.name.convention.problem.descriptor.regex.mismatch", getRegex());
+  }
+
+  @Override
+  public JComponent[] createExtraOptions() {
+    return new JComponent[] {
+      new CheckBox("ignore 'native' methods", this, "ignoreNativeMethods")
+    };
   }
 
   @Override
@@ -80,6 +93,9 @@ public class InstanceMethodNamingConventionInspectionBase extends ConventionInsp
       if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
+      if (ignoreNativeMethods && method.hasModifierProperty(PsiModifier.NATIVE)) {
+        return;
+      }
       final PsiIdentifier nameIdentifier = method.getNameIdentifier();
       if (nameIdentifier == null) {
         return;
@@ -88,10 +104,8 @@ public class InstanceMethodNamingConventionInspectionBase extends ConventionInsp
       if (isValid(name)) {
         return;
       }
-      if (!isOnTheFly()) {
-        if (MethodUtils.hasSuper(method)) {
-          return;
-        }
+      if (!isOnTheFly() && MethodUtils.hasSuper(method)) {
+        return;
       }
       if (LibraryUtil.isOverrideOfLibraryMethod(method)) {
         return;

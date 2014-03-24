@@ -53,6 +53,8 @@ public class PydevConsoleExecuteActionHandler extends ProcessBackedConsoleExecut
   private final ConsoleCommunication myConsoleCommunication;
   private boolean myEnabled = false;
 
+  private int myIpythonInputPromptCount = 1;
+
   public PydevConsoleExecuteActionHandler(LanguageConsoleView consoleView,
                                           ProcessHandler myProcessHandler,
                                           ConsoleCommunication consoleCommunication) {
@@ -194,6 +196,9 @@ public class PydevConsoleExecuteActionHandler extends ProcessBackedConsoleExecut
   private void sendLineToConsole(@NotNull final ConsoleCommunication.ConsoleCodeFragment code,
                                  @NotNull final LanguageConsoleImpl console,
                                  @NotNull final Editor currentEditor) {
+    if(!StringUtil.isEmptyOrSpaces(code.getText())) {
+      myIpythonInputPromptCount+=1;
+    }
     if (myConsoleCommunication != null) {
       final boolean waitedForInputBefore = myConsoleCommunication.isWaitingForInput();
       if (myConsoleCommunication.isWaitingForInput()) {
@@ -225,7 +230,7 @@ public class PydevConsoleExecuteActionHandler extends ProcessBackedConsoleExecut
           }
           else {
             if (!myConsoleCommunication.isWaitingForInput()) {
-              ordinaryPrompt(console, currentEditor);
+              inPrompt(console, currentEditor);
             }
             setCurrentIndentSize(0);
           }
@@ -235,8 +240,9 @@ public class PydevConsoleExecuteActionHandler extends ProcessBackedConsoleExecut
       });
       // After requesting input we got no call back to change prompt, change it manually
       if (waitedForInputBefore && !myConsoleCommunication.isWaitingForInput()) {
-        console.setPrompt(PyConsoleUtil.ORDINARY_PROMPT);
-        PyConsoleUtil.scrollDown(currentEditor);
+        myIpythonInputPromptCount-=1;
+        inPrompt(console, currentEditor);
+        setCurrentIndentSize(0);
       }
     }
   }
@@ -246,7 +252,16 @@ public class PydevConsoleExecuteActionHandler extends ProcessBackedConsoleExecut
     return lines[lines.length - 1];
   }
 
+  private void inPrompt(LanguageConsoleImpl console, Editor currentEditor){
+    if(ipythonEnabled(console)){
+      ipythonInPrompt(console, currentEditor);
+    } else {
+      ordinaryPrompt(console, currentEditor);
+    }
+  }
+
   private void ordinaryPrompt(LanguageConsoleImpl console, Editor currentEditor) {
+
     if (!myConsoleCommunication.isExecuting()) {
       if (!PyConsoleUtil.ORDINARY_PROMPT.equals(console.getPrompt())) {
         console.setPrompt(PyConsoleUtil.ORDINARY_PROMPT);
@@ -256,6 +271,16 @@ public class PydevConsoleExecuteActionHandler extends ProcessBackedConsoleExecut
     else {
       executingPrompt(console);
     }
+  }
+
+  private boolean ipythonEnabled(LanguageConsoleImpl console){
+    return console.getFile().getVirtualFile() != null ?
+           PyConsoleUtil.getOrCreateIPythonData(console.getFile().getVirtualFile()).isIPythonEnabled() : false;
+  }
+
+  private void ipythonInPrompt(LanguageConsoleImpl console, Editor currentEditor){
+    console.setPrompt("In[" + myIpythonInputPromptCount + "]:");
+    PyConsoleUtil.scrollDown(currentEditor);
   }
 
   private static void executingPrompt(LanguageConsoleImpl console) {
@@ -279,7 +304,9 @@ public class PydevConsoleExecuteActionHandler extends ProcessBackedConsoleExecut
       final LanguageConsoleImpl console = myConsoleView.getConsole();
       final Editor currentEditor = console.getConsoleEditor();
 
-      ordinaryPrompt(console, currentEditor);
+      if(!ipythonEnabled(console)){
+        ordinaryPrompt(console, currentEditor);
+      }
     }
   }
 

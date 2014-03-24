@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
@@ -59,10 +58,10 @@ public class ReplaceDelimiterFix extends Intention {
     if (forStatement == null) return;
     GrForClause clause = forStatement.getClause();
     if (clause instanceof GrForInClause) {
-      GroovyFile f = GroovyPsiElementFactory.getInstance(project).createGroovyFile("in", false, null);
-      PsiElement child = f.getFirstChild().getFirstChild();
+      GrForStatement stubFor = (GrForStatement)GroovyPsiElementFactory.getInstance(project).createStatementFromText("for (x in y){}");
+      PsiElement newDelimiter = ((GrForInClause)stubFor.getClause()).getDelimiter();
       PsiElement delimiter = ((GrForInClause)clause).getDelimiter();
-      delimiter.replace(child);
+      delimiter.replace(newDelimiter);
     }
   }
 
