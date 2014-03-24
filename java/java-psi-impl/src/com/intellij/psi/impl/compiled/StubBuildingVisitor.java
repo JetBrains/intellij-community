@@ -57,7 +57,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   public static final String FLOAT_NEGATIVE_INF = "-1.0f / 0.0";
   public static final String FLOAT_NAN = "0.0f / 0.0";
 
-  public static final int ASM_API = Opcodes.ASM5;
+  private static final int ASM_API = Opcodes.ASM5;
 
   @NonNls private static final String SYNTHETIC_CLASS_INIT_METHOD = "<clinit>";
   @NonNls private static final String SYNTHETIC_INIT_METHOD = "<init>";
@@ -208,6 +208,9 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       case Opcodes.V1_7:
         return LanguageLevel.JDK_1_7;
 
+      case Opcodes.V1_8:
+        return LanguageLevel.JDK_1_8;
+
       default:
         return LanguageLevel.HIGHEST;
     }
@@ -321,14 +324,11 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       return;
     }
 
-    final T innerSource = myInnersStrategy.findInnerClass(innerName, mySource);
-    if (innerSource == null) return;
-
-    final ClassReader reader = myInnersStrategy.readerForInnerClass(innerSource);
-    if (reader == null) return;
-
-    final StubBuildingVisitor<T> classVisitor = new StubBuildingVisitor<T>(innerSource, myInnersStrategy, myResult, access, innerName);
-    reader.accept(classVisitor, ClassReader.SKIP_FRAMES);
+    T innerClass = myInnersStrategy.findInnerClass(innerName, mySource);
+    if (innerClass != null) {
+      StubBuildingVisitor<T> visitor = new StubBuildingVisitor<T>(innerClass, myInnersStrategy, myResult, access, innerName);
+      myInnersStrategy.accept(innerClass, visitor);
+    }
   }
 
   private static boolean isCorrectName(String name) {

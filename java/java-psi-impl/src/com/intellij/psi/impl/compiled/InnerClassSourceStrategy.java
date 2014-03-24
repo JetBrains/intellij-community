@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.impl.compiled;
 
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.org.objectweb.asm.ClassReader;
 
+/**
+ * @author max
+ */
 public interface InnerClassSourceStrategy<T> {
   @Nullable
   T findInnerClass(String name, T outerClass);
 
-  @Nullable
-  ClassReader readerForInnerClass(T innerClass);
+  void accept(T innerClass, StubBuildingVisitor<T> visitor);
 }

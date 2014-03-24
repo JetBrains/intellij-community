@@ -555,15 +555,13 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       return dir.findChild(baseName + "$" + innerName + ".class");
     }
 
-    @Nullable
     @Override
-    public ClassReader readerForInnerClass(VirtualFile innerClass) {
+    public void accept(VirtualFile innerClass, StubBuildingVisitor<VirtualFile> visitor) {
       try {
-        return new ClassReader(innerClass.contentsToByteArray());
+        byte[] bytes = innerClass.contentsToByteArray();
+        new ClassReader(bytes).accept(visitor, ClassReader.SKIP_FRAMES);
       }
-      catch (IOException e) {
-        return null;
-      }
+      catch (IOException ignored) { }
     }
   };
 
