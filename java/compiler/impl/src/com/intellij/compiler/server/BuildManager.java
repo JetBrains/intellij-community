@@ -1266,7 +1266,7 @@ public class BuildManager implements ApplicationComponent{
     @Override
     public String getValue() {
       if (myPath.length == 1) {
-        final String name = FileNameCache.getVFileName(myPath[0]);
+        final String name = FileNameCache.getVFileName(myPath[0]).toString();
         // handle case of windows drive letter
         return name.length() == 2 && name.endsWith(":")? name + "/" : name;
       }

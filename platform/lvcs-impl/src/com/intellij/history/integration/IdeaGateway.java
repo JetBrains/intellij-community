@@ -63,8 +63,7 @@ public class IdeaGateway {
   public boolean isVersioned(@NotNull VirtualFile f, boolean shouldBeInContent) {
     if (!f.isInLocalFileSystem()) return false;
 
-    String fileName = f.getName();
-    if (!f.isDirectory() && fileName.endsWith(".class")) return false;
+    if (!f.isDirectory() && StringUtil.endsWith(f.getNameSequence(), ".class")) return false;
 
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     boolean isInContent = false;

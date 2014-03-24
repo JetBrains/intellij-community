@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -103,18 +104,24 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @Override
   @NotNull
   public String getName() {
+    return getNameSequence().toString();
+  }
+
+  @NotNull
+  @Override
+  public CharSequence getNameSequence() {
     return FileNameCache.getVFileName(myNameId);
   }
 
-  public int compareNameTo(@NotNull String name, boolean ignoreCase) {
+  public int compareNameTo(@NotNull CharSequence name, boolean ignoreCase) {
     return FileNameCache.compareNameTo(myNameId, name, ignoreCase);
   }
 
-  protected static int compareNames(@NotNull String name1, @NotNull String name2, boolean ignoreCase) {
+  protected static int compareNames(@NotNull CharSequence name1, @NotNull CharSequence name2, boolean ignoreCase) {
     return compareNames(name1, name2, ignoreCase, 0);
   }
 
-  static int compareNames(@NotNull String name1, @NotNull String name2, boolean ignoreCase, int offset2) {
+  static int compareNames(@NotNull CharSequence name1, @NotNull CharSequence name2, boolean ignoreCase, int offset2) {
     int d = name1.length() - name2.length() + offset2;
     if (d != 0) return d;
     for (int i=0; i<name1.length(); i++) {
@@ -197,9 +204,9 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return FileNameCache.appendPathOnFileSystem(myNameId, myParent, accumulatedPathLength, positionRef);
   }
 
-  protected static int copyString(@NotNull char[] chars, int pos, @NotNull String s) {
+  protected static int copyString(@NotNull char[] chars, int pos, @NotNull CharSequence s) {
     int length = s.length();
-    s.getChars(0, length, chars, pos);
+    CharArrayUtil.getChars(s, chars, 0, pos, length);
     return pos + length;
   }
 
