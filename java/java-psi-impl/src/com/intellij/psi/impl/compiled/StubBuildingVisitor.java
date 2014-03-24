@@ -31,7 +31,7 @@ import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.asm4.*;
+import org.jetbrains.org.objectweb.asm.*;
 
 import java.lang.reflect.Array;
 import java.text.CharacterIterator;
