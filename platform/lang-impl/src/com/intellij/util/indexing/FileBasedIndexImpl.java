@@ -268,11 +268,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     myChangedFilesCollector.invalidateIndices(file, true);
   }
 
-  @Override
-  public void requestReindexExcluded(@NotNull final VirtualFile file) {
-    myChangedFilesCollector.invalidateIndices(file, false);
-  }
-
   private void initExtensions() {
     try {
       final FileBasedIndexExtension[] extensions = Extensions.getExtensions(FileBasedIndexExtension.EXTENSION_POINT_NAME);
@@ -1992,21 +1987,22 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       iterateIndexableFiles(eventFile, new Processor<VirtualFile>() {
         @Override
         public boolean process(@NotNull final VirtualFile file) {
-          FileContent fileContent = null;
-
           // handle 'content-less' indices separately
           boolean fileIsDirectory = file.isDirectory();
-          for (ID<?, ?> indexId : fileIsDirectory ? myIndicesForDirectories : myNotRequiringContentIndices) {
-            if (getInputFilter(indexId).acceptInput(file)) {
-              try {
-                if (fileContent == null) {
-                  fileContent = new FileContentImpl(file);
+          if (!contentChange) {
+            FileContent fileContent = null;
+            for (ID<?, ?> indexId : fileIsDirectory ? myIndicesForDirectories : myNotRequiringContentIndices) {
+              if (getInputFilter(indexId).acceptInput(file)) {
+                try {
+                  if (fileContent == null) {
+                    fileContent = new FileContentImpl(file);
+                  }
+                  updateSingleIndex(indexId, file, fileContent);
                 }
-                updateSingleIndex(indexId, file, fileContent);
-              }
-              catch (StorageException e) {
-                LOG.info(e);
-                requestRebuild(indexId);
+                catch (StorageException e) {
+                  LOG.info(e);
+                  requestRebuild(indexId);
+                }
               }
             }
           }
@@ -2090,14 +2086,16 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
       List<ID<?, ?>> nontrivialFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(file);
 
-      for (ID<?, ?> indexId : nontrivialFileIndexedStates) {
-        if (myNotRequiringContentIndices.contains(indexId)) {
-          try {
-            updateSingleIndex(indexId, file, null);
-          }
-          catch (StorageException e) {
-            LOG.info(e);
-            requestRebuild(indexId);
+      if (!markForReindex) {  // markForReindex really means content changed
+        for (ID<?, ?> indexId : nontrivialFileIndexedStates) {
+          if (myNotRequiringContentIndices.contains(indexId)) {
+            try {
+              updateSingleIndex(indexId, file, null);
+            }
+            catch (StorageException e) {
+              LOG.info(e);
+              requestRebuild(indexId);
+            }
           }
         }
       }
