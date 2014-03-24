@@ -7,13 +7,13 @@ package org.apache.commons.lang.enum;
 public abstract class ValuedEnum extends org.apache.commons.lang.enum.Enum {
     private final int iValue;
 
-    protected ValuedEnum(java.lang.String s, int i) { /* compiled code */ }
+    protected ValuedEnum(java.lang.String name, int value) { /* compiled code */ }
 
-    protected static org.apache.commons.lang.enum.Enum getEnum(java.lang.Class aClass, int i) { /* compiled code */ }
+    protected static org.apache.commons.lang.enum.Enum getEnum(java.lang.Class enumClass, int value) { /* compiled code */ }
 
     public final int getValue() { /* compiled code */ }
 
-    public int compareTo(java.lang.Object o) { /* compiled code */ }
+    public int compareTo(java.lang.Object other) { /* compiled code */ }
 
     public java.lang.String toString() { /* compiled code */ }
 }
