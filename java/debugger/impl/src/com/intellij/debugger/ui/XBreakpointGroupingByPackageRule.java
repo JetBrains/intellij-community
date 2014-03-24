@@ -39,6 +39,7 @@ public class XBreakpointGroupingByPackageRule<B> extends XBreakpointGroupingRule
     return XBreakpointsGroupingPriorities.BY_PACKAGE;
   }
 
+  @NotNull
   @Override
   public XBreakpointPackageGroup getGroup(@NotNull B breakpoint, @NotNull Collection<XBreakpointPackageGroup> groups) {
     String packageName = null;
@@ -49,7 +50,7 @@ public class XBreakpointGroupingByPackageRule<B> extends XBreakpointGroupingRule
       }
     }
     if (packageName == null) {
-      return null;
+      return XBreakpointPackageGroup.UNKNOWN;
     }
     for (XBreakpointPackageGroup group : groups) {
       if (StringUtil.equals(group.getPackageName(), packageName)) {

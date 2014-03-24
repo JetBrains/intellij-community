@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,7 +154,7 @@ public class LowLevelSearchUtil {
     int startOffset = scopeStart;
     int endOffset = range.getEndOffset();
     if (endOffset > buffer.length()) {
-      throw new AssertionError("Range for element: '"+scope+"' = "+range+" is out of file '" + file + "' range: " + file.getTextLength());
+      throw new AssertionError("Range for element: '"+scope+"' = "+range+" is out of file '" + file + "' range: " + file.getTextRange()+"; file contents length: "+buffer.length()+"; file provider: "+file.getViewProvider());
     }
 
     final char[] bufferArray = CharArrayUtil.fromSequenceWithoutCopying(buffer);

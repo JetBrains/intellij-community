@@ -63,7 +63,7 @@ import com.intellij.util.cls.ClsFormatException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.asm4.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -537,7 +537,8 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
     try {
       PsiJavaFileStubImpl stub = new PsiJavaFileStubImpl("do.not.know.yet", true);
-      StubBuildingVisitor<VirtualFile> visitor = new StubBuildingVisitor<VirtualFile>(file, STRATEGY, stub, 0, file.getNameWithoutExtension());
+      String className = file.getNameWithoutExtension();
+      StubBuildingVisitor<VirtualFile> visitor = new StubBuildingVisitor<VirtualFile>(file, STRATEGY, stub, 0, className);
       try {
         new ClassReader(bytes).accept(visitor, ClassReader.SKIP_FRAMES);
       }

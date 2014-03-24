@@ -17,6 +17,7 @@ package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.util.PlatformIcons;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,13 @@ import javax.swing.*;
 
 public class XBreakpointClassGroup extends XBreakpointGroup {
   private static final String DEFAULT_PACKAGE_NAME = DebuggerBundle.message("default.package.name");
+  public static final XBreakpointClassGroup UNKNOWN = new XBreakpointClassGroup("", "") {
+    @NotNull
+    @Override
+    public String getName() {
+      return XDebuggerBundle.message("xbreakpoint.group.unknown");
+    }
+  };
 
   private String myPackageName;
   private String myClassName;

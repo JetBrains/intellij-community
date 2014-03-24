@@ -45,6 +45,7 @@ public class XBreakpointGroupingByTypeRule<B> extends XBreakpointGroupingRule<B,
     return XBreakpointsGroupingPriorities.BY_TYPE;
   }
 
+  @NotNull
   @Override
   public XBreakpointTypeGroup getGroup(@NotNull B b, @NotNull Collection<XBreakpointTypeGroup> groups) {
     if (b instanceof XBreakpoint) {
@@ -56,6 +57,6 @@ public class XBreakpointGroupingByTypeRule<B> extends XBreakpointGroupingRule<B,
       }
       return new XBreakpointTypeGroup(breakpoint.getType());
     }
-    return null;
+    return XBreakpointTypeGroup.UNKNOWN;
   }
 }

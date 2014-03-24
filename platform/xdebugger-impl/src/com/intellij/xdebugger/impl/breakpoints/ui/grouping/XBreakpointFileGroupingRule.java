@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.breakpoints.ui.grouping;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
@@ -41,17 +42,20 @@ public class XBreakpointFileGroupingRule<B> extends XBreakpointGroupingRule<B, X
     return XBreakpointsGroupingPriorities.BY_FILE;
   }
 
+  @NotNull
   public XBreakpointFileGroup getGroup(@NotNull final B breakpoint, @NotNull final Collection<XBreakpointFileGroup> groups) {
     if (!(breakpoint instanceof XLineBreakpoint)) {
-      return null;
+      return XBreakpointFileGroup.UNKNOWN;
     }
     XSourcePosition position = ((XLineBreakpoint)breakpoint).getSourcePosition();
 
-    if (position == null) return null;
+    if (position == null) {
+      return XBreakpointFileGroup.UNKNOWN;
+    }
 
     VirtualFile file = position.getFile();
     for (XBreakpointFileGroup group : groups) {
-      if (group.getFile().equals(file)) {
+      if (Comparing.equal(group.getFile(), file)) {
         return group;
       }
     }
