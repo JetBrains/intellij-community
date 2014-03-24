@@ -394,7 +394,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       if (erasure != null) {
         final PsiType[] boundTypes = typeParameter.getExtendsListTypes();
         for (PsiType boundType : boundTypes) {
-          if (TypeConversionUtil.isAssignable(boundType, erasure) || TypeConversionUtil.isAssignable(erasure, boundType)) {
+          if (TypeConversionUtil.isAssignable(erasure, boundType)) {
             return boundType;
           }
         }
