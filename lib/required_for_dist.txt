@@ -1,6 +1,7 @@
 asm-commons.jar
 asm.jar
 asm4-all.jar
+asm-all.jar
 automaton.jar
 cglib-2.2.2.jar
 cli-parser-1.1.jar
