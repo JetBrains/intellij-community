@@ -60,6 +60,7 @@
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.ValueProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.ValueExperimentalProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.WitherProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.BuilderClassProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.BuilderProcessor"/>
 
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.DelegateFieldProcessor"/>
@@ -68,6 +69,7 @@
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor"/>
 
     <processor implementation="de.plushnikov.intellij.plugin.processor.method.DelegateMethodProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderClassMethodProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderMethodProcessor"/>
 
     <!-- lombok-pg-->
