@@ -3,7 +3,7 @@ package com.intellij.coverage;
 import com.intellij.rt.coverage.instrumentation.SourceLineCounter;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntProcedure;
-import org.jetbrains.asm4.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.util.List;
 
@@ -28,7 +28,7 @@ public class SourceLineCounterUtil {
     if (!counter.isInterface()) {
       packageCoverageInfo.totalClassCount++;
     }
-    return counter.getNMethodsWithCode() > 0;
+    return false;
   }
 
   public static void collectSrcLinesForUntouchedFiles(final List<Integer> uncoveredLines,
