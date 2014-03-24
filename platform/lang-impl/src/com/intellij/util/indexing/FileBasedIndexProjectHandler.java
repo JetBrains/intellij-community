@@ -23,7 +23,6 @@ import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.file.exclude.ProjectFileExclusionManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -45,14 +44,12 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
   private final FileBasedIndexImpl myIndex;
   private final ProjectRootManagerEx myRootManager;
   private final FileTypeManager myFileTypeManager;
-  private final ProjectFileExclusionManagerImpl myExclusionManager;
 
   public FileBasedIndexProjectHandler(final FileBasedIndexImpl index, final Project project, final ProjectRootManagerComponent rootManager, FileTypeManager ftManager, final ProjectManager projectManager) {
     super(project);
     myIndex = index;
     myRootManager = rootManager;
     myFileTypeManager = ftManager;
-    myExclusionManager = ProjectFileExclusionManagerImpl.getInstance(project);
 
     final StartupManagerEx startupManager = (StartupManagerEx)StartupManager.getInstance(project);
     if (startupManager != null) {
@@ -87,7 +84,6 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
   public boolean isInSet(@NotNull final VirtualFile file) {
     final ProjectFileIndex index = myRootManager.getFileIndex();
     if (index.isInContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file)) {
-      if (myExclusionManager != null && myExclusionManager.isExcluded(file)) return false;
       return !myFileTypeManager.isFileIgnored(file);
     }
     return false;
