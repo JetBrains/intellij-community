@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
@@ -95,7 +96,7 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
               methodExpression.setQualifierExpression(qualifierExpression);
             }
 
-            return copy;
+            return (PsiExpression)JavaCodeStyleManager.getInstance(copy.getProject()).shortenClassReferences(copy);
           }
         }
       }
