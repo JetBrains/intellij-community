@@ -214,11 +214,15 @@ public class CaretModelWindow implements CaretModel {
   public void setCaretsAndSelections(@NotNull List<CaretState> caretStates) {
     List<CaretState> convertedStates = new ArrayList<CaretState>(caretStates.size());
     for (CaretState state : caretStates) {
-      convertedStates.add(new CaretState(state.getCaretPosition() == null ? null : myEditorWindow.injectedToHost(state.getCaretPosition()),
-                                         state.getSelectionStart() == null ? null : myEditorWindow.injectedToHost(state.getSelectionStart()),
-                                         state.getSelectionEnd() == null ? null : myEditorWindow.injectedToHost(state.getSelectionEnd())));
+      convertedStates.add(new CaretState(injectedToHost(state.getCaretPosition()),
+                                         injectedToHost(state.getSelectionStart()),
+                                         injectedToHost(state.getSelectionEnd())));
     }
     myDelegate.setCaretsAndSelections(convertedStates);
+  }
+
+  private LogicalPosition injectedToHost(@Nullable LogicalPosition position) {
+    return position == null ? null : myEditorWindow.injectedToHost(position);
   }
 
   @NotNull
@@ -227,11 +231,15 @@ public class CaretModelWindow implements CaretModel {
     List<CaretState> caretsAndSelections = myDelegate.getCaretsAndSelections();
     List<CaretState> convertedStates = new ArrayList<CaretState>(caretsAndSelections.size());
     for (CaretState state : caretsAndSelections) {
-      convertedStates.add(new CaretState(state.getCaretPosition() == null ? null : myEditorWindow.hostToInjected(state.getCaretPosition()),
-                                         state.getSelectionStart() == null ? null : myEditorWindow.hostToInjected(state.getSelectionStart()),
-                                         state.getSelectionEnd() == null ? null : myEditorWindow.hostToInjected(state.getSelectionEnd())));
+      convertedStates.add(new CaretState(hostToInjected(state.getCaretPosition()),
+                                         hostToInjected(state.getSelectionStart()),
+                                         hostToInjected(state.getSelectionEnd())));
     }
     return convertedStates;
+  }
+
+  private LogicalPosition hostToInjected(@Nullable LogicalPosition position) {
+    return position == null ? null : myEditorWindow.hostToInjected(position);
   }
 
   private InjectedCaret createInjectedCaret(Caret caret) {
