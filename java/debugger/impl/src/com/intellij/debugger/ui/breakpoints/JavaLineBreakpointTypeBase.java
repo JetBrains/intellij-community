@@ -49,7 +49,7 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
 
   @Override
   public boolean isAddBreakpointButtonVisible() {
-    return true;
+    return false;
   }
 
   @Override
