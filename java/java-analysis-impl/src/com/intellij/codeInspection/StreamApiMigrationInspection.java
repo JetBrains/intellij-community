@@ -331,24 +331,23 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
               iteration += ".filter(" + parameter.getName() + " -> " + condition.getText() +")";
             }
           }
-          iteration +=".map(";
-
           final PsiExpression mapperCall = methodCallExpression.getArgumentList().getExpressions()[0];
-
-          final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-          final PsiClass functionClass = psiFacade.findClass("java.util.function.Function", GlobalSearchScope.allScope(project));
-          final PsiClassType functionalInterfaceType = functionClass != null ? psiFacade.getElementFactory().createType(functionClass, parameter.getType(), mapperCall.getType()) : null;
-          final PsiCallExpression toConvertCall = LambdaCanBeMethodReferenceInspection.canBeMethodReferenceProblem(mapperCall,
-                                                                                                                   new PsiParameter[]{
-                                                                                                                     parameter},
-                                                                                                                   functionalInterfaceType);
-          final String methodReferenceText = LambdaCanBeMethodReferenceInspection.createMethodReferenceText(toConvertCall, functionalInterfaceType, new PsiParameter[]{parameter});
-          if (methodReferenceText != null) {
-            iteration += methodReferenceText;
-          } else {
-            iteration += parameter.getName() + " -> " + mapperCall.getText();
+          if (!isIdentityMapping(parameter, mapperCall)) {
+            iteration +=".map(";
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+            final PsiClass functionClass = psiFacade.findClass("java.util.function.Function", GlobalSearchScope.allScope(project));
+            final PsiClassType functionalInterfaceType = functionClass != null ? psiFacade.getElementFactory().createType(functionClass, parameter.getType(), mapperCall.getType()) : null;
+            final PsiCallExpression toConvertCall = LambdaCanBeMethodReferenceInspection.canBeMethodReferenceProblem(mapperCall, new PsiParameter[]{parameter}, functionalInterfaceType);
+            final String methodReferenceText = LambdaCanBeMethodReferenceInspection.createMethodReferenceText(toConvertCall, functionalInterfaceType, new PsiParameter[]{parameter});
+            if (methodReferenceText != null) {
+              iteration += methodReferenceText;
+            } else {
+              iteration += parameter.getName() + " -> " + mapperCall.getText();
+            }
+            iteration += ")";
           }
-          iteration += ").collect(java.util.stream.Collectors.";
+
+          iteration += ".collect(java.util.stream.Collectors.";
 
           String variableName = null;
           PsiExpression primitiveInitializer = null;
@@ -402,6 +401,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           }
         }
       }
+    }
+
+    private static boolean isIdentityMapping(PsiParameter parameter, PsiExpression mapperCall) {
+      return mapperCall instanceof PsiReferenceExpression && ((PsiReferenceExpression)mapperCall).resolve() == parameter;
     }
   }
 
