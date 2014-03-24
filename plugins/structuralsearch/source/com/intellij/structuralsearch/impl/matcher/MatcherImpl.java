@@ -576,12 +576,7 @@ public class MatcherImpl {
             public void run() {
               PsiElement file = finalFile;
               if (!file.isValid()) return;
-//TODO JAVA SPECIFIC
-              if (file instanceof PsiIdentifier) {
-                // Searching in previous results
-                file = file.getParent();
-              }
-
+              file = StructuralSearchUtil.getProfileByLanguage(file.getLanguage()).extendMatchOnePsiFile(file);
               match(file);
             }
           }
@@ -642,12 +637,7 @@ public class MatcherImpl {
         elementToStartMatching = element;
       }
     } else {
-//TODO JAVA SPECIFIC
-      if (targetNode instanceof PsiIdentifier) {
-        targetNode = targetNode.getParent();
-        final PsiElement parent = targetNode.getParent();
-        if (parent instanceof PsiTypeElement || parent instanceof PsiStatement) targetNode = parent;
-      }
+      targetNode = StructuralSearchUtil.getProfileByPsiElement(element).extendMatchedByDownUp(targetNode);
 
       MatchingHandler handler = null;
 

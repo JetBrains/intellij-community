@@ -108,6 +108,25 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return targetNode;
   }
 
+  @Override
+  public PsiElement extendMatchedByDownUp(PsiElement targetNode) {
+    if (targetNode instanceof PsiIdentifier) {
+      targetNode = targetNode.getParent();
+      final PsiElement parent = targetNode.getParent();
+      if (parent instanceof PsiTypeElement || parent instanceof PsiStatement) targetNode = parent;
+    }
+    return targetNode;
+  }
+
+  @Override
+  public PsiElement extendMatchOnePsiFile(PsiElement file) {
+    if (file instanceof PsiIdentifier) {
+      // Searching in previous results
+      file = file.getParent();
+    }
+    return file;
+  }
+
   public void compile(PsiElement[] elements, @NotNull GlobalCompilingVisitor globalVisitor) {
     elements[0].getParent().accept(new JavaCompilingVisitor(globalVisitor));
   }

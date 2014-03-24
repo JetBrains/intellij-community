@@ -182,4 +182,12 @@ public abstract class StructuralSearchProfile {
   public PsiElement updateCurrentNode(PsiElement node) {
     return node;
   }
+
+  public PsiElement extendMatchedByDownUp(PsiElement node) {
+    return node;
+  }
+
+  public PsiElement extendMatchOnePsiFile(PsiElement file) {
+    return file;
+  }
 }
