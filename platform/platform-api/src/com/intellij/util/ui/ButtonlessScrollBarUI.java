@@ -16,13 +16,11 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.components.JBScrollPane;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -166,7 +164,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     };
     myNSScrollerListener = new NSScrollerHelper.ScrollbarStyleListener() {
       @Override
-      public void styleChanged(@NotNull NSScrollerHelper.Style newStyle) {
+      public void styleChanged() {
         updateMacScrollbarStyle();
       }
     };
@@ -177,11 +175,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   private void updateMacScrollbarStyle() {
-    if (!SystemInfo.isMac) return;
-
-    NSScrollerHelper.Style style = UIUtil.isUnderNativeMacLookAndFeel() && !Registry.is("ui.no.mac.scrollbar")
-                                   ? NSScrollerHelper.getScrollerStyle()
-                                   : null;
+    NSScrollerHelper.Style style = NSScrollerHelper.getScrollerStyle();
 
     if (style != myMacScrollerStyle && scrollbar != null) {
       myMacScrollerStyle = style;
@@ -193,7 +187,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       if (pane != null) pane.revalidate();
     }
   }
-  
+
   public boolean alwaysShowTrack() {
     return !isMacOverlayScrollbar();
   }

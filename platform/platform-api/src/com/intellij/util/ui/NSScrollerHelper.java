@@ -21,6 +21,7 @@ import com.intellij.ui.mac.foundation.ID;
 import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.EventListenerList;
 import java.util.EventListener;
@@ -31,11 +32,10 @@ class NSScrollerHelper {
   private static final Callback CALLBACK = new Callback() {
     @SuppressWarnings("UnusedDeclaration")
     public void callback(ID self, Pointer selector, ID event) {
-      final Style style = getScrollerStyle();
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         @Override
         public void run() {
-          fireStyleChanged(style);
+          fireStyleChanged();
         }
       });
     }
@@ -75,9 +75,9 @@ class NSScrollerHelper {
     }
   }
 
-  @NotNull
+  @Nullable
   public static Style getScrollerStyle() {
-    if (!SystemInfo.isMac) return Style.Legacy;
+    if (!SystemInfo.isMac) return null;
 
     Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
     try {
@@ -101,16 +101,16 @@ class NSScrollerHelper {
     ourListeners.remove(ScrollbarStyleListener.class, listener);
   }
 
-  private static void fireStyleChanged(@NotNull Style style) {
+  private static void fireStyleChanged() {
     Object[] listeners = ourListeners.getListenerList();
     for (int i = listeners.length - 2; i >= 0; i -= 2) {
       if (listeners[i] == ScrollbarStyleListener.class) {
-        ((ScrollbarStyleListener)listeners[i + 1]).styleChanged(style);
+        ((ScrollbarStyleListener)listeners[i + 1]).styleChanged();
       }
     }
   }
 
   public interface ScrollbarStyleListener extends EventListener {
-    void styleChanged(@NotNull Style newStyle);
+    void styleChanged();
   }
 }
