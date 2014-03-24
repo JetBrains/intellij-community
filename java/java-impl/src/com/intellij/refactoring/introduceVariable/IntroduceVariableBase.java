@@ -111,10 +111,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       final PsiElement[] statementsInRange = findStatementsAtOffset(editor, file, offset);
 
       //try line selection
-      if (statementsInRange.length == 1 && (!PsiUtil.isStatement(statementsInRange[0]) ||
-                                            statementsInRange[0].getTextRange().getStartOffset() > offset ||
-                                            statementsInRange[0].getTextRange().getEndOffset() < offset ||
-                                            isPreferStatements())) {
+      if (statementsInRange.length == 1 && selectLineAtCaret(offset, statementsInRange)) {
         selectionModel.selectLineAtCaret();
         final PsiExpression expressionInRange =
           findExpressionInRange(project, file, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
@@ -132,27 +129,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
           selectionModel.setSelection(textRange.getStartOffset(), textRange.getEndOffset());
         }
         else {
-          int selection;
-          if (statementsInRange.length == 1 &&
-              statementsInRange[0] instanceof PsiExpressionStatement &&
-              PsiUtilCore.hasErrorElementChild(statementsInRange[0])) {
-            selection = expressions.indexOf(((PsiExpressionStatement)statementsInRange[0]).getExpression());
-          } else {
-            PsiExpression expression = expressions.get(0);
-            if (expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).resolve() instanceof PsiLocalVariable) {
-              selection = 1;
-            }
-            else {
-              selection = -1;
-            }
-          }
           IntroduceTargetChooser.showChooser(editor, expressions,
             new Pass<PsiExpression>(){
               public void pass(final PsiExpression selectedValue) {
                 invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
               }
             },
-            new PsiExpressionTrimRenderer.RenderFunction(), "Expressions", selection, ScopeHighlighter.NATURAL_RANGER);
+            new PsiExpressionTrimRenderer.RenderFunction(), "Expressions", preferredSelection(statementsInRange, expressions), ScopeHighlighter.NATURAL_RANGER);
           return;
         }
       }
@@ -161,6 +144,31 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         LookupManager.getActiveLookup(editor) == null) {
       selectionModel.removeSelection();
     }
+  }
+
+  public static boolean selectLineAtCaret(int offset, PsiElement[] statementsInRange) {
+    return !PsiUtil.isStatement(statementsInRange[0]) ||
+            statementsInRange[0].getTextRange().getStartOffset() > offset ||
+            statementsInRange[0].getTextRange().getEndOffset() < offset ||
+            isPreferStatements();
+  }
+
+  public static int preferredSelection(PsiElement[] statementsInRange, List<PsiExpression> expressions) {
+    int selection;
+    if (statementsInRange.length == 1 &&
+        statementsInRange[0] instanceof PsiExpressionStatement &&
+        PsiUtilCore.hasErrorElementChild(statementsInRange[0])) {
+      selection = expressions.indexOf(((PsiExpressionStatement)statementsInRange[0]).getExpression());
+    } else {
+      PsiExpression expression = expressions.get(0);
+      if (expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).resolve() instanceof PsiLocalVariable) {
+        selection = 1;
+      }
+      else {
+        selection = -1;
+      }
+    }
+    return selection;
   }
 
   public static boolean isPreferStatements() {
