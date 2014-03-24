@@ -37,11 +37,20 @@ public class ToolWindowContentUiType {
   public static ToolWindowContentUiType getInstance(String name) {
     if (TABBED.getName().equals(name)) {
       return TABBED;
-    } else if (COMBO.getName().equals(name)) {
+    }
+    else if (COMBO.getName().equals(name)) {
       return COMBO;
-    } else {
+    }
+    else {
       LOG.debug("Unknown content type=" + name);
       return TABBED;
     }
+  }
+
+  @Override
+  public String toString() {
+    return "ToolWindowContentUiType{" +
+           "myName='" + myName + '\'' +
+           '}';
   }
 }
