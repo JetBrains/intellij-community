@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.rename;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -23,6 +24,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,6 +35,7 @@ import java.util.*;
 public class JavaNameSuggestionProvider implements NameSuggestionProvider {
   @Nullable
   public SuggestedNameInfo getSuggestedNames(final PsiElement element, final PsiElement nameSuggestionContext, Set<String> result) {
+    if (!PsiUtilCore.findLanguageFromElement(element).isKindOf(JavaLanguage.INSTANCE)) return null;
     String initialName = UsageViewUtil.getShortName(element);
     SuggestedNameInfo info = suggestNamesForElement(element, nameSuggestionContext);
     if (info != null) {
@@ -95,6 +98,7 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
   @Nullable
   private static String[] suggestProperlyCasedName(PsiElement psiElement) {
     if (!(psiElement instanceof PsiNamedElement)) return null;
+    if (psiElement instanceof PsiFile) return null;
     String name = ((PsiNamedElement)psiElement).getName();
     if (name == null) return null;
     if (psiElement instanceof PsiVariable) {
