@@ -36,6 +36,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.impl.ContentImpl;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +60,8 @@ public final class ToolWindowImpl implements ToolWindowEx {
   private final JComponent myComponent;
   private boolean myAvailable;
   private final ContentManager myContentManager;
-  private Icon myIcon = null;
+  private Icon myIcon;
+  private String myTitle;
 
   private static final Content EMPTY_CONTENT = new ContentImpl(new JLabel(), "", false);
   private final ToolWindowContentUi myContentUI;
@@ -342,7 +344,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   public final String getTitle() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    return getSelectedContent().getDisplayName();
+    return ObjectUtils.notNull(myTitle, myId);
   }
 
   public final void setIcon(final Icon icon) {
@@ -356,10 +358,10 @@ public final class ToolWindowImpl implements ToolWindowEx {
     myChangeSupport.firePropertyChange(PROP_ICON, oldIcon, icon);
   }
 
-  public final void setTitle(final String title) {
+  public final void setTitle(String title) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final String oldTitle = getTitle();
-    getSelectedContent().setDisplayName(title);
+    myTitle = title;
     myChangeSupport.firePropertyChange(PROP_TITLE, oldTitle, title);
   }
 

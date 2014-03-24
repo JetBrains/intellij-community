@@ -323,7 +323,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
    * and short cut registered in the key map.
    */
   void updateText() {
-    final String toolWindowId = getWindowInfo().getId();
+    String toolWindowId = myDecorator.getToolWindow().getTitle();
     String text = toolWindowId;
     if (UISettings.getInstance().SHOW_TOOL_WINDOW_NUMBERS) {
       final int mnemonic = ActivateToolWindowAction.getMnemonicForToolWindow(toolWindowId);
