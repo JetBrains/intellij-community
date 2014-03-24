@@ -1,7 +1,7 @@
 // "Replace with expression lambda" "true"
 class Test {
   {
-    Runnable c = () -> <caret>{foo();};
+    Runnable c = () -> foo();
   }
   
   int foo() {return 1;}
