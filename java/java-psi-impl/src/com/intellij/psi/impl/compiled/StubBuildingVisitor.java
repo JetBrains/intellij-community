@@ -57,6 +57,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   public static final String FLOAT_NEGATIVE_INF = "-1.0f / 0.0";
   public static final String FLOAT_NAN = "0.0f / 0.0";
 
+  public static final int ASM_API = Opcodes.ASM5;
+
   @NonNls private static final String SYNTHETIC_CLASS_INIT_METHOD = "<clinit>";
   @NonNls private static final String SYNTHETIC_INIT_METHOD = "<init>";
 
@@ -69,7 +71,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private PsiModifierListStub myModList;
 
   public StubBuildingVisitor(T classSource, InnerClassSourceStrategy<T> innersStrategy, StubElement parent, int access, String shortName) {
-    super(Opcodes.ASM4);
+    super(ASM_API);
     mySource = classSource;
     myInnersStrategy = innersStrategy;
     myParent = parent;
@@ -326,7 +328,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     if (reader == null) return;
 
     final StubBuildingVisitor<T> classVisitor = new StubBuildingVisitor<T>(innerSource, myInnersStrategy, myResult, access, innerName);
-    reader.accept(classVisitor, ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES);
+    reader.accept(classVisitor, ClassReader.SKIP_FRAMES);
   }
 
   private static boolean isCorrectName(String name) {
@@ -544,7 +546,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     private final String myDesc;
 
     public AnnotationTextCollector(@Nullable String desc, AnnotationResultCallback callback) {
-      super(Opcodes.ASM4);
+      super(ASM_API);
       myCallback = callback;
 
       myDesc = desc;
@@ -616,7 +618,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     private final PsiModifierListStub myModList;
 
     private AnnotationCollectingVisitor(final PsiModifierListStub modList) {
-      super(Opcodes.ASM4);
+      super(ASM_API);
       myModList = modList;
     }
 
@@ -647,7 +649,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
                                              final int paramIgnoreCount,
                                              final int paramCount,
                                              final PsiParameterStubImpl[] paramStubs) {
-      super(Opcodes.ASM4);
+      super(ASM_API);
       myOwner = owner;
       myModList = modList;
       myIgnoreCount = ignoreCount;
