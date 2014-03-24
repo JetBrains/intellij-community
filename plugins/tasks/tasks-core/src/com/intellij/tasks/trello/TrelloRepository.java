@@ -20,12 +20,14 @@ import com.google.gson.JsonParseException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
+import com.intellij.tasks.impl.TaskUtil;
+import com.intellij.tasks.impl.httpclient.ResponseUtil;
 import com.intellij.tasks.trello.model.TrelloBoard;
 import com.intellij.tasks.trello.model.TrelloCard;
 import com.intellij.tasks.trello.model.TrelloList;
@@ -291,33 +293,32 @@ public final class TrelloRepository extends BaseRepositoryImpl {
   /**
    * Make GET request to specified URL and return HTTP entity of result as Reader object
    */
-  private String makeRequest(String url) throws Exception {
+  @NotNull
+  private String makeRequest(@NotNull String url) throws Exception {
     HttpMethod method = new GetMethod(url);
     configureHttpMethod(method);
     return executeMethod(method);
   }
 
-  private String executeMethod(HttpMethod method) throws Exception {
+  @NotNull
+  private String executeMethod(@NotNull HttpMethod method) throws Exception {
     HttpClient client = getHttpClient();
-    String entityContent;
     client.executeMethod(method);
-    // Can't use HttpMethod#getResponseBodyAsString because Trello doesn't specify encoding
-    // in Content-Type header and by default this method decodes from Latin-1
-    entityContent = StreamUtil.readText(method.getResponseBodyAsStream(), "utf-8");
-    LOG.debug(entityContent);
+    String entityContent = ResponseUtil.getResponseContentAsString(method);
+    TaskUtil.prettyFormatJsonToLog(LOG, entityContent);
+    // LOG.debug("Response size: " + method.getResponseHeader("Content-Length").getValue() + " bytes");
     if (method.getStatusCode() != HttpStatus.SC_OK) {
       Header header = method.getResponseHeader("Content-Type");
       if (header != null && header.getValue().startsWith("text/plain")) {
-        throw new Exception("Request failed. Reason: " + StringUtil.capitalize(entityContent));
+        throw new Exception(TaskBundle.message("failure.server.message", StringUtil.capitalize(entityContent)));
       }
-      throw new Exception("Request failed with HTTP error: " + method.getStatusText());
+      throw new Exception(TaskBundle.message("failure.http.error", method.getStatusCode(), method.getStatusText()));
     }
-    //return new InputStreamReader(method.getResponseBodyAsStream(), "utf-8");
     return entityContent;
   }
 
   @NotNull
-  private <T> T makeRequestAndDeserializeJsonResponse(String url, Type type) throws Exception {
+  private <T> T makeRequestAndDeserializeJsonResponse(@NotNull String url, @NotNull Type type) throws Exception {
     String entityStream = makeRequest(url);
     // javac 1.6.0_23 bug workaround
     // TrelloRepository.java:286: type parameters of <T>T cannot be determined; no unique maximal instance exists for type variable T with upper bounds T,java.lang.Object
@@ -326,7 +327,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
   }
 
   @NotNull
-  private <T> T makeRequestAndDeserializeJsonResponse(String url, Class<T> cls) throws Exception {
+  private <T> T makeRequestAndDeserializeJsonResponse(@NotNull String url, @NotNull Class<T> cls) throws Exception {
     String entityStream = makeRequest(url);
     return TrelloUtil.GSON.fromJson(entityStream, cls);
   }
