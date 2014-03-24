@@ -93,6 +93,21 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return text;
   }
 
+  @Override
+  public PsiElement updateCurrentNode(PsiElement targetNode) {
+    if (targetNode instanceof PsiCodeBlock && ((PsiCodeBlock)targetNode).getStatements().length == 1) {
+      PsiElement targetNodeParent = targetNode.getParent();
+      if (targetNodeParent instanceof PsiBlockStatement) {
+        targetNodeParent = targetNodeParent.getParent();
+      }
+
+      if (targetNodeParent instanceof PsiIfStatement || targetNodeParent instanceof PsiLoopStatement) {
+        targetNode = targetNodeParent;
+      }
+    }
+    return targetNode;
+  }
+
   public void compile(PsiElement[] elements, @NotNull GlobalCompilingVisitor globalVisitor) {
     elements[0].getParent().accept(new JavaCompilingVisitor(globalVisitor));
   }

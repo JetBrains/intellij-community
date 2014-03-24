@@ -662,9 +662,8 @@ public class MatcherImpl {
         targetNode = targetNode.getParent();
 
         if (options.isLooseMatching()) {
-//TODO JAVA SPECIFIC
-          element = updateCurrentNode(element);
-          targetNode = updateCurrentNode(targetNode);
+          element = StructuralSearchUtil.getProfileByPsiElement(element).updateCurrentNode(element);
+          targetNode = StructuralSearchUtil.getProfileByPsiElement(element).updateCurrentNode(targetNode);
         }
       }
 
@@ -678,21 +677,6 @@ public class MatcherImpl {
     final int matchCount = sink.getMatches().size();
     assert matchCount <= 1;
     return matchCount > 0 ? sink.getMatches().get(0) : null;
-  }
-
-//TODO JAVA SPECIFIC
-  private static PsiElement updateCurrentNode(PsiElement targetNode) {
-    if (targetNode instanceof PsiCodeBlock && ((PsiCodeBlock)targetNode).getStatements().length == 1) {
-      PsiElement targetNodeParent = targetNode.getParent();
-      if (targetNodeParent instanceof PsiBlockStatement) {
-        targetNodeParent = targetNodeParent.getParent();
-      }
-
-      if (targetNodeParent instanceof PsiIfStatement || targetNodeParent instanceof PsiLoopStatement) {
-        targetNode = targetNodeParent;
-      }
-    }
-    return targetNode;
   }
 
   private class MatchOneVirtualFile extends MatchOneFile {
