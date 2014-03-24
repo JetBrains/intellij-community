@@ -20,7 +20,6 @@ import com.intellij.concurrency.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -55,6 +54,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -382,7 +382,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (file != null && !(file instanceof PsiBinaryFile)) {
       // load contents outside read action
       if (FileDocumentManager.getInstance().getCachedDocument(vfile) == null) {
-        LoadTextUtil.loadText(vfile); // cache bytes in vfs
+        // cache bytes in vfs
+        try {
+          vfile.contentsToByteArray();
+        }
+        catch (IOException ignored) {
+        }
       }
       ApplicationUtil.tryRunReadAction(new Computable<Void>() {
         @Override
