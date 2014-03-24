@@ -16,6 +16,7 @@
 package com.intellij.ui.messages;
 
 import com.apple.eawt.FullScreenUtilities;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.MacMainFrameDecorator;
@@ -80,7 +81,9 @@ public class SheetMessage {
       FullScreenUtilities.setWindowCanFullScreen(myParent, false);
     }
     setPositionRelativeToParent();
+    LaterInvocator.enterModal(myWindow);
     myWindow.setVisible(true);
+    LaterInvocator.leaveModal(myWindow);
   }
 
   private boolean couldBeInFullScreen() {
