@@ -71,8 +71,9 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     // check first for fields, methods and filter it out, because PsiClass is parent of all annotations and will match other parents too
     PsiElement psiElement = PsiTreeUtil.getParentOfType(psiAnnotation, PsiField.class, PsiMethod.class, PsiClass.class);
     if (psiElement instanceof PsiClass) {
-      result = new ArrayList<LombokProblem>(1);
-      validate(psiAnnotation, (PsiClass) psiElement, new ProblemNewBuilder(result));
+      ProblemNewBuilder problemNewBuilder = new ProblemNewBuilder();
+      validate(psiAnnotation, (PsiClass) psiElement, problemNewBuilder);
+      result = problemNewBuilder.getProblems();
     }
 
     return result;

@@ -15,7 +15,6 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import lombok.Cleanup;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -40,8 +39,7 @@ public class CleanupProcessor extends AbstractProcessor {
   @Override
   public Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
     // TODO warning: "You're assigning an auto-cleanup variable to something else. This is a bad idea."
-    Collection<LombokProblem> result = new ArrayList<LombokProblem>(2);
-    final ProblemNewBuilder problemNewBuilder = new ProblemNewBuilder(result);
+    final ProblemNewBuilder problemNewBuilder = new ProblemNewBuilder(2);
 
     PsiLocalVariable psiVariable = PsiTreeUtil.getParentOfType(psiAnnotation, PsiLocalVariable.class);
     if (null != psiVariable) {
@@ -59,7 +57,7 @@ public class CleanupProcessor extends AbstractProcessor {
       problemNewBuilder.addError("'@Cleanup' is legal only on local variable declarations");
     }
 
-    return result;
+    return problemNewBuilder.getProblems();
   }
 
   private void validateCleanUpMethodExists(@NotNull PsiLocalVariable psiVariable, @NotNull String cleanupName, @NotNull ProblemNewBuilder problemNewBuilder) {

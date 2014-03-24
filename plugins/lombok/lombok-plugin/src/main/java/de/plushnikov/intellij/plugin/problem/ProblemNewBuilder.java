@@ -3,16 +3,25 @@ package de.plushnikov.intellij.plugin.problem;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 
-import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Plushnikov Michail
  */
 public class ProblemNewBuilder implements ProblemBuilder {
-  private Collection<LombokProblem> target;
+  private Set<LombokProblem> problems;
 
-  public ProblemNewBuilder(Collection<LombokProblem> target) {
-    this.target = target;
+  public ProblemNewBuilder() {
+    this(1);
+  }
+
+  public ProblemNewBuilder(int size) {
+    this.problems = new HashSet<LombokProblem>(size);
+  }
+
+  public Set<LombokProblem> getProblems() {
+    return problems;
   }
 
   public void addWarning(String message) {
@@ -40,6 +49,6 @@ public class ProblemNewBuilder implements ProblemBuilder {
   }
 
   public void addProblem(String message, ProblemHighlightType highlightType, LocalQuickFix... quickFixes) {
-    target.add(new LombokProblem(message, highlightType, quickFixes));
+    problems.add(new LombokProblem(message, highlightType, quickFixes));
   }
 }

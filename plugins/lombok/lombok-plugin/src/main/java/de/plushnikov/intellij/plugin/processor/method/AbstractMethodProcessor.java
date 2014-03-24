@@ -65,8 +65,9 @@ public abstract class AbstractMethodProcessor extends AbstractProcessor implemen
 
     PsiMethod psiMethod = PsiTreeUtil.getParentOfType(psiAnnotation, PsiMethod.class);
     if (null != psiMethod) {
-      result = new ArrayList<LombokProblem>(1);
-      validate(psiAnnotation, psiMethod, new ProblemNewBuilder(result));
+      ProblemNewBuilder problemNewBuilder = new ProblemNewBuilder();
+      validate(psiAnnotation, psiMethod, problemNewBuilder);
+      result = problemNewBuilder.getProblems();
     }
 
     return result;

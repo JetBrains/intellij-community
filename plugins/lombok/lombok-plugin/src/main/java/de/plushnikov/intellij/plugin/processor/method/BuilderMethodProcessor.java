@@ -6,13 +6,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
-import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
-import de.plushnikov.intellij.plugin.util.BuilderUtil;
+import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
+import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import lombok.experimental.Builder;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -21,7 +21,10 @@ import java.util.List;
  *
  * @author Tomasz Kalkosiński
  */
-public class BuilderMethodProcessor extends BuilderMethodInnerClassProcessor {
+public class BuilderMethodProcessor extends AbstractMethodProcessor {
+
+  private final BuilderHandler builderHandler = new BuilderHandler();
+  private final AllArgsConstructorProcessor allArgsConstructorProcessor = new AllArgsConstructorProcessor();
 
   public BuilderMethodProcessor() {
     super(Builder.class, PsiMethod.class);
@@ -29,26 +32,24 @@ public class BuilderMethodProcessor extends BuilderMethodInnerClassProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @NotNull ProblemBuilder builder) {
-    return validateInternal(psiAnnotation, psiMethod, builder, false);
+    return builderHandler.validate(psiAnnotation, psiMethod, builder);
   }
 
   protected void processIntern(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    final PsiClass containingClass = psiMethod.getContainingClass();
-    assert containingClass != null;
+    final PsiClass psiClass = psiMethod.getContainingClass();
+    if (null != psiClass) {
 
-    String innerClassName = BuilderUtil.createBuilderClassNameWithGenerics(psiAnnotation, psiMethod.getReturnType());
-    PsiClass innerClassByName = PsiClassUtil.getInnerClassByName(containingClass, innerClassName);
-    assert innerClassByName != null; // BuilderMethodClassProcessor should run first
+      final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
+      // Create all args constructor only if there is no declared constructors
+      if (definedConstructors.isEmpty()) {
+        target.addAll(allArgsConstructorProcessor.createAllArgsConstructor(psiClass, PsiModifier.DEFAULT, psiAnnotation));
+      }
 
-    final String builderMethodName = BuilderUtil.createBuilderMethodName(psiAnnotation);
-    if (!PsiMethodUtil.hasMethodByName(PsiClassUtil.collectClassMethodsIntern(containingClass), builderMethodName)) {
-      LombokLightMethodBuilder method = new LombokLightMethodBuilder(containingClass.getManager(), builderMethodName)
-          .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(innerClassByName))
-          .withContainingClass(containingClass)
-          .withNavigationElement(psiAnnotation);
-      method.withModifier(PsiModifier.STATIC);
-      method.withModifier(PsiModifier.PUBLIC);
-      target.add(method);
+      final String builderClassName = builderHandler.getBuilderClassName(psiClass, psiAnnotation);
+      final PsiClass builderClass = PsiClassUtil.getInnerClassByName(psiClass, builderClassName);
+      if (null != builderClass) {
+        target.add(builderHandler.createBuilderMethod(psiClass, builderClass, psiAnnotation));
+      }
     }
   }
 }

@@ -98,9 +98,13 @@ public class LombokLightClass extends LightClass {
     return myTypeParameters;
   }
 
-  public void setTypeParameterList(@NotNull PsiTypeParameterList list) {
+  public void setTypeParameterList(@Nullable PsiTypeParameterList list) {
     myTypeParameterList = list;
-    myTypeParameters = list.getTypeParameters();
+    if (null == myTypeParameterList) {
+      myTypeParameters = PsiTypeParameter.EMPTY_ARRAY;
+    } else {
+      myTypeParameters = myTypeParameterList.getTypeParameters();
+    }
   }
 
   @Nullable

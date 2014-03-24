@@ -67,8 +67,9 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
 
     PsiField psiField = PsiTreeUtil.getParentOfType(psiAnnotation, PsiField.class);
     if (null != psiField) {
-      result = new ArrayList<LombokProblem>(1);
-      validate(psiAnnotation, psiField, new ProblemNewBuilder(result));
+      ProblemNewBuilder problemNewBuilder = new ProblemNewBuilder();
+      validate(psiAnnotation, psiField, problemNewBuilder);
+      result = problemNewBuilder.getProblems();
     }
 
     return result;

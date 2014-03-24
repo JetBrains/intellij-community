@@ -19,7 +19,6 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import lombok.Synchronized;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -43,9 +42,7 @@ public class SynchronizedProcessor extends AbstractProcessor {
   @NotNull
   @Override
   public Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
-    Collection<LombokProblem> result = new ArrayList<LombokProblem>(2);
-
-    final ProblemNewBuilder problemNewBuilder = new ProblemNewBuilder(result);
+    final ProblemNewBuilder problemNewBuilder = new ProblemNewBuilder(2);
 
     PsiMethod psiMethod = PsiTreeUtil.getParentOfType(psiAnnotation, PsiMethod.class);
     if (null != psiMethod) {
@@ -79,6 +76,6 @@ public class SynchronizedProcessor extends AbstractProcessor {
       problemNewBuilder.addError("'@Synchronized' is legal only on methods.");
     }
 
-    return result;
+    return problemNewBuilder.getProblems();
   }
 }

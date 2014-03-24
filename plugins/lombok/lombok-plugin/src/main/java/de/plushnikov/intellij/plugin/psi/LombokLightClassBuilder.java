@@ -10,6 +10,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiTypeParameterList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -45,7 +46,7 @@ public class LombokLightClassBuilder extends LombokLightClass {
     return this;
   }
 
-  public LombokLightClassBuilder withParameterTypes(@NotNull PsiTypeParameterList parameterList) {
+  public LombokLightClassBuilder withParameterTypes(@Nullable PsiTypeParameterList parameterList) {
     setTypeParameterList(parameterList);
     return this;
   }
