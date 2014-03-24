@@ -246,7 +246,7 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
 
   public static File fillFileWithGroovycParameters(final String outputDir,
                                                    final Collection<String> changedSources,
-                                                   String finalOutput,
+                                                   Collection<String> finalOutputs,
                                                    Map<String, String> class2Src,
                                                    @Nullable final String encoding,
                                                    List<String> patchers,
@@ -284,7 +284,7 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
       writer.write(outputDir);
       writer.write("\n");
       writer.write(GroovyRtConstants.FINAL_OUTPUTPATH + "\n");
-      writer.write(finalOutput);
+      writer.write(StringUtil.join(finalOutputs, File.pathSeparator));
       writer.write("\n");
     }
     finally {
