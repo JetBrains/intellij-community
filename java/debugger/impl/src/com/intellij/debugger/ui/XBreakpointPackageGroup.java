@@ -18,17 +18,30 @@ package com.intellij.debugger.ui;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public class XBreakpointPackageGroup extends XBreakpointGroup {
   private static final String DEFAULT_PACKAGE_NAME = DebuggerBundle.message("default.package.name");
+  public static final XBreakpointPackageGroup UNKNOWN = new XBreakpointPackageGroup() {
+    @NotNull
+    @Override
+    public String getName() {
+      return XDebuggerBundle.message("xbreakpoint.group.unknown");
+    }
+  };
 
   private String myPackageName;
 
-  public XBreakpointPackageGroup(String packageName) {
+  private XBreakpointPackageGroup() {
+    myPackageName = null;
+  }
+
+  public XBreakpointPackageGroup(@NotNull String packageName) {
     myPackageName = packageName;
   }
 
@@ -44,7 +57,7 @@ public class XBreakpointPackageGroup extends XBreakpointGroup {
     return StringUtil.isEmpty(packageName) ? DEFAULT_PACKAGE_NAME : packageName;
   }
 
-  @NotNull
+  @Nullable
   public String getPackageName() {
     return myPackageName;
   }
