@@ -156,6 +156,10 @@ public class CommandExecutor {
     return outputAdapter.getOutput().getStderr();
   }
 
+  public ProcessOutput getProcessOutput() {
+    return outputAdapter.getOutput();
+  }
+
   @Nullable
   public ByteArrayOutputStream getBinaryOutput() {
     return myHandler instanceof BinaryOSProcessHandler ? ((BinaryOSProcessHandler)myHandler).myBinaryOutput : null;
@@ -207,6 +211,15 @@ public class CommandExecutor {
       }
     }
     while (!finished);
+  }
+
+  public void run(int timeout) throws SvnBindException {
+    start();
+    boolean finished = waitFor(timeout);
+    if (!finished) {
+      outputAdapter.getOutput().setTimeout();
+      doDestroyProcess();
+    }
   }
 
   public void addListener(final LineCommandListener listener) {
