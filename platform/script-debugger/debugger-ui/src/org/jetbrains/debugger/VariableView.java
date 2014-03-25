@@ -1,5 +1,6 @@
 package org.jetbrains.debugger;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
@@ -22,7 +23,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
-public final class VariableView extends VariableViewBase implements VariableContext {
+public final class VariableView extends XNamedValue implements VariableContext {
   private static final Pattern ARRAY_DESCRIPTION_PATTERN = Pattern.compile("^[a-zA-Z]+\\[\\d+\\]$");
   private static final class ArrayPresentation extends XValuePresentation {
     private final String length;
@@ -86,6 +87,19 @@ public final class VariableView extends VariableViewBase implements VariableCont
                                           node.setPresentation(icon, null, "Array[" + lengthValue.getValueString() + ']', true);
                                         }
                                       });
+    }
+  }
+
+  @NotNull
+  public static Icon getIcon(@NotNull Value value) {
+    ValueType type = value.getType();
+    switch (type) {
+      case FUNCTION:
+        return AllIcons.Nodes.Function;
+      case ARRAY:
+        return AllIcons.Debugger.Db_array;
+      default:
+        return type.isObjectType() ? AllIcons.Debugger.Value : AllIcons.Debugger.Db_primitive;
     }
   }
 
@@ -333,9 +347,9 @@ public final class VariableView extends VariableViewBase implements VariableCont
     while (!done);
   }
 
-  @Override
-  public ValueType getValueType() {
-    return value.getType();
+  @NotNull
+  private Icon getIcon() {
+    return getIcon(value);
   }
 
   @Override
@@ -391,6 +405,7 @@ public final class VariableView extends VariableViewBase implements VariableCont
     return context.getEvaluateContext();
   }
 
+  @Nullable
   public Value getValue() {
     return variable.getValue();
   }
