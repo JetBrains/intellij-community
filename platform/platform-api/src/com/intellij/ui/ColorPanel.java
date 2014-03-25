@@ -40,6 +40,7 @@ public class ColorPanel extends JComponent {
     addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent e) {
+        if (!isEnabled() || !isEditable) return;
         Color color = ColorChooser.chooseColor(ColorPanel.this, UIBundle.message("color.panel.select.color.dialog.description"), myColor);
         if (color != null) {
           myColor = color;
@@ -87,7 +88,7 @@ public class ColorPanel extends JComponent {
       return null;
     }
     StringBuilder buffer = new StringBuilder("0x").append(ColorUtil.toHex(myColor).toUpperCase());
-    if (isEnabled()) {
+    if (isEnabled() && isEditable) {
       buffer.append(" (Click to customize)");
     }
     return buffer.toString();
