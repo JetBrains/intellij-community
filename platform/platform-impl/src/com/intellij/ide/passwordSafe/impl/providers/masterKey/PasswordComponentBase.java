@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.passwordSafe.impl.providers.masterKey;
 
-import com.intellij.openapi.ui.Messages;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +47,7 @@ public abstract class PasswordComponentBase {
     mySafe = safe;
     myTitle = title;
     myIconLabel.setText("");
-    myIconLabel.setIcon(Messages.getQuestionIcon()); // todo add some lock icon
+    myIconLabel.setIcon(AllIcons.General.PasswordLock);
     //myPromptLabel.setUI(new MultiLineLabelUI());
     myPromptLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
 
