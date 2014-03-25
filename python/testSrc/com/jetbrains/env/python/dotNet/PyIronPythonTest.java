@@ -9,7 +9,7 @@ import com.jetbrains.env.python.debug.PyEnvTestCase;
 public class PyIronPythonTest extends PyEnvTestCase {
 
   /**
-   *  Tests skeleton generation
+   * Tests skeleton generation
    */
   public void testSkeletons() throws Exception {
     runPythonTest(new SkeletonTestTask());

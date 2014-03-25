@@ -30,18 +30,15 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
    */
   private static final Set<String> IRON_TAGS = Sets.newHashSet("iron");
   /**
-   * Number of seconds we wait for skeleton generation external process (should be enouigh)
+   * Number of seconds we wait for skeleton generation external process (should be enough)
    */
-  private static final int SECONDS_TO_WAIT_FOR_SKELETON_GENERATION = 5;
+  private static final int SECONDS_TO_WAIT_FOR_SKELETON_GENERATION = 20;
   /**
    * We check that generated skeleton is exactly as this file
    */
   private static final String DOT_NET_EXPECTED_SKELETON_PY = "dotNet/expected.skeleton.py";
+  private static final String SKELETON_FILE_TO_TEST = "testSkeleton.py";
 
-  /**
-   * @param sdkHome
-   * @throws com.intellij.util.IncorrectOperationException
-   */
   @Override
   public void runTestOn(@NotNull final String sdkHome) throws IOException {
     final Sdk sdk = getSdk(sdkHome);
@@ -49,9 +46,9 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
     final File skeletonsPath = new File(PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), sdkHome));
     final File skeleton = new File(skeletonsPath, "com/just/like/java.py"); // File with module skeleton
 
-    myFixture.copyFileToProject("dotNet/testSkeleton.py", "testSkeleton.py"); // File that uses CLR library
+    myFixture.copyFileToProject("dotNet/testSkeleton.py", SKELETON_FILE_TO_TEST); // File that uses CLR library
     myFixture.copyFileToProject("dotNet/PythonLibs.dll", "PythonLibs.dll"); // Library itself
-    myFixture.configureByFile("testSkeleton.py");
+    myFixture.configureByFile(SKELETON_FILE_TO_TEST);
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class); // This inspection should suggest us to generate stubs
 
 
@@ -75,7 +72,11 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
     return Collections.unmodifiableSet(IRON_TAGS);
   }
 
-  // TODO: Doc
+  /**
+   * Waits {@link #SECONDS_TO_WAIT_FOR_SKELETON_GENERATION} seconds for file to be created.
+   * Fails test after that.
+   * @param skeletonToWait file to wait
+   */
   private static void waitForSkeleton(@NotNull final File skeletonToWait) {
     for (int i = 0; i < SECONDS_TO_WAIT_FOR_SKELETON_GENERATION; i++) {
       try {
