@@ -246,11 +246,22 @@ public class SheetController {
     messageTextPane.setEditable(false);
 
     messageTextPane.setContentType("text/html");
-    messageTextPane.setSize(250, Short.MAX_VALUE);
-    messageTextPane.setText(message);
-    messageArea.setSize(messageTextPane.getPreferredSize().width, messageTextPane.getPreferredSize().height);
 
-    SHEET_WIDTH = Math.max(LEFT_SHEET_OFFSET + messageTextPane.getPreferredSize().width + RIGHT_OFFSET, SHEET_WIDTH);
+    FontMetrics fontMetrics = mySheetMessage.getFontMetrics(regularFont);
+
+    int widestWordWidth = 250;
+
+    String [] words = message.split(" ");
+
+    for (String word : words) {
+      widestWordWidth = Math.max(fontMetrics.stringWidth(word), widestWordWidth);
+    }
+
+    messageTextPane.setSize(widestWordWidth, Short.MAX_VALUE);
+    messageTextPane.setText(message);
+    messageArea.setSize(widestWordWidth, messageTextPane.getPreferredSize().height);
+
+    SHEET_WIDTH = Math.max(LEFT_SHEET_OFFSET + widestWordWidth + RIGHT_OFFSET, SHEET_WIDTH);
     messageTextPane.setSize(messageArea);
 
     messageTextPane.setOpaque(false);
