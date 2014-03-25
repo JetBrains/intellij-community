@@ -28,8 +28,6 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
@@ -57,6 +55,7 @@ import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.regexp.RegExpFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -669,14 +668,7 @@ public class FindDialog extends DialogWrapper {
 
     if (editorComponent instanceof EditorTextField) {
       boolean isRegexp = myCbRegularExpressions.isSelectedWhenSelectable();
-      FileType fileType = PlainTextFileType.INSTANCE;
-      if (isRegexp) {
-        FileType regexpFileType = FileTypeManager.getInstance().getFileTypeByFileName("a.regexp");
-        if (regexpFileType != FileTypes.UNKNOWN) { // RegExp plugin might not be installed
-          fileType = regexpFileType;
-        }
-      }
-
+      FileType fileType = isRegexp ? RegExpFileType.INSTANCE : PlainTextFileType.INSTANCE;
       String fileName = isRegexp ? "a.regexp" : "a.txt";
       final PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText(fileName, fileType, ((EditorTextField)editorComponent).getText(), -1, true);
 
