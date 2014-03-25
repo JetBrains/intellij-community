@@ -8,7 +8,6 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -19,7 +18,6 @@ import com.jetbrains.python.console.*;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
-import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -199,22 +197,6 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
       disposeConsole();
     }
-  }
-
-  private static Sdk getSdk(final String sdkHome) {
-    Sdk sdk = PythonSdkType.findSdkByPath(sdkHome);
-
-    return sdk != null ? sdk : new ProjectJdkImpl("Python Test Sdk " + sdkHome, PythonSdkType.getInstance()) {
-      @Override
-      public String getHomePath() {
-        return sdkHome;
-      }
-
-      @Override
-      public String getVersionString() {
-        return "Python 2 Mock SDK";
-      }
-    };
   }
 
   private void disposeConsoleProcess() throws InterruptedException {

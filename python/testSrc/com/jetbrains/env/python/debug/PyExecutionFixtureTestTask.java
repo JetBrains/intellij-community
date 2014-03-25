@@ -6,6 +6,8 @@ import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
@@ -14,6 +16,7 @@ import com.intellij.testFramework.fixtures.impl.ModuleFixtureImpl;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.fixtures.PyProfessionalTestCase;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +32,28 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
   public static final int LONG_TIMEOUT = 120000;
   private int myTimeout = NORMAL_TIMEOUT;
   protected CodeInsightTestFixture myFixture;
+
+  /**
+   * Creates sdk by SDK path
+   * @param sdkHome python sdk path
+   * @return sdk
+   */
+  @NotNull
+  protected static Sdk getSdk(final String sdkHome) {
+    Sdk sdk = PythonSdkType.findSdkByPath(sdkHome);
+
+    return sdk != null ? sdk : new ProjectJdkImpl("Python Test Sdk " + sdkHome, PythonSdkType.getInstance()) {
+      @Override
+      public String getHomePath() {
+        return sdkHome;
+      }
+
+      @Override
+      public String getVersionString() {
+        return "Python 2 Mock SDK";
+      }
+    };
+  }
 
   public Project getProject() {
     return myFixture.getProject();
