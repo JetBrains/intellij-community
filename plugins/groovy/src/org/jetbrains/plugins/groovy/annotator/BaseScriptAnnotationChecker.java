@@ -39,7 +39,7 @@ public class BaseScriptAnnotationChecker extends CustomAnnotationChecker {
       PsiFile file = annotation.getContainingFile();
       if (file instanceof GroovyFile && !(((GroovyFile)file).isScript())) {
         holder.createErrorAnnotation(annotation, GroovyBundle.message("base.script.annotation.is.allowed.only.inside.scripts"));
-        return false;
+        return true;
       }
 
       PsiElement pparent = annotation.getParent().getParent();
@@ -50,11 +50,11 @@ public class BaseScriptAnnotationChecker extends CustomAnnotationChecker {
         if (!InheritanceUtil.isInheritor(type, GroovyCommonClassNames.GROOVY_LANG_SCRIPT)) {
           String typeText = type != null ? type.getCanonicalText() : CommonClassNames.JAVA_LANG_OBJECT;
           holder.createErrorAnnotation(annotation, GroovyBundle.message("declared.type.0.have.to.extend.script", typeText));
-          return false;
+          return true;
         }
       }
     }
 
-    return true;
+    return false;
   }
 }

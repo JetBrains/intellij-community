@@ -515,7 +515,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
           else {
             // if ref is an annotation name reference we should not process declarations of annotated elements
             // because inner annotations are not permitted and it can cause infinite recursion
-            PsiElement placeToStartWalking = isAnnotationRef(ref) ? ref.getContainingFile() : ref;
+            PsiElement placeToStartWalking = isAnnotationRef(ref) ? getContainingFileSkippingStubFiles(ref) : ref;
             if (placeToStartWalking != null) {
               ResolveUtil.treeWalkUp(placeToStartWalking, processor, false);
               GroovyResolveResult[] candidates = processor.getCandidates();
@@ -598,6 +598,15 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
       }
 
       return GroovyResolveResult.EMPTY_ARRAY;
+    }
+
+    private static PsiFile getContainingFileSkippingStubFiles(GrCodeReferenceElementImpl ref) {
+      PsiFile file = ref.getContainingFile();
+      while (file != null && !file.isPhysical() && file.getContext() != null) {
+        PsiElement context = file.getContext();
+        file = context.getContainingFile();
+      }
+      return file;
     }
 
     private static boolean isAnnotationRef(GrCodeReferenceElement ref) {
