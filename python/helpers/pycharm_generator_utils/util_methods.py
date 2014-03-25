@@ -520,28 +520,32 @@ def is_clr_type(clr_type):
 def restore_clr(p_name, p_class):
     """
     Restore the function signature by the CLR type signature
+    :return (is_static, spec, sig_note)
     """
     clr_type = clr.GetClrType(p_class)
     if p_name == '__new__':
         methods = [c for c in clr_type.GetConstructors()]
         if not methods:
-            return p_name + '(*args)', 'cannot find CLR constructor'
+            return False, p_name + '(*args)', 'cannot find CLR constructor'
     else:
         methods = [m for m in clr_type.GetMethods() if m.Name == p_name]
         if not methods:
             bases = p_class.__bases__
             if len(bases) == 1 and p_name in dir(bases[0]):
                 # skip inherited methods
-                return None, None
-            return p_name + '(*args)', 'cannot find CLR method'
+                return False, None, None
+            return False, p_name + '(*args)', 'cannot find CLR method'
 
     parameter_lists = []
     for m in methods:
         parameter_lists.append([p.Name for p in m.GetParameters()])
     params = restore_parameters_for_overloads(parameter_lists)
+    is_static = False
     if not methods[0].IsStatic:
         params = ['self'] + params
-    return build_signature(p_name, params), None
+    else:
+        is_static = True
+    return is_static, build_signature(p_name, params), None
 
 def build_output_name(dirname, qualified_name):
     qualifiers = qualified_name.split(".")
