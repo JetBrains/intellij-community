@@ -242,4 +242,28 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
                       "five  eightsix \n" +
                       "seven<caret>");
   }
+
+  public void testEscapeAfterDragDown() throws Exception {
+    init("line1\n" +
+         "line2",
+         TestFileType.TEXT);
+    setEditorVisibleSize(1000, 1000);
+
+    mouse().alt().clickAt(0, 1).dragTo(1, 2).release();
+    executeAction("EditorEscape");
+    checkResultByText("li<caret>ne1\n" +
+                      "line2");
+  }
+
+  public void testEscapeAfterDragUp() throws Exception {
+    init("line1\n" +
+         "line2",
+         TestFileType.TEXT);
+    setEditorVisibleSize(1000, 1000);
+
+    mouse().alt().clickAt(1, 1).dragTo(0, 2).release();
+    executeAction("EditorEscape");
+    checkResultByText("line1\n" +
+                      "li<caret>ne2");
+  }
 }
