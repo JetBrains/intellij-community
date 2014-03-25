@@ -308,6 +308,7 @@
                                             implementationClass="org.jetbrains.plugins.groovy.refactoring.rename.inplace.GroovyResolveSnapshotProvider"/>
 
     <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.inplace.GrVariableInplaceRenameHandler"/>
+    <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.inplace.GrMethodInplaceRenameHandler"/>
 
     <nameSuggestionProvider implementation="org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionProvider"/>
 
