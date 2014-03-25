@@ -91,7 +91,6 @@ public class SheetMessage {
           super.componentShown(e);
           setWindowOpacity(1.0f);
           myWindow.setSize(myController.SHEET_NC_WIDTH, myController.SHEET_NC_HEIGHT);
-          startAnimation(true);
         }
       });
     } else {
@@ -99,6 +98,7 @@ public class SheetMessage {
       myWindow.setSize(myController.SHEET_NC_WIDTH, myController.SHEET_NC_HEIGHT);
       setPositionRelativeToParent();
     }
+    startAnimation(true);
     restoreFullscreenButton = couldBeInFullScreen();
     if (restoreFullscreenButton) {
       FullScreenUtilities.setWindowCanFullScreen(myParent, false);
