@@ -19,9 +19,12 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.*;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BinaryOutputReader;
@@ -30,10 +33,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNCancelException;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
+import java.io.*;
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -48,6 +49,8 @@ public class CommandExecutor {
   static final Logger LOG = Logger.getInstance(CommandExecutor.class.getName());
   private final AtomicReference<Integer> myExitCodeReference;
 
+  @Nullable private String myMessage;
+  @Nullable private File myMessageFile;
   private boolean myIsDestroyed;
   private boolean myNeedsDestroy;
   private volatile String myDestroyReason;
@@ -84,8 +87,28 @@ public class CommandExecutor {
       myCommandLine.addParameters("--config-dir", command.getConfigDir().getPath());
     }
     myCommandLine.addParameter(command.getName().getName());
-    myCommandLine.addParameters(command.getParameters());
+    myCommandLine.addParameters(prepareParameters(command));
     myExitCodeReference = new AtomicReference<Integer>();
+  }
+
+  @NotNull
+  private List<String> prepareParameters(@NotNull Command command) {
+    List<String> parameters = command.getParameters();
+
+    detectAndRemoveMessage(parameters);
+
+    return parameters;
+  }
+
+  private void detectAndRemoveMessage(@NotNull List<String> parameters) {
+    int index = parameters.indexOf("-m");
+    index = index < 0 ? parameters.indexOf("--message") : index;
+
+    if (index >= 0 && index + 1 < parameters.size()) {
+      myMessage = parameters.get(index + 1);
+      parameters.remove(index + 1);
+      parameters.remove(index);
+    }
   }
 
   /**
@@ -124,10 +147,38 @@ public class CommandExecutor {
   }
 
   protected void cleanup() {
+    cleanupMessageFile();
   }
 
-  protected void beforeCreateProcess() {
+  protected void beforeCreateProcess() throws SvnBindException {
     EncodingEnvironmentUtil.fixDefaultEncodingIfMac(myCommandLine, null);
+    ensureMessageFile();
+  }
+
+  private void ensureMessageFile() throws SvnBindException {
+    if (myMessage != null) {
+      try {
+        File vcsFolder = new File(PathManager.getSystemPath(), "vcs");
+        myMessageFile = FileUtil.createTempFile(new File(vcsFolder, "svn"), "commit-message", ".txt");
+        FileUtil.writeToFile(myMessageFile, myMessage);
+
+        myCommandLine.addParameters("-F", myMessageFile.getAbsolutePath());
+        myCommandLine.addParameters("--config-option", "config:miscellany:log-encoding=" + CharsetToolkit.UTF8);
+      }
+      catch (IOException e) {
+        throw new SvnBindException(e);
+      }
+    }
+  }
+
+  private void cleanupMessageFile() {
+    if (myMessageFile != null) {
+      boolean wasDeleted = FileUtil.delete(myMessageFile);
+
+      if (!wasDeleted) {
+        LOG.info("Failed to delete temp commit message file " + myMessageFile.getAbsolutePath());
+      }
+    }
   }
 
   @NotNull
