@@ -1238,14 +1238,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         updatePopup();
 
 
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            buildSymbols(pattern);
-          }
-        });
-
-
-        updatePopup();
+        if (!DumbService.getInstance(project).isDumb()) {
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
+              buildSymbols(pattern);
+            }
+          });
+          updatePopup();
+        }
       }
       catch (Exception ignore) {
         myDone.setRejected();
