@@ -134,13 +134,17 @@ public class SheetController {
 
   private void handleMnemonics(int i, String buttonTitle) {
     buttons[i].setName(buttonTitle);
-
-    if (buttonTitle.indexOf('&') != -1) {
-      buttons[i].setMnemonic(buttonTitle.charAt(buttonTitle.indexOf('&') + 1));
-      buttonTitle = buttonTitle.replace("&","");
-    }
-
     buttons[i].setText(buttonTitle);
+    setMnemonicsFromChar('&', buttons[i]);
+    setMnemonicsFromChar('_', buttons[i]);
+  }
+
+  private static void setMnemonicsFromChar(char mnemonicChar, JButton button) {
+    String buttonTitle = button.getText();
+    if (buttonTitle.indexOf(mnemonicChar) != -1) {
+      button.setMnemonic(buttonTitle.charAt(buttonTitle.indexOf(mnemonicChar) + 1));
+      button.setText(buttonTitle.replace(Character.toString(mnemonicChar), ""));
+    }
   }
 
   void requestFocus() {
