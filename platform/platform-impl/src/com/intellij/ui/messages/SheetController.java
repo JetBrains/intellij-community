@@ -172,9 +172,7 @@ public class SheetController {
   }
 
   private final static int TOP_SHEET_PADDING = 15;
-  private final static int GAP_BETWEEN_TITLE_AND_MESSAGE = 10;
-  private final static int GAP_BETWEEN_MESSAGE_AND_BUTTONS = 10;
-  private final static int BUTTONS_PLUS_CHECKBOX = 70;
+  private final static int GAP_BETWEEN_LINES = 10;
 
   private final static int LEFT_SHEET_PADDING = 35;
   private final static int LEFT_SHEET_OFFSET = 120;
@@ -254,15 +252,23 @@ public class SheetController {
 
     messageTextPane.repaint();
 
-    SHEET_HEIGHT = TOP_SHEET_PADDING + headerLabel.getPreferredSize().height + GAP_BETWEEN_TITLE_AND_MESSAGE + messageArea.height
-                   + GAP_BETWEEN_MESSAGE_AND_BUTTONS + BUTTONS_PLUS_CHECKBOX;
+
 
     ico.setOpaque(false);
     ico.setSize(new Dimension(AllIcons.Logo_welcomeScreen.getIconWidth(), AllIcons.Logo_welcomeScreen.getIconHeight()));
     ico.setLocation(LEFT_SHEET_PADDING, TOP_SHEET_PADDING);
     sheetPanel.add(ico);
     headerLabel.setLocation(LEFT_SHEET_OFFSET, TOP_SHEET_PADDING);
-    messageTextPane.setLocation(LEFT_SHEET_OFFSET, TOP_SHEET_PADDING + headerLabel.getPreferredSize().height + GAP_BETWEEN_TITLE_AND_MESSAGE);
+    messageTextPane.setLocation(LEFT_SHEET_OFFSET, TOP_SHEET_PADDING + headerLabel.getPreferredSize().height + GAP_BETWEEN_LINES);
+
+    SHEET_HEIGHT = TOP_SHEET_PADDING + headerLabel.getPreferredSize().height + GAP_BETWEEN_LINES + messageArea.height
+                   + GAP_BETWEEN_LINES;
+
+
+    if (myDoNotAskOption != null) {
+      layoutDoNotAskCheckbox(sheetPanel);
+    }
+
     layoutWithAbsoluteLayout(buttons, sheetPanel);
 
     sheetPanel.setFocusCycleRoot(true);
@@ -281,11 +287,6 @@ public class SheetController {
 
   private void layoutWithAbsoluteLayout(JButton[] buttons, JPanel sheetPanel) {
     layoutButtons(buttons, sheetPanel);
-
-    if (myDoNotAskOption != null) {
-      layoutDoNotAskCheckbox();
-      sheetPanel.add(doNotAskCheckBox);
-    }
   }
 
   private void paintShadow(Graphics2D g2d) {
@@ -298,6 +299,8 @@ public class SheetController {
   private void layoutButtons(final JButton[] buttons, JPanel panel) {
 
     int buttonsWidth = 15;
+
+
 
     for (JButton button : buttons) {
       panel.add(button);
@@ -313,13 +316,15 @@ public class SheetController {
       Dimension size = button.getPreferredSize();
       buttonShift += size.width;
       button.setBounds(SHEET_WIDTH - buttonShift,
-                       SHEET_HEIGHT - 40,
+                       SHEET_HEIGHT,
                        size.width, size.height);
       buttonShift += 10;
     }
+
+    SHEET_HEIGHT += buttons[0].getHeight() + GAP_BETWEEN_LINES;
   }
 
-  private void layoutDoNotAskCheckbox() {
+  private void layoutDoNotAskCheckbox(JPanel sheetPanel) {
     doNotAskCheckBox = new JCheckBox(myDoNotAskOption.getDoNotShowMessage());
     doNotAskCheckBox.addItemListener(new ItemListener() {
       @Override
@@ -329,7 +334,12 @@ public class SheetController {
     });
     doNotAskCheckBox.repaint();
     doNotAskCheckBox.setSize(doNotAskCheckBox.getPreferredSize());
-    doNotAskCheckBox.setLocation(LEFT_SHEET_OFFSET, SHEET_HEIGHT - BUTTONS_PLUS_CHECKBOX);
+
+
+    doNotAskCheckBox.setLocation(LEFT_SHEET_OFFSET, SHEET_HEIGHT);
+    sheetPanel.add(doNotAskCheckBox);
+
+    SHEET_HEIGHT += doNotAskCheckBox.getHeight() + GAP_BETWEEN_LINES;
   }
 
   /**
