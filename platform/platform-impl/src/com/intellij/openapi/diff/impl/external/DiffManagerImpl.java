@@ -90,6 +90,9 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
     myProperties.registerProperty(FOLDERS_TOOL, TOOL_PATH_UPDATE);
     myProperties.registerProperty(ENABLE_FILES);
     myProperties.registerProperty(FILES_TOOL, TOOL_PATH_UPDATE);
+    myProperties.registerProperty(ENABLE_MERGE);
+    myProperties.registerProperty(MERGE_TOOL, TOOL_PATH_UPDATE);
+    myProperties.registerProperty(MERGE_TOOL_PARAMETERS);
   }
 
   public DiffTool getIdeaDiffTool() { return INTERNAL_DIFF; }

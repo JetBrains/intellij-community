@@ -48,8 +48,8 @@ public class ExpandMacroToPathMap extends PathMacroMap {
       //noinspection ConstantConditions
       return null;
     }
-    
-    if (text.indexOf('$') < 0) {
+
+    if (text.indexOf('$') < 0 && text.indexOf('%') < 0) {
       return text;
     }
 

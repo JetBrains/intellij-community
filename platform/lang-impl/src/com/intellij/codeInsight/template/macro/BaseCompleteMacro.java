@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,11 +99,7 @@ public abstract class BaseCompleteMacro extends Macro {
         }, "", null);
       }
     };
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      runnable.run();
-    } else {
-      ApplicationManager.getApplication().invokeLater(runnable);
-    }
+    ApplicationManager.getApplication().invokeLater(runnable);
   }
 
   private static void considerNextTab(Editor editor) {

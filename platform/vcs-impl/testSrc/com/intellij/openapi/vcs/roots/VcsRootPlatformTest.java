@@ -52,11 +52,9 @@ import java.util.HashSet;
 import static com.intellij.openapi.vcs.Executor.cd;
 import static com.intellij.openapi.vcs.Executor.mkdir;
 
-
-/**
- * @author Nadya Zabrodina
- */
 public abstract class VcsRootPlatformTest extends UsefulTestCase {
+
+  public static final String DOT_MOCK = ".mock";
 
   private VcsRootChecker myExtension;
   @NotNull protected ProjectLevelVcsManagerImpl myVcsManager;
@@ -100,12 +98,12 @@ public abstract class VcsRootPlatformTest extends UsefulTestCase {
 
       @Override
       public boolean isRoot(@NotNull String path) {
-        return new File(path, ".mock").exists();
+        return new File(path, DOT_MOCK).exists();
       }
 
       @Override
       public boolean isVcsDir(@Nullable String path) {
-        return path != null && path.toLowerCase().endsWith(".mock");
+        return path != null && path.toLowerCase().endsWith(DOT_MOCK);
       }
     };
     point.registerExtension(myExtension);
@@ -202,7 +200,7 @@ public abstract class VcsRootPlatformTest extends UsefulTestCase {
     for (String path : mockRoots) {
       File file = new File(projectDir, path);
       file.mkdirs();
-      File mockDir = new File(file, ".mock");
+      File mockDir = new File(file, DOT_MOCK);
       mockDir.mkdirs();
       myFilesToDelete.add(mockDir);
       mockDir.deleteOnExit();

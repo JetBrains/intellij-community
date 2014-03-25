@@ -144,7 +144,7 @@ public class RemoteConnectionCredentialsWrapper {
 
 
   public static String constructSshCredentialsFullPath(RemoteCredentials cred) {
-    return RemoteSdkCredentialsHolder.SSH_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getPort();
+    return RemoteCredentialsHolder.SSH_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getPort();
   }
 
   public void switchType(RemoteSdkConnectionAcceptor acceptor) {
@@ -160,5 +160,13 @@ public class RemoteConnectionCredentialsWrapper {
     else {
       throw unknownConnectionType();
     }
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof RemoteConnectionCredentialsWrapper) {
+      return getId().equals(((RemoteConnectionCredentialsWrapper)obj).getId());
+    }
+    return false;
   }
 }

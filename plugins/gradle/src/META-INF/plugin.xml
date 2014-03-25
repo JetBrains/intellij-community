@@ -62,7 +62,6 @@
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleSourceSetsContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleImplicitContributor"/>
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.BaseGradleProjectResolverExtension"/>
-    <projectResolve implementation="org.jetbrains.plugins.gradle.integrations.scala.ScalaGradleProjectResolverExtension"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

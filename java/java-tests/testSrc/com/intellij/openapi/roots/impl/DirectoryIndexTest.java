@@ -20,6 +20,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
@@ -330,9 +331,10 @@ public class DirectoryIndexTest extends IdeaTestCase {
   }
 
   public void testChangeIgnoreList() throws Exception {
-    myModule1Dir.createChildDirectory(this, "newDir");
-
+    VirtualFile newDir = myModule1Dir.createChildDirectory(this, "newDir");
+    
     myIndex.checkConsistency();
+    checkInfoNotNull(newDir);
 
     final FileTypeManagerEx fileTypeManager = (FileTypeManagerEx)FileTypeManager.getInstance();
     final String list = fileTypeManager.getIgnoredFilesList();
@@ -344,8 +346,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
           fileTypeManager.setIgnoredFilesList(list1);
         }
       });
-
       myIndex.checkConsistency();
+      checkInfoNull(newDir);
     }
     finally {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -354,6 +356,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
           fileTypeManager.setIgnoredFilesList(list);
         }
       });
+      checkInfoNotNull(newDir);
     }
   }
 
@@ -373,6 +376,45 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
 
     myIndex.checkConsistency();
+  }
+
+  public void testModuleUnderIgnoredDir() throws IOException {
+    final VirtualFile ignored = myRootVFile.createChildDirectory(this, "RCS");
+    assertTrue(FileTypeManager.getInstance().isFileIgnored(ignored));
+    final VirtualFile module4 = ignored.createChildDirectory(this, "module4");
+    assertFalse(FileTypeManager.getInstance().isFileIgnored(module4));
+    
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+        Module module = moduleManager.newModule(myRootVFile.getPath() + "/newModule.iml", StdModuleTypes.JAVA.getId());
+        PsiTestUtil.addContentRoot(module, module4);
+        checkInfoNull(ignored);
+        checkInfo(module4, module, false, false, null, null);
+      }
+    }.execute().throwException();
+
+  }
+
+  public void testModuleInIgnoredDir() throws IOException {
+    final VirtualFile ignored = myRootVFile.createChildDirectory(this, "RCS");
+    assertTrue(FileTypeManager.getInstance().isFileIgnored(ignored));
+    
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+        ModifiableModuleModel model = moduleManager.getModifiableModel();
+        model.disposeModule(myModule);
+        model.disposeModule(myModule2);
+        model.disposeModule(myModule3);
+        model.commit();
+        Module module = moduleManager.newModule(myRootVFile.getPath() + "/newModule.iml", StdModuleTypes.JAVA.getId());
+        PsiTestUtil.addContentRoot(module, ignored);
+        checkInfo(ignored, module, false, false, null, null);
+      }
+    }.execute().throwException();
   }
 
   public void testExcludedDirsInLibraries() {

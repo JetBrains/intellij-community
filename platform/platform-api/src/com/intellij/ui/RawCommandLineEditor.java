@@ -31,7 +31,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
-public class RawCommandLineEditor extends JPanel {
+public class RawCommandLineEditor extends JPanel implements TextAccessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.RawCommandLineEditor");
 
   private final TextFieldWithBrowseButton myTextField;
@@ -44,6 +44,7 @@ public class RawCommandLineEditor extends JPanel {
   public RawCommandLineEditor(final Function<String, List<String>> lineParser, final Function<List<String>, String> lineJoiner) {
     super(new BorderLayout());
     myTextField = new TextFieldWithBrowseButton(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (myDialogCaption == null) {
           Container parent = getParent();
@@ -73,10 +74,12 @@ public class RawCommandLineEditor extends JPanel {
     myDialogCaption = dialogCaption != null ? dialogCaption : "";
   }
 
+  @Override
   public void setText(String text) {
     myTextField.setText(text);
   }
 
+  @Override
   public String getText() {
     return myTextField.getText();
   }
@@ -93,6 +96,7 @@ public class RawCommandLineEditor extends JPanel {
     label.setLabelFor(myTextField.getTextField());
   }
 
+  @Override
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
     myTextField.setEnabled(enabled);

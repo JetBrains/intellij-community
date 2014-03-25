@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.classlayout;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.psi.LambdaHighlightingUtil;
 import com.intellij.psi.LambdaUtil;
@@ -71,7 +72,7 @@ public class InterfaceMayBeAnnotatedFunctionalInspection extends BaseInspection 
         return;
       }
       super.visitClass(aClass);
-      if (!aClass.isInterface()) {
+      if (!aClass.isInterface() || AnnotationUtil.isAnnotated(aClass, "java.lang.FunctionalInterface", false)) {
         return;
       }
       if (LambdaHighlightingUtil.checkInterfaceFunctional(aClass) != null) {

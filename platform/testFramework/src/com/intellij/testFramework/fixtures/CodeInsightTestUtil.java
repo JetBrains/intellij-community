@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.testFramework.TestDataFile;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,10 +73,12 @@ public class CodeInsightTestUtil {
     return null;
   }
 
+  @TestOnly
   public static void doIntentionTest(CodeInsightTestFixture fixture, @NonNls String file, @NonNls String actionText) {
     doIntentionTest(fixture, actionText, file + ".xml", file + "_after.xml");
   }
 
+  @TestOnly
   public static void doIntentionTest(@NotNull final CodeInsightTestFixture fixture, @NonNls final String action,
                                      @NotNull final String before, @NotNull final String after) {
     fixture.configureByFile(before);
@@ -90,6 +93,7 @@ public class CodeInsightTestUtil {
         fixture.launchAction(intentionAction);
       }
     }.execute();
+    UIUtil.dispatchAllInvocationEvents();
     fixture.checkResultByFile(after, false);
   }
 

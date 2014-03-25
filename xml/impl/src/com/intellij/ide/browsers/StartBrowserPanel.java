@@ -119,7 +119,7 @@ public class StartBrowserPanel {
   }
 
   @Nullable
-  private static Url virtualFileToUrl(VirtualFile file, Project project) {
+  private static Url virtualFileToUrl(@NotNull VirtualFile file, @NotNull Project project) {
     PsiFile psiFile;
     AccessToken token = ReadAction.start();
     try {
@@ -150,13 +150,16 @@ public class StartBrowserPanel {
     };
     descriptor.setTitle(XmlBundle.message("javascript.debugger.settings.choose.file.title"));
     descriptor.setDescription(XmlBundle.message("javascript.debugger.settings.choose.file.subtitle"));
-    //descriptor.setShowFileSystemRoots(false);
     descriptor.setRoots(ProjectRootManager.getInstance(project).getContentRoots());
 
     field.addBrowseFolderListener(new TextBrowseFolderListener(descriptor, project) {
       @NotNull
       @Override
       protected String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
+        if (chosenFile.isDirectory()) {
+          return chosenFile.getPath();
+        }
+
         Url url = virtualFileToUrl(chosenFile, project);
         return url == null ? chosenFile.getUrl() : url.toDecodedForm();
       }

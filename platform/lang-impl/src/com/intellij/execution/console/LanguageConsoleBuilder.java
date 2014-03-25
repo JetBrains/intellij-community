@@ -148,13 +148,13 @@ public final class LanguageConsoleBuilder {
 
   public LanguageConsoleView build(@NotNull Project project, @NotNull Language language) {
     GutteredLanguageConsole console = new GutteredLanguageConsole(language.getDisplayName() + " Console", project, language, gutterContentProvider, psiFileFactory);
+    if (oneLineInput) {
+      console.getConsoleEditor().setOneLineMode(true);
+    }
     LanguageConsoleViewImpl consoleView = new LanguageConsoleViewImpl(console, true);
     if (executeActionHandler != null) {
       assert historyType != null;
       doInitAction(consoleView, executeActionHandler, historyType);
-    }
-    if (oneLineInput) {
-      console.getConsoleEditor().setOneLineMode(true);
     }
     console.initComponents();
     return consoleView;
@@ -179,7 +179,6 @@ public final class LanguageConsoleBuilder {
   }
 
   private final static class GutteredLanguageConsole extends LanguageConsoleImpl {
-    @Nullable
     private final GutterContentProvider gutterContentProvider;
     @Nullable
     private final PairFunction<VirtualFile, Project, PsiFile> psiFileFactory;
@@ -193,13 +192,13 @@ public final class LanguageConsoleBuilder {
 
       setShowSeparatorLine(false);
 
-      this.gutterContentProvider = gutterContentProvider;
+      this.gutterContentProvider = gutterContentProvider == null ? new BasicGutterContentProvider() : gutterContentProvider;
       this.psiFileFactory = psiFileFactory;
     }
 
     @Override
     boolean isHistoryViewerForceAdditionalColumnsUsage() {
-      return gutterContentProvider == null;
+      return false;
     }
 
     @Override
@@ -223,10 +222,6 @@ public final class LanguageConsoleBuilder {
       super.setupEditorDefault(editor);
 
       if (editor == getConsoleEditor()) {
-        editor.setOneLineMode(true);
-        return;
-      }
-      else if (gutterContentProvider == null) {
         return;
       }
 
@@ -287,12 +282,7 @@ public final class LanguageConsoleBuilder {
 
     @Override
     protected void doAddPromptToHistory() {
-      if (gutterContentProvider == null) {
-        super.doAddPromptToHistory();
-      }
-      else {
-        gutterContentProvider.beforeEvaluate(getHistoryViewer());
-      }
+      gutterContentProvider.beforeEvaluate(getHistoryViewer());
     }
 
     private final class GutterUpdateScheduler extends DocumentAdapter implements DocumentBulkUpdateListener {
@@ -354,10 +344,7 @@ public final class LanguageConsoleBuilder {
 
       private void documentCleared() {
         gutterSizeUpdater = null;
-
         lineEndGutter.documentCleared();
-
-        assert gutterContentProvider != null;
         gutterContentProvider.documentCleared(getHistoryViewer());
       }
 
@@ -423,7 +410,6 @@ public final class LanguageConsoleBuilder {
           int actualStartLine = startLine == 0 ? 0 : startLine - 1;
           int y = (actualStartLine + 1) * lineHeight;
           g.setColor(editor.getColorsScheme().getColor(EditorColors.INDENT_GUIDE_COLOR));
-          assert gutterContentProvider != null;
           for (int visualLine = actualStartLine; visualLine < endLine; visualLine++) {
             if (gutterContentProvider.isShowSeparatorLine(editor.visualToLogicalPosition(new VisualPosition(visualLine, 0)).line, editor)) {
               g.drawLine(0, y, clip.width, y);

@@ -64,7 +64,7 @@ public class HtmlAttributeValueGetter extends XmlAttributeValueGetter {
       }
       else if ("rel".equals(name) || "rev".equals(name)) {
         return new String[]{"alternate", "stylesheet", "start", "next", "prev", "contents", "index", "glossary", "copyright", "chapter",
-            "section", "subsection", "appendix", "help", "bookmark", "script"};
+            "section", "subsection", "appendix", "help", "bookmark", "script", "import"};
       }
       else if ("media".equals(name)) {
         return new String[]{"screen", "tty", "tv", "projection", "handheld", "print", "all", "aural", "braille"};

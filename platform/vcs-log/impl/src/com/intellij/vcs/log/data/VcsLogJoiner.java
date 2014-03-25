@@ -93,8 +93,9 @@ public class VcsLogJoiner {
                                                                                     @NotNull Collection<Hash> newRefs) {
     Set<Hash> allUnresolvedLinkedHashes = new HashSet<Hash>(newRefs);
     allUnresolvedLinkedHashes.removeAll(previousRefs);
-    // in this moment allUnresolvedLinkedHashes contains only NEW refs
+    // at this moment allUnresolvedLinkedHashes contains only NEW refs
     for (VcsCommit commit : firstBlock) {
+      allUnresolvedLinkedHashes.add(commit.getHash());
       allUnresolvedLinkedHashes.addAll(commit.getParents());
     }
     for (VcsCommit commit : firstBlock) {

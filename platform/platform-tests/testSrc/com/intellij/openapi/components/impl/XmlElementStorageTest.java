@@ -28,6 +28,7 @@ import com.intellij.util.io.fs.IFile;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -144,7 +145,7 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
     }
 
     @Override
-    public String collapsePath(final String path) {
+    public String collapsePath(@Nullable String path) {
       throw new UnsupportedOperationException("Method collapsePath not implemented in " + getClass());
     }
 

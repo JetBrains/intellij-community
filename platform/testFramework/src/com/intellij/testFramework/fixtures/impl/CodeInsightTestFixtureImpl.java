@@ -1704,7 +1704,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
     }
 
-    EditorTestUtil.verifyCaretAndSelectionState(editor, loader.caretState);
+    EditorTestUtil.verifyCaretAndSelectionState(editor, loader.caretState, expectedFile);
   }
 
   private String stripTrailingSpaces(String actualText) {

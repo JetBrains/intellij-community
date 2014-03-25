@@ -120,6 +120,7 @@ public class MavenResourceCompilerConfigurationGenerator {
       addResources(resourceConfig.testResources, mavenProject.getTestResources());
 
       addWebResources(module, projectConfig, mavenProject);
+      addEjbClientArtifactConfiguration(module, projectConfig, mavenProject);
 
       resourceConfig.filteringExclusions.addAll(MavenProjectsTree.getFilterExclusions(mavenProject));
 
@@ -168,7 +169,7 @@ public class MavenResourceCompilerConfigurationGenerator {
   private Properties getFilteringProperties(MavenProject mavenProject) {
     final Properties properties = new Properties();
 
-    for (String each : mavenProject.getFilters()) {
+    for (String each : mavenProject.getFilterPropertiesFiles()) {
       try {
         FileInputStream in = new FileInputStream(each);
         try {
@@ -229,57 +230,105 @@ public class MavenResourceCompilerConfigurationGenerator {
     Element warCfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-war-plugin");
     if (warCfg == null) return;
 
+    boolean filterWebXml = Boolean.parseBoolean(warCfg.getChildTextTrim("filteringDeploymentDescriptors"));
     Element webResources = warCfg.getChild("webResources");
-    if (webResources == null) return;
+
+    if (webResources == null && !filterWebXml) return;
 
     String webArtifactName = MavenUtil.getArtifactName("war", module, true);
 
-    MavenArtifactResourceConfiguration artifactResourceCfg = projectCfg.artifactsResources.get(webArtifactName);
+    MavenWebArtifactConfiguration artifactResourceCfg = projectCfg.webArtifactConfigs.get(webArtifactName);
     if (artifactResourceCfg == null) {
-      artifactResourceCfg = new MavenArtifactResourceConfiguration();
-      artifactResourceCfg.webArtifactName = webArtifactName;
+      artifactResourceCfg = new MavenWebArtifactConfiguration();
       artifactResourceCfg.moduleName = module.getName();
-      projectCfg.artifactsResources.put(webArtifactName, artifactResourceCfg);
+      projectCfg.webArtifactConfigs.put(webArtifactName, artifactResourceCfg);
     }
     else {
-      LOG.error("MavenArtifactResourceConfiguration already exists.");
+      LOG.error("MavenWebArtifactConfiguration already exists.");
     }
 
-    for (Element resource : webResources.getChildren("resource")) {
+    if (webResources != null) {
+      for (Element resource : webResources.getChildren("resource")) {
+        ResourceRootConfiguration r = new ResourceRootConfiguration();
+        String directory = resource.getChildTextTrim("directory");
+        if (StringUtil.isEmptyOrSpaces(directory)) continue;
+
+        if (!FileUtil.isAbsolute(directory)) {
+          directory = mavenProject.getDirectory() + '/' + directory;
+        }
+
+        r.directory = directory;
+        r.isFiltered = Boolean.parseBoolean(resource.getChildTextTrim("filtering"));
+
+        r.targetPath = resource.getChildTextTrim("targetPath");
+
+        Element includes = resource.getChild("includes");
+        if (includes != null) {
+          for (Element include : includes.getChildren("include")) {
+            String includeText = include.getTextTrim();
+            if (!includeText.isEmpty()) {
+              r.includes.add(includeText);
+            }
+          }
+        }
+
+        Element excludes = resource.getChild("excludes");
+        if (excludes != null) {
+          for (Element exclude : excludes.getChildren("exclude")) {
+            String excludeText = exclude.getTextTrim();
+            if (!excludeText.isEmpty()) {
+              r.excludes.add(excludeText);
+            }
+          }
+        }
+
+        artifactResourceCfg.webResources.add(r);
+      }
+    }
+
+    if (filterWebXml) {
       ResourceRootConfiguration r = new ResourceRootConfiguration();
-      String directory = resource.getChildTextTrim("directory");
-      if (StringUtil.isEmptyOrSpaces(directory)) continue;
-
-      if (!FileUtil.isAbsolute(directory)) {
-        directory = mavenProject.getDirectory() + '/' + directory;
-      }
-
-      r.directory = directory;
-      r.isFiltered = Boolean.parseBoolean(resource.getChildTextTrim("filtering"));
-
-      r.targetPath = resource.getChildTextTrim("targetPath");
-
-      Element includes = resource.getChild("includes");
-      if (includes != null) {
-        for (Element include : includes.getChildren("include")) {
-          String includeText = include.getTextTrim();
-          if (!includeText.isEmpty()) {
-            r.includes.add(includeText);
-          }
-        }
-      }
-
-      Element excludes = resource.getChild("excludes");
-      if (excludes != null) {
-        for (Element exclude : excludes.getChildren("exclude")) {
-          String excludeText = exclude.getTextTrim();
-          if (!excludeText.isEmpty()) {
-            r.excludes.add(excludeText);
-          }
-        }
-      }
-
+      r.directory = mavenProject.getDirectory() + "/src/main/webapp";
+      r.includes = Collections.singleton("WEB-INF/web.xml");
+      r.isFiltered = true;
+      r.targetPath = "";
       artifactResourceCfg.webResources.add(r);
+    }
+  }
+
+  private void addEjbClientArtifactConfiguration(Module module, MavenProjectConfiguration projectCfg, MavenProject mavenProject) {
+    Element pluginCfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-ejb-plugin");
+
+    if (pluginCfg == null || !Boolean.parseBoolean(pluginCfg.getChildTextTrim("generateClient"))) {
+      return;
+    }
+
+    String ejbClientArtifactName = MavenUtil.getEjbClientArtifactName(module);
+
+    MavenEjbClientConfiguration ejbClientCfg = new MavenEjbClientConfiguration();
+
+    Element includes = pluginCfg.getChild("clientIncludes");
+    if (includes != null) {
+      for (Element include : includes.getChildren("clientInclude")) {
+        String includeText = include.getTextTrim();
+        if (!includeText.isEmpty()) {
+          ejbClientCfg.includes.add(includeText);
+        }
+      }
+    }
+
+    Element excludes = pluginCfg.getChild("clientExcludes");
+    if (excludes != null) {
+      for (Element exclude : excludes.getChildren("clientExclude")) {
+        String excludeText = exclude.getTextTrim();
+        if (!excludeText.isEmpty()) {
+          ejbClientCfg.excludes.add(excludeText);
+        }
+      }
+    }
+
+    if (!ejbClientCfg.isEmpty()) {
+      projectCfg.ejbClientArtifactConfigs.put(ejbClientArtifactName, ejbClientCfg);
     }
   }
 

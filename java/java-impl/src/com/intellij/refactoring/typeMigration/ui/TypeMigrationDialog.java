@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -35,12 +34,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.changeSignature.ChangeSignatureUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.ui.EditorComboBox;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +50,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author anna
@@ -74,8 +74,8 @@ public class TypeMigrationDialog extends RefactoringDialog {
 
     final PsiType migrationRootType = rules != null ? rules.getMigrationRootType() : null;
     final PsiType rootType = getRootType();
-    final String text = migrationRootType != null ? migrationRootType.getPresentableText()
-                                                  : rootType != null ? rootType.getPresentableText() : "";
+    final String text = migrationRootType != null ? migrationRootType.getCanonicalText(true) :
+                        rootType != null ? rootType.getCanonicalText(true) : "";
     int flags = 0;
     if (root instanceof PsiParameter) {
       final PsiElement scope = ((PsiParameter)root).getDeclarationScope();
@@ -93,11 +93,7 @@ public class TypeMigrationDialog extends RefactoringDialog {
     assert document != null;
     myToTypeEditor = new EditorComboBox(document, project, StdFileTypes.JAVA);
     final String[] types = getValidTypes(project, root);
-    if (types != null) {
-      myToTypeEditor.setHistory(types);
-    } else {
-      myToTypeEditor.setHistory(new String[]{document.getText()});
-    }
+    myToTypeEditor.setHistory(types != null ? types : new String[]{document.getText()});
     document.addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(final DocumentEvent e) {
@@ -138,12 +134,12 @@ public class TypeMigrationDialog extends RefactoringDialog {
 
   @Nullable
   private String[] getValidTypes(final Project project, final PsiElement root) {
-    final ArrayList<PsiExpression> expressions = new ArrayList<PsiExpression>();
     if (root instanceof PsiField || root instanceof PsiMethod) {
       final PsiModifierList modifierList = ((PsiModifierListOwner)root).getModifierList();
       if (VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(modifierList), PsiModifier.PRIVATE) < 0) return null;
     }
 
+    final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
     for (PsiReference reference : ReferencesSearch.search(root, GlobalSearchScope.fileScope(root.getContainingFile()))) {
       final PsiElement element = reference.getElement();
       final PsiExpression expr = PsiTreeUtil.getParentOfType(element, PsiExpression.class, false);
@@ -158,7 +154,7 @@ public class TypeMigrationDialog extends RefactoringDialog {
         final String[] history = new String[psiTypes.length];
         for (int i = 0; i < psiTypes.length; i++) {
           PsiType psiType = psiTypes[i];
-          history[i] = psiType.getCanonicalText();
+          history[i] = psiType.getCanonicalText(true);
         }
         return history;
       }
@@ -188,7 +184,8 @@ public class TypeMigrationDialog extends RefactoringDialog {
       if (psiClassType.resolve() == null) return false;
       final PsiType[] types = psiClassType.getParameters();
       for (PsiType paramType : types) {
-        if (paramType instanceof PsiPrimitiveType || (paramType instanceof PsiWildcardType && ((PsiWildcardType)paramType).getBound() instanceof PsiPrimitiveType)) return false;
+        if (paramType instanceof PsiPrimitiveType ||
+            (paramType instanceof PsiWildcardType && ((PsiWildcardType)paramType).getBound() instanceof PsiPrimitiveType)) return false;
         if (!checkType(paramType)) return false;
       }
     }
@@ -198,15 +195,14 @@ public class TypeMigrationDialog extends RefactoringDialog {
     return true;
   }
 
+  @Override
   protected void doAction() {
     FindSettings.getInstance().setDefaultScopeName(myScopeChooserCombo.getSelectedScopeName());
 
     final PsiType rootType = getRootType();
-    final CanonicalTypes.Type typeWrapper = CanonicalTypes.createTypeWrapper(getMigrationType());
-    assert typeWrapper != null : getMigrationType();
-    final PsiType migrationType = typeWrapper.getType(myRoot, myRoot.getManager());
+    final PsiType migrationType = getMigrationType();
 
-    if (Comparing.equal(rootType, migrationType)) {
+    if (migrationType == null || ChangeSignatureUtil.deepTypeEqual(rootType, migrationType)) {
       close(DialogWrapper.OK_EXIT_CODE);
       return;
     }
@@ -224,12 +220,14 @@ public class TypeMigrationDialog extends RefactoringDialog {
     return TypeMigrationLabeler.getElementType(myRoot);
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST,
                                                          GridBagConstraints.HORIZONTAL, new Insets(5, 5, 0, 0), 0, 0);
     final PsiType type = getRootType();
-    panel.add(new JLabel("Migrate " + getElementPresentation(myRoot) + " \"" + (type != null ? type.getCanonicalText() : "<unknown>") + "\" to"), gc);
+    final String typeText = type != null ? type.getPresentableText() : "<unknown>";
+    panel.add(new JLabel("Migrate " + getElementPresentation(myRoot) + " \"" + typeText + "\" to"), gc);
     panel.add(myToTypeEditor, gc);
 
     LabeledComponent<ScopeChooserCombo> scopeChooserComponent = new LabeledComponent<ScopeChooserCombo>();
@@ -260,7 +258,7 @@ public class TypeMigrationDialog extends RefactoringDialog {
     if (element instanceof PsiReferenceParameterList) {
       return "class type arguments ";
     }
-    
+
     if (element instanceof PsiParameter) {
       final PsiParameter param = (PsiParameter)element;
       String result = "type of parameter " + param.getName();
@@ -275,6 +273,7 @@ public class TypeMigrationDialog extends RefactoringDialog {
     return element.toString();
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp("reference.typeMigrationDialog");
   }

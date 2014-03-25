@@ -20,8 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.BuiltInServer;
 
-import java.util.Random;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -40,13 +38,6 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
   @Nullable
   private BuiltInServer server;
   private boolean enabledInUnitTestMode = true;
-
-  static {
-    // IDEA-120811
-    String id = UUID.randomUUID().toString();
-    System.setProperty("io.netty.machineId", id.substring(id.length() - 8));
-    System.setProperty("io.netty.processId", Integer.toString(new Random().nextInt(65535)));
-  }
 
   @Override
   public int getPort() {
