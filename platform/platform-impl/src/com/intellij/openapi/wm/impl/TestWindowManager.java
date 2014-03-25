@@ -266,7 +266,7 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
 
   @Override
   public IdeFrame findFrameFor(@Nullable Project project) {
-    throw new UnsupportedOperationException();
+    return null;
   }
 
   @NotNull

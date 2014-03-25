@@ -86,19 +86,22 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
     return elementText;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return "Generate stubs for binary module " + myQualifiedName;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return "Generate binary stubs";
   }
 
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     final PsiFile file = descriptor.getPsiElement().getContainingFile();
-    final String folder = file.getContainingDirectory().getVirtualFile().getPath();
+    final String folder = file.getContainingDirectory().getVirtualFile().getCanonicalPath();
 
     final Task.Backgroundable backgroundable = new Task.Backgroundable(project, "Generating skeletons for binary module", false) {
 
