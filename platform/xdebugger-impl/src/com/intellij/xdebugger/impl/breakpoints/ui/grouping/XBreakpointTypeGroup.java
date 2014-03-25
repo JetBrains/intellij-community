@@ -15,31 +15,17 @@
  */
 package com.intellij.xdebugger.impl.breakpoints.ui.grouping;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.util.ArrayUtil;
-import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public class XBreakpointTypeGroup extends XBreakpointGroup {
-  public static final XBreakpointTypeGroup UNKNOWN = new XBreakpointTypeGroup(null) {
-    @NotNull
-    @Override
-    public String getName() {
-      return XDebuggerBundle.message("xbreakpoint.group.unknown");
-    }
-
-    @Override
-    public Icon getIcon(boolean isOpen) {
-      return AllIcons.Debugger.Db_set_breakpoint;
-    }
-  };
 
   private XBreakpointType myBreakpointType;
 
@@ -53,7 +39,6 @@ public class XBreakpointTypeGroup extends XBreakpointGroup {
     return myBreakpointType.getTitle();
   }
 
-  @Nullable
   public XBreakpointType getBreakpointType() {
     return myBreakpointType;
   }
