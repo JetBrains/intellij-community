@@ -205,6 +205,7 @@
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.AnnotationCollectorChecker" order="first"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.DelegatesToAnnotationChecker"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.griffon.GriffonPropertyListenerAnnotationChecker"/>
+    <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.BaseScriptAnnotationChecker"/>
 
     <convertToJava.customMethodInvocator implementation="org.jetbrains.plugins.groovy.refactoring.convertToJava.invocators.MapGetterSetterInvocator"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.TypeCheckedAnnotationChecker"/>
