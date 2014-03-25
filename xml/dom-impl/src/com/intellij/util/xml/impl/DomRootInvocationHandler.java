@@ -70,6 +70,12 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
     return myParent.hashCode();
   }
 
+  @Override
+  public boolean exists() {
+    return getStub() != null ||
+           getXmlElement() != null;
+  }
+
   @NotNull
   public String getXmlElementNamespace() {
     return getXmlName().getNamespace(getFile(), getFile());

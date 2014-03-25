@@ -43,6 +43,18 @@ public class DomBasicsTest extends DomTestCase {
     assertEquals(fileElement.getRootElement(), fileElement.getRootElement());
   }
 
+  public void testRootElementUndefineNotExisting() {
+    final XmlFile file = createXmlFile("<a/>");
+    final DomManagerImpl manager = getDomManager();
+    final DomFileElementImpl<DomElement> fileElement = manager.getFileElement(file, DomElement.class, "a");
+    final DomElement rootElement = fileElement.getRootElement();
+    assertNotNull(rootElement);
+    assertTrue(rootElement.exists());
+
+    rootElement.undefine();
+    assertFalse(rootElement.exists());
+  }
+
   public void testElementCaching() throws Throwable {
     final MyElement element = createElement("<a><child/></a>");
     assertSame(element.getChild(), element.getChild());
@@ -167,7 +179,8 @@ public class DomBasicsTest extends DomTestCase {
 
     assertEquals(new HashSet(Arrays.asList(foo, child, collectionChild, genericChild,
                                            info.getAttributeChildrenDescriptions().get(0))),
-                 new HashSet(info.getChildrenDescriptions()));
+                 new HashSet(info.getChildrenDescriptions())
+    );
   }
 
   private void assertFixedChildDescription(final DomFixedChildDescription description,
@@ -225,7 +238,8 @@ public class DomBasicsTest extends DomTestCase {
   }
 
   private void assertCollectionPresentableName(final String expected, final String tagName, final DomNameStrategy strategy) {
-    assertEquals(expected, new CollectionChildDescriptionImpl(new XmlName(tagName), DomElement.class, null).getCommonPresentableName(strategy));
+    assertEquals(expected,
+                 new CollectionChildDescriptionImpl(new XmlName(tagName), DomElement.class, null).getCommonPresentableName(strategy));
   }
 
   private void assertFixedPresentableName(final String expected, final String tagName, final DomNameStrategy strategy) {
