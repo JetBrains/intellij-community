@@ -17,7 +17,9 @@ package com.intellij.ui.messages;
 
 import com.apple.eawt.FullScreenUtilities;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.ui.Animator;
@@ -28,12 +30,17 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 
 /**
  * Created by Denis Fokin
  */
 public class SheetMessage {
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.messages.SheetMessage");
+
   private JDialog myWindow;
   private Window myParent;
   private SheetController myController;
@@ -73,17 +80,49 @@ public class SheetMessage {
     registerMoveResizeHandler();
     myWindow.setFocusable(true);
     myWindow.setFocusableWindowState(true);
+    if (SystemInfo.isJavaVersionAtLeast("1.7")) {
+      myWindow.setSize(myController.SHEET_NC_WIDTH, 0);
 
-    startAnimation(true);
-    myWindow.setSize(myController.SHEET_NC_WIDTH, myController.SHEET_NC_HEIGHT);
+      setWindowOpacity(0.0f);
+
+      myWindow.addComponentListener(new ComponentAdapter() {
+        @Override
+        public void componentShown(ComponentEvent e) {
+          super.componentShown(e);
+          setWindowOpacity(1.0f);
+          myWindow.setSize(myController.SHEET_NC_WIDTH, myController.SHEET_NC_HEIGHT);
+          startAnimation(true);
+        }
+      });
+    } else {
+      myWindow.setModal(true);
+      myWindow.setSize(myController.SHEET_NC_WIDTH, myController.SHEET_NC_HEIGHT);
+      setPositionRelativeToParent();
+    }
     restoreFullscreenButton = couldBeInFullScreen();
     if (restoreFullscreenButton) {
       FullScreenUtilities.setWindowCanFullScreen(myParent, false);
     }
-    setPositionRelativeToParent();
+
     LaterInvocator.enterModal(myWindow);
     myWindow.setVisible(true);
     LaterInvocator.leaveModal(myWindow);
+  }
+
+  private void setWindowOpacity(float opacity) {
+    try {
+      Method setOpacityMethod = myWindow.getClass().getMethod("setOpacity", Float.TYPE);
+      setOpacityMethod.invoke(myWindow, opacity);
+    }
+    catch (NoSuchMethodException e) {
+      LOG.error(e);
+    }
+    catch (InvocationTargetException e) {
+      LOG.error(e);
+    }
+    catch (IllegalAccessException e) {
+      LOG.error(e);
+    }
   }
 
   private boolean couldBeInFullScreen() {
