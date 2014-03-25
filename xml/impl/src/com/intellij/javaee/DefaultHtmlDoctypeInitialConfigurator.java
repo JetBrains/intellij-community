@@ -20,6 +20,7 @@ public class DefaultHtmlDoctypeInitialConfigurator {
       ExternalResourceManagerEx.getInstanceEx()
         .setDefaultHtmlDoctype(Html5SchemaProvider.getHtml5SchemaLocation(), projectManager.getDefaultProject());
     }
+    // sometimes VFS fails to pick up updated schema contents and we need to force refresh
     if (propertiesComponent.getOrInitInt("DefaultHtmlDoctype.Refreshed", 0) < VERSION) {
       propertiesComponent.setValue("DefaultHtmlDoctype.Refreshed", Integer.toString(VERSION));
       final String schemaUrl = VfsUtilCore.pathToUrl(Html5SchemaProvider.getHtml5SchemaLocation());
