@@ -48,6 +48,8 @@ public class SheetController {
   private JButton myDefaultButton;
   private JButton myFocusedButton;
 
+  private static int RIGHT_OFFSET = 15;
+
   public int SHADOW_BORDER = 10;
 
   // SHEET
@@ -242,7 +244,9 @@ public class SheetController {
     messageTextPane.setContentType("text/html");
     messageTextPane.setSize(250, Short.MAX_VALUE);
     messageTextPane.setText(message);
-    messageArea.setSize(250, messageTextPane.getPreferredSize().height);
+    messageArea.setSize(messageTextPane.getPreferredSize().width, messageTextPane.getPreferredSize().height);
+
+    SHEET_WIDTH = Math.max(LEFT_SHEET_OFFSET + messageTextPane.getPreferredSize().width + RIGHT_OFFSET, SHEET_WIDTH);
     messageTextPane.setSize(messageArea);
 
     messageTextPane.setOpaque(false);
@@ -298,7 +302,7 @@ public class SheetController {
 
   private void layoutButtons(final JButton[] buttons, JPanel panel) {
 
-    int buttonsWidth = 15;
+    int buttonsWidth = RIGHT_OFFSET;
 
 
 
