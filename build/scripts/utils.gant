@@ -56,6 +56,7 @@ binding.setVariable("isEap", {
 binding.setVariable("mem32", "-server -Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=64m")
 binding.setVariable("mem64", "-Xms128m -Xmx750m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=96m")
 binding.setVariable("common_vmoptions", "-ea -Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
+                                        "-Djsse.enableSNIExtension=false " +
                                         "-XX:+UseCodeCacheFlushing -XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50")
 
 binding.setVariable("vmOptions", { "$common_vmoptions ${isEap() ? '-XX:+HeapDumpOnOutOfMemoryError' : ''}".trim() })
