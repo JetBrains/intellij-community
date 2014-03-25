@@ -21,8 +21,8 @@ public class ToolWindowContentUiType {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.ToolWindowContentUiType");
 
-  public static ToolWindowContentUiType TABBED = new ToolWindowContentUiType("tabs");
-  public static ToolWindowContentUiType COMBO = new ToolWindowContentUiType("combo");
+  public static final ToolWindowContentUiType TABBED = new ToolWindowContentUiType("tabs");
+  public static final ToolWindowContentUiType COMBO = new ToolWindowContentUiType("combo");
 
   private final String myName;
 

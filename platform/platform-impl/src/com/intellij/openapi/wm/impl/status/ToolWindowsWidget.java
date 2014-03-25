@@ -30,7 +30,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.GotItMessage;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.UIBundle;
@@ -146,7 +145,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
             @Override
             public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
               final ToolWindow toolWindow = (ToolWindow)value;
-              label.setText(toolWindow instanceof ToolWindowImpl ? ((ToolWindowImpl)toolWindow).getId() : toolWindow.getTitle());
+              label.setText(toolWindow.getStripeTitle());
               label.setIcon(toolWindow.getIcon());
               label.setBorder(IdeBorderFactory.createEmptyBorder(4, 10, 4, 10));
               label.setForeground(UIUtil.getListForeground(isSelected));
