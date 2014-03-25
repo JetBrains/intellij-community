@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,10 +45,13 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
   private final GrLightAnnotationArgumentList myAnnotationArgList;
 
   private final String myQualifiedName;
-  private PsiAnnotationOwner myOwner;
-  private GrLightClassReferenceElement myRef;
+  private final PsiAnnotationOwner myOwner;
+  private final GrLightClassReferenceElement myRef;
 
-  public GrLightAnnotation(PsiManager manager, Language language, String qualifiedName, PsiAnnotationOwner owner) {
+  public GrLightAnnotation(@NotNull PsiManager manager,
+                           @NotNull Language language,
+                           @NotNull String qualifiedName,
+                           @NotNull PsiAnnotationOwner owner) {
     super(manager, language);
     myQualifiedName = qualifiedName;
     myOwner = owner;
@@ -157,12 +160,17 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
   }
 
 
-  private static class GrLightAnnotationArgumentList extends LightElement implements GrAnnotationArgumentList {
+  private class GrLightAnnotationArgumentList extends LightElement implements GrAnnotationArgumentList {
     private List<GrAnnotationNameValuePair> myAttributes = null;
     private GrAnnotationNameValuePair[] myCachedAttributes = GrAnnotationNameValuePair.EMPTY_ARRAY;
 
 
-    private GrLightAnnotationArgumentList(PsiManager manager, Language language) {
+    @Override
+    public PsiElement getContext() {
+      return GrLightAnnotation.this;
+    }
+
+    private GrLightAnnotationArgumentList(@NotNull PsiManager manager, @NotNull Language language) {
       super(manager, language);
     }
 
@@ -203,7 +211,7 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
 
     @Override
     public String getText() {
-      if (myAttributes.isEmpty()) return "";
+      if (myAttributes == null || myAttributes.isEmpty()) return "";
 
       StringBuilder buffer = new StringBuilder();
       buffer.append('(');

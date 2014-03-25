@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.annotator;
+package org.jetbrains.plugins.groovy.annotator.checkers;
 
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrAnnotationCollector;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -40,25 +36,28 @@ public class GrAliasAnnotationChecker extends CustomAnnotationChecker {
 
   @Override
   public boolean checkApplicability(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {
-    final PsiAnnotation annotationCollector = GrAnnotationCollector.findAnnotationCollector(annotation);
-    if (annotationCollector == null) {
+    final ArrayList<GrAnnotation> aliasedAnnotations = getAliasedAnnotations(annotation);
+    if (aliasedAnnotations == null) {
       return false;
     }
 
-    final GrCodeReferenceElement ref = annotation.getClassReference();
-
-    final ArrayList<GrAnnotation> aliasedAnnotations = ContainerUtil.newArrayList();
-    GrAnnotationCollector.collectAnnotations(aliasedAnnotations, annotation, annotationCollector);
-
-    for (GrAnnotation anno : aliasedAnnotations) {
-      if (GroovyCommonClassNames.GROOVY_TRANSFORM_ANNOTATION_COLLECTOR.equals(anno.getQualifiedName())) continue;
-      final String description = CustomAnnotationChecker.isAnnotationApplicable(anno, annotation.getParent());
-      if (description != null) {
-        holder.createErrorAnnotation(ref, description);
-      }
+    AliasedAnnotationHolder aliasedHolder = new AliasedAnnotationHolder(holder, annotation);
+    AnnotationChecker checker = new AnnotationChecker(aliasedHolder);
+    for (GrAnnotation aliased : aliasedAnnotations) {
+      checker.checkApplicability(aliased, annotation.getOwner());
     }
 
     return true;
+  }
+
+  @Nullable
+  private static ArrayList<GrAnnotation> getAliasedAnnotations(GrAnnotation annotation) {
+    final PsiAnnotation annotationCollector = GrAnnotationCollector.findAnnotationCollector(annotation);
+    if (annotationCollector == null) return null;
+
+    final ArrayList<GrAnnotation> aliasedAnnotations = ContainerUtil.newArrayList();
+    GrAnnotationCollector.collectAnnotations(aliasedAnnotations, annotation, annotationCollector);
+    return aliasedAnnotations;
   }
 
   @Override
@@ -71,24 +70,10 @@ public class GrAliasAnnotationChecker extends CustomAnnotationChecker {
     final ArrayList<GrAnnotation> annotations = ContainerUtil.newArrayList();
     final Set<String> usedAttributes = GrAnnotationCollector.collectAnnotations(annotations, annotation, annotationCollector);
 
-    final GrCodeReferenceElement ref = annotation.getClassReference();
-
-    Map<PsiElement, String> map = ContainerUtil.newHashMap();
+    AliasedAnnotationHolder aliasedHolder = new AliasedAnnotationHolder(holder, annotation);
+    AnnotationChecker checker = new AnnotationChecker(aliasedHolder);
     for (GrAnnotation aliased : annotations) {
-      final PsiClass clazz = (PsiClass)aliased.getClassReference().resolve();
-      assert clazz != null;
-      checkAnnotationArguments(map, clazz, ref, aliased.getParameterList().getAttributes(), true);
-    }
-
-    for (Map.Entry<PsiElement, String> entry : map.entrySet()) {
-      final PsiElement key = entry.getKey();
-      final String value = entry.getValue();
-      if (PsiTreeUtil.isAncestor(annotation, key, true)) {
-        holder.createErrorAnnotation(key, value);
-      }
-      else {
-        holder.createErrorAnnotation(ref, value);
-      }
+      checker.checkAnnotationArgumentList(aliased);
     }
 
     final GrAnnotationNameValuePair[] attributes = annotation.getParameterList().getAttributes();

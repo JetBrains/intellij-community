@@ -850,7 +850,7 @@ public class ResolveUtil {
 
   @Nullable
   public static PsiClass resolveAnnotation(PsiElement insideAnnotation) {
-    final GrAnnotation annotation = PsiTreeUtil.getParentOfType(insideAnnotation, GrAnnotation.class);
+    final GrAnnotation annotation = PsiTreeUtil.getParentOfType(insideAnnotation, GrAnnotation.class, false);
     if (annotation == null) return null;
 
     final GrCodeReferenceElement reference = annotation.getClassReference();
