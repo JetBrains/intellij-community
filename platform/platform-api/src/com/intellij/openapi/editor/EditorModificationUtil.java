@@ -178,6 +178,18 @@ public class EditorModificationUtil {
 
     if (editor.getCaretModel().supportsMultipleCarets()) {
       int caretCount = editor.getCaretModel().getCaretCount();
+      if (caretCount == 1 && editor.isColumnMode()) {
+        int pastedLineCount = LineTokenizer.calcLineCount(text, true);
+        deleteSelectedText(editor);
+        Caret caret = editor.getCaretModel().getPrimaryCaret();
+        for (int i = 0; i < pastedLineCount - 1; i++) {
+          caret = caret.clone(false);
+          if (caret == null) {
+            break;
+          }
+        }
+        caretCount = editor.getCaretModel().getCaretCount();
+      }
       final Iterator<String> segments = new ClipboardTextPerCaretSplitter().split(text, caretCount).iterator();
       editor.getCaretModel().runForEachCaret(new CaretAction() {
         @Override
