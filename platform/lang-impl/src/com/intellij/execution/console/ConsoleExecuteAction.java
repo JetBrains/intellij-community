@@ -144,7 +144,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
       myPreserveMarkup = preserveMarkup;
     }
 
-    public ConsoleHistoryModel getConsoleHistoryModel() {
+    public final ConsoleHistoryModel getConsoleHistoryModel() {
       return myCommandHistoryModel;
     }
 
@@ -152,11 +152,16 @@ public class ConsoleExecuteAction extends DumbAwareAction {
       return true;
     }
 
-    public void setAddCurrentToHistory(boolean addCurrentToHistory) {
+    public final void setAddCurrentToHistory(boolean addCurrentToHistory) {
       myAddToHistory = addCurrentToHistory;
     }
 
+    protected void beforeExecution(@NotNull LanguageConsoleImpl console) {
+    }
+
     final void runExecuteAction(@NotNull LanguageConsoleImpl console, @Nullable LanguageConsoleView consoleView) {
+      beforeExecution(console);
+
       String text = console.prepareExecuteAction(myAddToHistory, myPreserveMarkup, true);
       ((UndoManagerImpl)UndoManager.getInstance(console.getProject())).invalidateActionsFor(DocumentReferenceManager.getInstance().create(console.getCurrentEditor().getDocument()));
       addToCommandHistoryAndExecute(console, consoleView, text);
