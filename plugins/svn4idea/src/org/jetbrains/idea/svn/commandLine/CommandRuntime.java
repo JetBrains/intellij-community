@@ -206,7 +206,8 @@ public class CommandRuntime {
       executor = new CommandExecutor(exePath, command);
     }
     else {
-      command.put("--force-interactive");
+      // do not explicitly specify "--force-interactive" as it is not supported in svn 1.7 - commands will be interactive by default as
+      // running under terminal
       executor = new TerminalExecutor(exePath, command);
       ((TerminalExecutor)executor).addInteractiveListener(new TerminalSshModule(this, executor));
     }
