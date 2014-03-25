@@ -49,7 +49,11 @@ import java.util.concurrent.ConcurrentMap;
  * and set its indexed state to unindexed
  * if we get other event we set indexed state to outdated
  *
- * Index stamp is file timestamp of the index directory, we assume that index stamps are monotonically increasing
+ * Index stamp is file timestamp of the index directory, it is assumed that index stamps are monotonically increasing, but
+ * still << Long.MAX_VALUE: there are two negative special timestamps used for marking outdated / unindexed index state.
+ * The code doesn't take overflow of real file timestaps (or their coincidence to negative special timestamps) into account because
+ * it will happen (if time will go as forward as it does today) near year 292277094 (=new java.util.Date(Long.MAX_VALUE).getYear()).
+ * At that time (if this code will be still actual) we can use positive small timestamps for special cases.
  */
 public class IndexingStamp {
   private static final long UNINDEXED_STAMP = -1L; // we don't store trivial "absent" state
