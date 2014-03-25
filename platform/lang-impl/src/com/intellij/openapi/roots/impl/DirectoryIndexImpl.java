@@ -369,7 +369,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     @Override
     public void after(@NotNull List<? extends VFileEvent> events) {
       RootIndex rootIndex = myRootIndex;
-      if (rootIndex != null && !rootIndex.handleAfterEvent(events)) {
+      if (rootIndex != null && rootIndex.resetOnEvents(events)) {
         myRootIndex = null;
       }
       if (ourUseRootIndexOnly) {
@@ -661,6 +661,20 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     assertConsistentResult(dir, riResult, standardResult);
 */
     return standardResult;
+  }
+
+  @Override
+  public boolean isModuleExcludeRoot(@NotNull VirtualFile dir) {
+    checkAvailability();
+    if (!(dir instanceof NewVirtualFile)) return false;
+
+    if (ourUseRootIndexOnly) {
+      //noinspection ConstantConditions
+      return getRootIndex().isModuleExcludeRoot(dir);
+    }
+
+    // unsupported with old indexing
+    return false;
   }
 
   private VirtualFile findFileById(int dir) {

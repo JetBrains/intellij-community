@@ -27,7 +27,7 @@ public abstract class FileIndexBase implements FileIndex {
       return info;
     }
 
-    if (!file.isDirectory()) {
+    if (!file.isDirectory() && !myDirectoryIndex.isModuleExcludeRoot(file)) {
       VirtualFile dir = file.getParent();
       if (dir != null) {
         return myDirectoryIndex.getInfoForDirectory(dir);
