@@ -994,8 +994,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
 
       Color bg = cmp.getBackground();
-      cmp.setBackground(UIUtil.getListBackground(isSelected));
       if (bg == null) {
+        cmp.setBackground(UIUtil.getListBackground(isSelected));
         bg = cmp.getBackground();
       }
       myMainPanel.setBorder(new CustomLineBorder(bg, 0, 0, 2, 0));
