@@ -25,6 +25,8 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.Consumer;
+import com.intellij.util.NullableConsumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +40,7 @@ public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings>
                                @Nullable final Callback callback,
                                @NotNull final Project project,
                                @NotNull final RunProfileState state) throws ExecutionException {
-    prepare(project, environment, state).doWhenProcessed(new Consumer<RunProfileStarter>() {
+    prepare(project, environment, state).doWhenDone(new Consumer<RunProfileStarter>() {
       @Override
       public void consume(@Nullable final RunProfileStarter result) {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -49,6 +51,16 @@ public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings>
             }
           }
         });
+      }
+    }).doWhenRejected(new NullableConsumer<String>() {
+      @Override
+      public void consume(@Nullable String errorMessage) {
+        if (project.isDisposed()) {
+          return;
+        }
+
+        ExecutionUtil.handleExecutionError(project, environment.getExecutor().getToolWindowId(), environment.getRunProfile(),
+                                           new ExecutionException(ObjectUtils.chooseNotNull(errorMessage, "Internal error")));
       }
     });
   }
