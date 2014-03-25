@@ -16,11 +16,16 @@
 package com.intellij.vcs.log.facade.utils.impl;
 
 import com.intellij.vcs.log.facade.utils.IntToIntMap;
+import com.intellij.vcs.log.facade.utils.UpdatableIntToIntMap;
+import org.jetbrains.annotations.NotNull;
 
-public class IDIntToInt implements IntToIntMap {
+public class IDIntToIntMap implements IntToIntMap {
+  @NotNull
+  public static final UpdatableIntToIntMap EMPTY = new EmptyIDIntToIntMap();
+
   private final int size;
 
-  public IDIntToInt(int size) {
+  public IDIntToIntMap(int size) {
     this.size = size;
   }
 
@@ -42,5 +47,17 @@ public class IDIntToInt implements IntToIntMap {
   @Override
   public int getShortIndex(int longIndex) {
     return longIndex;
+  }
+
+  private static class EmptyIDIntToIntMap extends IDIntToIntMap implements UpdatableIntToIntMap {
+
+    public EmptyIDIntToIntMap() {
+      super(0);
+    }
+
+    @Override
+    public void update(int startLongIndex, int endLongIndex) {
+      // do nothing
+    }
   }
 }

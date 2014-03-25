@@ -17,13 +17,14 @@
 package com.intellij.vcs.log.facade.utils.impl;
 
 import com.intellij.util.BooleanFunction;
+import com.intellij.vcs.log.facade.utils.UpdatableIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 
 public class ListIntToIntMap extends AbstractUpdatableIntToIntMap {
   public static final int DEFAULT_BLOCK_SIZE = 30;
 
   @NotNull
-  public static ListIntToIntMap newInstance(@NotNull final BooleanFunction<Integer> thisIsVisible, final int longSize) {
+  public static UpdatableIntToIntMap newInstance(@NotNull final BooleanFunction<Integer> thisIsVisible, final int longSize) {
     return newInstance(thisIsVisible, longSize, DEFAULT_BLOCK_SIZE);
   }
 
@@ -35,11 +36,14 @@ public class ListIntToIntMap extends AbstractUpdatableIntToIntMap {
    *    getShortIndex access need: blockSize
    */
   @NotNull
-  public static ListIntToIntMap newInstance(@NotNull final BooleanFunction<Integer> thisIsVisible, final int longSize, int blockSize) {
-    if (longSize < 1)
-      throw new IllegalArgumentException("Unsupported size: " + longSize);
+  public static UpdatableIntToIntMap newInstance(@NotNull final BooleanFunction<Integer> thisIsVisible, final int longSize, int blockSize) {
+    if (longSize < 0)
+      throw new NegativeArraySizeException("size < 0: " + longSize);
 
-    int sumSize = longSize / blockSize + 1;
+    if (longSize == 0)
+      return IDIntToIntMap.EMPTY;
+
+    int sumSize = (longSize - 1) / blockSize + 1;
     ListIntToIntMap listIntToIntMap = new ListIntToIntMap(thisIsVisible, longSize, blockSize, new int[sumSize]);
     listIntToIntMap.update(0, longSize - 1);
     return listIntToIntMap;

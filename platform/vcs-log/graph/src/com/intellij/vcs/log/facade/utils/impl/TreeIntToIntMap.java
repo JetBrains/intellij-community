@@ -17,13 +17,17 @@
 package com.intellij.vcs.log.facade.utils.impl;
 
 import com.intellij.util.BooleanFunction;
+import com.intellij.vcs.log.facade.utils.UpdatableIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 
 public class TreeIntToIntMap extends AbstractUpdatableIntToIntMap {
 
-  public static TreeIntToIntMap newInstance(@NotNull final BooleanFunction<Integer> thisIsVisible, final int longSize) {
-    if (longSize < 1)
-      throw new IllegalArgumentException("Unsupported size: " + longSize);
+  public static UpdatableIntToIntMap newInstance(@NotNull final BooleanFunction<Integer> thisIsVisible, final int longSize) {
+    if (longSize < 0)
+      throw new NegativeArraySizeException("size < 0: " + longSize);
+
+    if (longSize == 0)
+      return IDIntToIntMap.EMPTY;
 
     int countLevels; // longSize -> countLevels: 1..2 -> 2; 3..4 -> 3;  5..8 -> 4
     if (longSize == 1)

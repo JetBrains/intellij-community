@@ -196,4 +196,22 @@ public abstract class UpdatableIntToIntMapTest {
 
     tester.testLongToShort("0|1");
   }
+
+  @Test
+  public void emptyTest() {
+    Tester tester = getTest(0, "");
+    tester.testLongToShort("");
+  }
+
+  @Test
+  public void blockSizeTest() {
+    getTest(0, "").testLongToShort("");
+    getTest(1, "0").testLongToShort("0");
+    getTest(2, "0|1").testLongToShort("0|1");
+    getTest(3, "0|1|2").testLongToShort("0|1|2");
+    getTest(4, "0|1|2|3").testLongToShort("0|1|2|3");
+    getTest(5, "0|1|2|3|4").testLongToShort("0|1|2|3|4");
+    getTest(6, "0|1|2|3|4|5").testLongToShort("0|1|2|3|4|5");
+    getTest(7, "0|1|2|3|4|5|6").testLongToShort("0|1|2|3|4|5|6");
+  }
 }
