@@ -60,15 +60,6 @@ public abstract class BaseConsoleExecuteActionHandler extends ConsoleExecuteActi
     throw new AbstractMethodError();
   }
 
-  @Deprecated
-  /**
-   * @deprecated to remove in IDEA 14
-   *
-   * Never used. It is Python specific implementation.
-   */
-  public void finishExecution() {
-  }
-
   public String getEmptyExecuteAction() {
     return ConsoleExecuteAction.CONSOLE_EXECUTE_ACTION_ID;
   }

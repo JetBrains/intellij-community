@@ -322,7 +322,6 @@ public class PydevConsoleExecuteActionHandler extends ProcessBackedConsoleExecut
     setCurrentIndentSize(1);
   }
 
-  @SuppressWarnings({"override", "deprecation"})
   public void finishExecution() {
     final LanguageConsoleImpl console = myConsoleView.getConsole();
     final Editor currentEditor = console.getConsoleEditor();
