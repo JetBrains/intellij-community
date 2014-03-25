@@ -306,6 +306,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private LogicalPosition myLastMousePressedLocation;
   private VisualPosition myTargetMultiSelectionPosition;
   private boolean myMultiSelectionInProgress;
+  private boolean myLastPressCreatedCaret;
 
   private CaretImpl myPrimaryCaret;
 
@@ -5677,22 +5678,31 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       final int oldStart = mySelectionModel.getSelectionStart();
       final int oldEnd = mySelectionModel.getSelectionEnd();
 
+      boolean toggleCaret = myCaretModel.supportsMultipleCarets() && e.getSource() != myGutterComponent && isToggleCaretEvent(e);
+      boolean lastPressCreatedCaret = myLastPressCreatedCaret;
+      if (e.getClickCount() == 1) {
+        myLastPressCreatedCaret = false;
+      }
       // Don't move caret on mouse press above gutter line markers area (a place where break points, 'override', 'implements' etc icons
       // are drawn) and annotations area. E.g. we don't want to change caret position if a user sets new break point (clicks
       // at 'line markers' area).
       if (e.getSource() != myGutterComponent
           || (eventArea != EditorMouseEventArea.LINE_MARKERS_AREA && eventArea != EditorMouseEventArea.ANNOTATIONS_AREA))
       {
-        boolean toggleCaret = myCaretModel.supportsMultipleCarets() && e.getSource() != myGutterComponent && isToggleCaretEvent(e);
         LogicalPosition pos = getLogicalPositionForScreenPos(x, y, true);
         if (toggleCaret) {
           VisualPosition visualPosition = logicalToVisualPosition(pos);
           Caret caret = getCaretModel().getCaretAt(visualPosition);
-          if (caret == null) {
-            getCaretModel().addCaret(visualPosition);
+          if (e.getClickCount() == 1) {
+            if (caret == null) {
+              myLastPressCreatedCaret = getCaretModel().addCaret(visualPosition) != null;
+            }
+            else {
+              getCaretModel().removeCaret(caret);
+            }
           }
-          else {
-            getCaretModel().removeCaret(caret);
+          else if (e.getClickCount() == 3 && lastPressCreatedCaret) {
+            getCaretModel().moveToLogicalPosition(pos);
           }
         }
         else {
@@ -5762,7 +5772,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
         else {
           if (!e.isPopupTrigger()
-              && (eventArea == EditorMouseEventArea.EDITING_AREA || eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA))
+              && (eventArea == EditorMouseEventArea.EDITING_AREA || eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA)
+              && (!toggleCaret || lastPressCreatedCaret))
           {
             switch (e.getClickCount()) {
               case 2:
