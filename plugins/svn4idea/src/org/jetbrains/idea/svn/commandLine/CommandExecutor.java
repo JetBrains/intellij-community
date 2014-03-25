@@ -106,8 +106,7 @@ public class CommandExecutor {
       checkNotStarted();
 
       try {
-        EncodingEnvironmentUtil.fixDefaultEncodingIfMac(myCommandLine, null);
-
+        beforeCreateProcess();
         myProcess = createProcess();
         if (LOG.isDebugEnabled()) {
           LOG.debug(myCommandLine.toString());
@@ -115,12 +114,20 @@ public class CommandExecutor {
         myHandler = createProcessHandler();
         myProcessWriter = new OutputStreamWriter(myHandler.getProcessInput());
         startHandlingStreams();
-      } catch (ExecutionException e) {
+      }
+      catch (ExecutionException e) {
         // TODO: currently startFailed() is not used for some real logic in svn4idea plugin
         listeners().startFailed(e);
         throw new SvnBindException(e);
       }
     }
+  }
+
+  protected void cleanup() {
+  }
+
+  protected void beforeCreateProcess() {
+    EncodingEnvironmentUtil.fixDefaultEncodingIfMac(myCommandLine, null);
   }
 
   @NotNull
@@ -200,25 +207,35 @@ public class CommandExecutor {
   }
 
   public void run() throws SvnBindException {
-    start();
-    boolean finished;
-    do {
-      finished = waitFor(500);
-      if (!finished && (wasError() || needsDestroy() || checkCancelled())) {
-        waitFor(1000);
-        doDestroyProcess();
-        break;
+    try {
+      start();
+      boolean finished;
+      do {
+        finished = waitFor(500);
+        if (!finished && (wasError() || needsDestroy() || checkCancelled())) {
+          waitFor(1000);
+          doDestroyProcess();
+          break;
+        }
       }
+      while (!finished);
     }
-    while (!finished);
+    finally {
+      cleanup();
+    }
   }
 
   public void run(int timeout) throws SvnBindException {
-    start();
-    boolean finished = waitFor(timeout);
-    if (!finished) {
-      outputAdapter.getOutput().setTimeout();
-      doDestroyProcess();
+    try {
+      start();
+      boolean finished = waitFor(timeout);
+      if (!finished) {
+        outputAdapter.getOutput().setTimeout();
+        doDestroyProcess();
+      }
+    }
+    finally {
+      cleanup();
     }
   }
 
