@@ -228,6 +228,11 @@ public class SheetMessage {
       }
     });
   }
+
+  FontMetrics getFontMetrics(Font f) {
+    return myParent.getGraphics().getFontMetrics(f);
+  }
+
 }
 
 
