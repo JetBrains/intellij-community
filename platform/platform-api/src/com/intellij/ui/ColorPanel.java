@@ -43,7 +43,7 @@ public class ColorPanel extends JComponent {
         if (!isEnabled() || !isEditable) return;
         Color color = ColorChooser.chooseColor(ColorPanel.this, UIBundle.message("color.panel.select.color.dialog.description"), myColor);
         if (color != null) {
-          myColor = color;
+          setSelectedColor(color);
           fireActionEvent();
         }
       }
