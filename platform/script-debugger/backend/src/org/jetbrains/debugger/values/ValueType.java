@@ -6,7 +6,6 @@ public enum ValueType {
   STRING,
   FUNCTION,
   BOOLEAN,
-  ERROR,
 
   ARRAY,
   REGEXP,
@@ -29,6 +28,6 @@ public enum ValueType {
    * not a {@link ObjectValue}
    */
   public boolean isObjectType() {
-    return this == OBJECT || this == ARRAY || this == ERROR || this == FUNCTION || this == REGEXP || this == DATE || this == NODE;
+    return this == OBJECT || this == ARRAY || this == FUNCTION || this == REGEXP || this == DATE || this == NODE;
   }
 }
