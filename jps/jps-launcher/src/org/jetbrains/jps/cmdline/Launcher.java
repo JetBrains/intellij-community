@@ -44,9 +44,11 @@ public class Launcher {
     final URLClassLoader jpsLoader = new URLClassLoader(urls.toArray(new URL[urls.size()]), Launcher.class.getClassLoader());
     
     // IDEA-120811; speeding up DefaultChannelIDd calculation for netty
-    final String id = UUID.randomUUID().toString();
-    System.setProperty("io.netty.machineId", id.substring(id.length() - 8));
-    System.setProperty("io.netty.processId", Integer.toString(new Random().nextInt(65535)));
+    if (Boolean.parseBoolean(System.getProperty("io.netty.random.id"))) {
+      final String id = UUID.randomUUID().toString();
+      System.setProperty("io.netty.machineId", id.substring(id.length() - 8));
+      System.setProperty("io.netty.processId", Integer.toString(new Random().nextInt(65535)));
+    }
 
     final Class<?> mainClass = jpsLoader.loadClass(mainClassName);
     final Method mainMethod = mainClass.getMethod("main", String[].class);
