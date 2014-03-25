@@ -185,7 +185,7 @@ public class CommandExecutor {
   protected OSProcessHandler createProcessHandler() {
     return needsBinaryOutput()
            ? new BinaryOSProcessHandler(myProcess, myCommandLine.getCommandLineString())
-           : new OSProcessHandler(myProcess, myCommandLine.getCommandLineString());
+           : new MyOSProcessHandler(myProcess, myCommandLine.getCommandLineString());
   }
 
   private boolean needsBinaryOutput() {
@@ -442,6 +442,21 @@ public class CommandExecutor {
       if (ProcessOutputTypes.STDERR == outputType) {
         myWasError.set(true);
       }
+    }
+  }
+
+  private class MyOSProcessHandler extends OSProcessHandler {
+
+    public MyOSProcessHandler(@NotNull Process process, @Nullable String commandLine) {
+      super(process, commandLine);
+    }
+
+    @Override
+    protected Reader createProcessOutReader() {
+      if (myCommand.getParameters().contains("--xml")) {
+        return new InputStreamReader(myProcess.getInputStream(), CharsetToolkit.UTF8_CHARSET);
+      }
+      return super.createProcessOutReader();
     }
   }
 
