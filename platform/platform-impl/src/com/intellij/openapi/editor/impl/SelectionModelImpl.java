@@ -482,8 +482,8 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   public String getSelectedText(boolean allCarets) {
     validateContext(false);
 
-    CharSequence text = myEditor.getDocument().getCharsSequence();
-    if (hasBlockSelection() || (myEditor.getCaretModel().supportsMultipleCarets() && allCarets)) {
+    if (hasBlockSelection()) {
+      CharSequence text = myEditor.getDocument().getCharsSequence();
       int[] starts = getBlockSelectionStarts();
       int[] ends = getBlockSelectionEnds();
       int width = myEditor.getCaretModel().supportsMultipleCarets() ? 0 : Math.abs(myBlockEnd.column - myBlockStart.column);
@@ -496,8 +496,22 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       }
       return buf.toString();
     }
-
-    return myEditor.getCaretModel().getCurrentCaret().getSelectedText();
+    else if (myEditor.getCaretModel().supportsMultipleCarets() && allCarets) {
+      final StringBuilder buf = new StringBuilder();
+      String separator = "";
+      for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
+        buf.append(separator);
+        String caretSelectedText = caret.getSelectedText();
+        if (caretSelectedText != null) {
+          buf.append(caretSelectedText);
+        }
+        separator = "\n";
+      }
+      return buf.toString();
+    }
+    else {
+      return myEditor.getCaretModel().getCurrentCaret().getSelectedText();
+    }
   }
 
   private static void appendCharSequence(@NotNull StringBuilder buf, @NotNull CharSequence s, int srcOffset, int len) {
