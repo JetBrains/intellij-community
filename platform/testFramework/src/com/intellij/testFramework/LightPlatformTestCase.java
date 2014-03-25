@@ -505,7 +505,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   protected void tearDown() throws Exception {
     Project project = getProject();
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-    checkForSettingsDamage();
+    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+    CompositeException damage = checkForSettingsDamage();
     VirtualFilePointerManagerImpl filePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
     doTearDown(project, ourApplication, true);
 
@@ -517,6 +518,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
       filePointerManager.assertPointersAreDisposed();
     }
+    damage.throwIfNotEmpty();
   }
 
   public static void doTearDown(@NotNull final Project project, IdeaTestApplication application, boolean checkForEditors) throws Exception {

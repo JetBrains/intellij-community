@@ -141,4 +141,8 @@ public class CompositeException extends Exception {
 
     return sb.toString();
   }
+
+  public void throwIfNotEmpty() throws CompositeException {
+    if (!isEmpty()) throw this;
+  }
 }

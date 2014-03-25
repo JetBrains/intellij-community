@@ -213,19 +213,19 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  protected void checkForSettingsDamage() throws Exception {
+  protected CompositeException checkForSettingsDamage() throws Exception {
     Application app = ApplicationManager.getApplication();
     if (isPerformanceTest() || app == null || app instanceof MockApplication) {
-      return;
+      return new CompositeException();
     }
 
     CodeStyleSettings oldCodeStyleSettings = myOldCodeStyleSettings;
     myOldCodeStyleSettings = null;
 
-    doCheckForSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings());
+    return doCheckForSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings());
   }
 
-  public static void doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings,
+  public static CompositeException doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings,
                                               @NotNull CodeStyleSettings currentCodeStyleSettings) throws Exception {
     CompositeException result = new CompositeException();
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
@@ -266,7 +266,7 @@ public abstract class UsefulTestCase extends TestCase {
       result.add(e);
     }
 
-    if (!result.isEmpty()) throw result;
+    return result;
   }
 
   protected void storeSettings() {
