@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -289,6 +290,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
       myDecorator.fireActivated();
     }
     myPressedWhenSelected = false;
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("toolwindow.clickstat." + myDecorator.getToolWindow().getId());
   }
 
   public void apply(@NotNull WindowInfoImpl info) {
