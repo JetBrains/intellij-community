@@ -48,6 +48,8 @@ public class SheetController {
   private JButton myDefaultButton;
   private JButton myFocusedButton;
 
+  private static int RIGHT_OFFSET = 15;
+
   public int SHADOW_BORDER = 10;
 
   // SHEET
@@ -132,13 +134,17 @@ public class SheetController {
 
   private void handleMnemonics(int i, String buttonTitle) {
     buttons[i].setName(buttonTitle);
-
-    if (buttonTitle.indexOf('&') != -1) {
-      buttons[i].setMnemonic(buttonTitle.charAt(buttonTitle.indexOf('&') + 1));
-      buttonTitle = buttonTitle.replace("&","");
-    }
-
     buttons[i].setText(buttonTitle);
+    setMnemonicsFromChar('&', buttons[i]);
+    setMnemonicsFromChar('_', buttons[i]);
+  }
+
+  private static void setMnemonicsFromChar(char mnemonicChar, JButton button) {
+    String buttonTitle = button.getText();
+    if (buttonTitle.indexOf(mnemonicChar) != -1) {
+      button.setMnemonic(buttonTitle.charAt(buttonTitle.indexOf(mnemonicChar) + 1));
+      button.setText(buttonTitle.replace(Character.toString(mnemonicChar), ""));
+    }
   }
 
   void requestFocus() {
@@ -240,9 +246,22 @@ public class SheetController {
     messageTextPane.setEditable(false);
 
     messageTextPane.setContentType("text/html");
-    messageTextPane.setSize(250, Short.MAX_VALUE);
+
+    FontMetrics fontMetrics = mySheetMessage.getFontMetrics(regularFont);
+
+    int widestWordWidth = 250;
+
+    String [] words = message.split(" ");
+
+    for (String word : words) {
+      widestWordWidth = Math.max(fontMetrics.stringWidth(word), widestWordWidth);
+    }
+
+    messageTextPane.setSize(widestWordWidth, Short.MAX_VALUE);
     messageTextPane.setText(message);
-    messageArea.setSize(250, messageTextPane.getPreferredSize().height);
+    messageArea.setSize(widestWordWidth, messageTextPane.getPreferredSize().height);
+
+    SHEET_WIDTH = Math.max(LEFT_SHEET_OFFSET + widestWordWidth + RIGHT_OFFSET, SHEET_WIDTH);
     messageTextPane.setSize(messageArea);
 
     messageTextPane.setOpaque(false);
@@ -298,7 +317,7 @@ public class SheetController {
 
   private void layoutButtons(final JButton[] buttons, JPanel panel) {
 
-    int buttonsWidth = 15;
+    int buttonsWidth = RIGHT_OFFSET;
 
 
 
@@ -325,7 +344,7 @@ public class SheetController {
   }
 
   private void layoutDoNotAskCheckbox(JPanel sheetPanel) {
-    doNotAskCheckBox = new JCheckBox(myDoNotAskOption.getDoNotShowMessage());
+    doNotAskCheckBox = new JCheckBox(myDoNotAskOption.getDoNotShowMessage(), !myDoNotAskOption.isToBeShown());
     doNotAskCheckBox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {

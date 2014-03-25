@@ -19,9 +19,12 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.*;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BinaryOutputReader;
@@ -30,10 +33,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNCancelException;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
+import java.io.*;
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -48,6 +49,8 @@ public class CommandExecutor {
   static final Logger LOG = Logger.getInstance(CommandExecutor.class.getName());
   private final AtomicReference<Integer> myExitCodeReference;
 
+  @Nullable private String myMessage;
+  @Nullable private File myMessageFile;
   private boolean myIsDestroyed;
   private boolean myNeedsDestroy;
   private volatile String myDestroyReason;
@@ -84,8 +87,28 @@ public class CommandExecutor {
       myCommandLine.addParameters("--config-dir", command.getConfigDir().getPath());
     }
     myCommandLine.addParameter(command.getName().getName());
-    myCommandLine.addParameters(command.getParameters());
+    myCommandLine.addParameters(prepareParameters(command));
     myExitCodeReference = new AtomicReference<Integer>();
+  }
+
+  @NotNull
+  private List<String> prepareParameters(@NotNull Command command) {
+    List<String> parameters = command.getParameters();
+
+    detectAndRemoveMessage(parameters);
+
+    return parameters;
+  }
+
+  private void detectAndRemoveMessage(@NotNull List<String> parameters) {
+    int index = parameters.indexOf("-m");
+    index = index < 0 ? parameters.indexOf("--message") : index;
+
+    if (index >= 0 && index + 1 < parameters.size()) {
+      myMessage = parameters.get(index + 1);
+      parameters.remove(index + 1);
+      parameters.remove(index);
+    }
   }
 
   /**
@@ -106,8 +129,7 @@ public class CommandExecutor {
       checkNotStarted();
 
       try {
-        EncodingEnvironmentUtil.fixDefaultEncodingIfMac(myCommandLine, null);
-
+        beforeCreateProcess();
         myProcess = createProcess();
         if (LOG.isDebugEnabled()) {
           LOG.debug(myCommandLine.toString());
@@ -115,10 +137,46 @@ public class CommandExecutor {
         myHandler = createProcessHandler();
         myProcessWriter = new OutputStreamWriter(myHandler.getProcessInput());
         startHandlingStreams();
-      } catch (ExecutionException e) {
+      }
+      catch (ExecutionException e) {
         // TODO: currently startFailed() is not used for some real logic in svn4idea plugin
         listeners().startFailed(e);
         throw new SvnBindException(e);
+      }
+    }
+  }
+
+  protected void cleanup() {
+    cleanupMessageFile();
+  }
+
+  protected void beforeCreateProcess() throws SvnBindException {
+    EncodingEnvironmentUtil.fixDefaultEncodingIfMac(myCommandLine, null);
+    ensureMessageFile();
+  }
+
+  private void ensureMessageFile() throws SvnBindException {
+    if (myMessage != null) {
+      try {
+        File vcsFolder = new File(PathManager.getSystemPath(), "vcs");
+        myMessageFile = FileUtil.createTempFile(new File(vcsFolder, "svn"), "commit-message", ".txt");
+        FileUtil.writeToFile(myMessageFile, myMessage);
+
+        myCommandLine.addParameters("-F", myMessageFile.getAbsolutePath());
+        myCommandLine.addParameters("--config-option", "config:miscellany:log-encoding=" + CharsetToolkit.UTF8);
+      }
+      catch (IOException e) {
+        throw new SvnBindException(e);
+      }
+    }
+  }
+
+  private void cleanupMessageFile() {
+    if (myMessageFile != null) {
+      boolean wasDeleted = FileUtil.delete(myMessageFile);
+
+      if (!wasDeleted) {
+        LOG.info("Failed to delete temp commit message file " + myMessageFile.getAbsolutePath());
       }
     }
   }
@@ -127,7 +185,7 @@ public class CommandExecutor {
   protected OSProcessHandler createProcessHandler() {
     return needsBinaryOutput()
            ? new BinaryOSProcessHandler(myProcess, myCommandLine.getCommandLineString())
-           : new OSProcessHandler(myProcess, myCommandLine.getCommandLineString());
+           : new MyOSProcessHandler(myProcess, myCommandLine.getCommandLineString());
   }
 
   private boolean needsBinaryOutput() {
@@ -154,6 +212,10 @@ public class CommandExecutor {
 
   public String getErrorOutput() {
     return outputAdapter.getOutput().getStderr();
+  }
+
+  public ProcessOutput getProcessOutput() {
+    return outputAdapter.getOutput();
   }
 
   @Nullable
@@ -196,17 +258,36 @@ public class CommandExecutor {
   }
 
   public void run() throws SvnBindException {
-    start();
-    boolean finished;
-    do {
-      finished = waitFor(500);
-      if (!finished && (wasError() || needsDestroy() || checkCancelled())) {
-        waitFor(1000);
+    try {
+      start();
+      boolean finished;
+      do {
+        finished = waitFor(500);
+        if (!finished && (wasError() || needsDestroy() || checkCancelled())) {
+          waitFor(1000);
+          doDestroyProcess();
+          break;
+        }
+      }
+      while (!finished);
+    }
+    finally {
+      cleanup();
+    }
+  }
+
+  public void run(int timeout) throws SvnBindException {
+    try {
+      start();
+      boolean finished = waitFor(timeout);
+      if (!finished) {
+        outputAdapter.getOutput().setTimeout();
         doDestroyProcess();
-        break;
       }
     }
-    while (!finished);
+    finally {
+      cleanup();
+    }
   }
 
   public void addListener(final LineCommandListener listener) {
@@ -361,6 +442,21 @@ public class CommandExecutor {
       if (ProcessOutputTypes.STDERR == outputType) {
         myWasError.set(true);
       }
+    }
+  }
+
+  private class MyOSProcessHandler extends OSProcessHandler {
+
+    public MyOSProcessHandler(@NotNull Process process, @Nullable String commandLine) {
+      super(process, commandLine);
+    }
+
+    @Override
+    protected Reader createProcessOutReader() {
+      if (myCommand.getParameters().contains("--xml")) {
+        return new InputStreamReader(myProcess.getInputStream(), CharsetToolkit.UTF8_CHARSET);
+      }
+      return super.createProcessOutReader();
     }
   }
 
