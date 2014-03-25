@@ -16,12 +16,14 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.notification.EventLog;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.SizedIcon;
@@ -55,6 +57,9 @@ public class ActivateToolWindowAction extends AnAction implements DumbAware {
     presentation.setVisible(toolWindow!=null);
     if (toolWindow != null) {
       Icon icon = toolWindow.getIcon();
+      if (EventLog.LOG_TOOL_WINDOW_ID.equals(myToolWindowId)) {
+        icon = AllIcons.Ide.Info_notifications;
+      }
       presentation.setIcon(icon == null ? null : new SizedIcon(icon, icon.getIconHeight(), icon.getIconHeight()));
     }
   }
