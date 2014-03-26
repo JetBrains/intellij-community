@@ -1,5 +1,6 @@
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -35,6 +36,9 @@ public abstract class AsyncValueLoader<T> {
   }
 
   protected void disposeResult(@NotNull T result) {
+    if (result instanceof Disposable) {
+      Disposer.dispose((Disposable)result, false);
+    }
   }
 
   public final boolean has() {
