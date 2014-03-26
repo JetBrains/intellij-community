@@ -176,7 +176,7 @@ final class GitRepositoryManager extends BaseRepositoryManager {
 
         Iterator<TrackingRefUpdate> refUpdates = fetchResult.getTrackingRefUpdates().iterator();
         TrackingRefUpdate refUpdate = refUpdates.hasNext() ? refUpdates.next() : null;
-        if (refUpdate == null || refUpdate.getResult() == RefUpdate.Result.NO_CHANGE) {
+        if (refUpdate == null || refUpdate.getResult() == RefUpdate.Result.NO_CHANGE || refUpdate.getResult() == RefUpdate.Result.FORCED) {
           // nothing to merge
           return;
         }

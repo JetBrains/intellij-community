@@ -61,7 +61,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
         //noinspection BusyWait
         Thread.sleep(100);
       }
-      catch (InterruptedException e) {
+      catch (InterruptedException ignored) {
         break;
       }
       if (indicator.isCanceled()) {
@@ -215,6 +215,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
   public void dispose() {
   }
 
+  @NotNull
   public ActionCallback sync() {
     commitAlarm.cancel();
     final ActionCallback actionCallback = new ActionCallback(3);

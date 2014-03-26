@@ -1,13 +1,17 @@
 package org.jetbrains.plugins.ideaConfigurationServer;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TextBrowseFolderListener;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.Consumer;
 import com.intellij.util.io.URLUtil;
+import org.eclipse.jgit.lib.Constants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +27,7 @@ import java.util.concurrent.Callable;
 @SuppressWarnings("DialogTitleCapitalization")
 public class IcsSettingsPanel extends DialogWrapper {
   private JPanel panel;
-  private JTextField urlTextField;
+  private TextFieldWithBrowseButton urlTextField;
   private JCheckBox updateRepositoryFromRemoteCheckBox;
   private JCheckBox shareProjectWorkspaceCheckBox;
   private final JButton syncButton;
@@ -37,6 +41,7 @@ public class IcsSettingsPanel extends DialogWrapper {
     updateRepositoryFromRemoteCheckBox.setSelected(settings.updateOnStart);
     shareProjectWorkspaceCheckBox.setSelected(settings.shareProjectWorkspace);
     urlTextField.setText(icsManager.getRepositoryManager().getRemoteRepositoryUrl());
+    urlTextField.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()));
 
     // todo TextComponentUndoProvider should not depends on app settings
     //new TextComponentUndoProvider(urlTextField);
@@ -64,7 +69,7 @@ public class IcsSettingsPanel extends DialogWrapper {
     });
     updateSyncButtonState();
 
-    urlTextField.getDocument().addDocumentListener(new DocumentAdapter() {
+    urlTextField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
         updateSyncButtonState();
@@ -137,33 +142,51 @@ public class IcsSettingsPanel extends DialogWrapper {
         url = url.substring(StandardFileSystems.FILE_PROTOCOL_PREFIX.length());
         isFile = true;
       }
+      else if (url.startsWith("git@") || url.startsWith("ssh://") || url.startsWith("git+ssh://")) {
+        Messages.showErrorDialog(getContentPane(), "SSH URL is not supported, please use HTTP/HTTPS");
+        return false;
+      }
       else {
         isFile = !URLUtil.containsScheme(url);
       }
 
-      if (isFile) {
-        File file = new File(url);
-        if (file.exists()) {
-          if (!file.isDirectory()) {
-            Messages.showErrorDialog(getContentPane(), "Specified path is not a directory", "Specified path is invalid");
-            return false;
-          }
-        }
-        else if (Messages.showYesNoDialog(getContentPane(), IcsBundle.message("init.dialog.message"), IcsBundle.message("init.dialog.title"), Messages.getQuestionIcon()) == 0) {
-          try {
-            IcsManager.getInstance().getRepositoryManager().initRepository(file);
-          }
-          catch (IOException e) {
-            Messages.showErrorDialog(getContentPane(), IcsBundle.message("init.failed.message", e.getMessage()), IcsBundle.message("init.failed.title"));
-            return false;
-          }
-        }
-        else {
-          return false;
-        }
+      if (isFile && !checkFileRepo(url)) {
+        return false;
       }
     }
     IcsManager.getInstance().getRepositoryManager().setRemoteRepositoryUrl(url);
     return true;
+  }
+
+  private boolean checkFileRepo(@NotNull String url) {
+    String suffix = '/' + Constants.DOT_GIT;
+    if (url.endsWith(suffix)) {
+      url = url.substring(0, url.length() - suffix.length());
+    }
+
+    File file = new File(url);
+    if (file.exists()) {
+      if (!file.isDirectory()) {
+        Messages.showErrorDialog(getContentPane(), "Specified path is not a directory", "Specified path is invalid");
+        return false;
+      }
+      else if (new File(file, Constants.DOT_GIT).exists()) {
+        return true;
+      }
+    }
+
+    if (Messages.showYesNoDialog(getContentPane(), IcsBundle.message("init.dialog.message"), IcsBundle.message("init.dialog.title"), Messages.getQuestionIcon()) == Messages.YES) {
+      try {
+        IcsManager.getInstance().getRepositoryManager().initRepository(file);
+        return true;
+      }
+      catch (IOException e) {
+        Messages.showErrorDialog(getContentPane(), IcsBundle.message("init.failed.message", e.getMessage()), IcsBundle.message("init.failed.title"));
+        return false;
+      }
+    }
+    else {
+      return false;
+    }
   }
 }
