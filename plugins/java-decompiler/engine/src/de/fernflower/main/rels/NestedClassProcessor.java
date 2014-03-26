@@ -55,15 +55,26 @@ public class NestedClassProcessor {
 	
 	
 	public void processClass(ClassNode root, ClassNode node) {
+
+		// hide lambda content methods
+		if(node.type == ClassNode.CLASS_LAMBDA) {
+			ClassNode node_content = DecompilerContext.getClassprocessor().getMapRootClasses().get(node.classStruct.qualifiedName);
+			if(node_content != null && node_content.wrapper != null) {
+				node_content.wrapper.getHideMembers().add(node.lambda_information.content_method_key);
+			}
+		}
 		
 		if(node.nested.isEmpty()) {
 			return;
 		}
+
+		if(node.type != ClassNode.CLASS_LAMBDA) {
 		
-		computeLocalVarsAndDefinitions(node);
-		
-		// for each local or anonymous class ensure not empty enclosing method 
-		checkNotFoundClasses(root, node);
+			computeLocalVarsAndDefinitions(node);
+			
+			// for each local or anonymous class ensure not empty enclosing method 
+			checkNotFoundClasses(root, node);
+		}
 		
 		for(ClassNode child : node.nested) {
 			// ensure not-empty class name
@@ -75,11 +86,15 @@ public class NestedClassProcessor {
 		
 		
 		for(ClassNode child : node.nested) {
-			if(child.type != ClassNode.CLASS_MEMBER || (child.access & CodeConstants.ACC_STATIC) == 0) {
-				insertLocalVars(node, child);
-				
-				if(child.type == ClassNode.CLASS_LOCAL) {
-					setLocalClassDefinition(node.wrapper.getMethods().getWithKey(child.enclosingMethod), child);
+			if(child.type == ClassNode.CLASS_LAMBDA) {
+				setLambdaVars(node, child);
+			} else {
+				if(child.type != ClassNode.CLASS_MEMBER || (child.access & CodeConstants.ACC_STATIC) == 0) {
+					insertLocalVars(node, child);
+					
+					if(child.type == ClassNode.CLASS_LOCAL) {
+						setLocalClassDefinition(node.wrapper.getMethods().getWithKey(child.enclosingMethod), child);
+					}
 				}
 			}
 		}
@@ -88,6 +103,74 @@ public class NestedClassProcessor {
 			processClass(root, child);
 		}
 		
+	}
+	
+	private void setLambdaVars(ClassNode parent, ClassNode child) {
+
+		final MethodWrapper meth = parent.wrapper.getMethods().getWithKey(child.lambda_information.content_method_key);
+		final MethodWrapper encmeth = parent.wrapper.getMethods().getWithKey(child.enclosingMethod);
+
+		MethodDescriptor md_lambda = MethodDescriptor.parseDescriptor(child.lambda_information.method_descriptor);
+		final MethodDescriptor md_content = MethodDescriptor.parseDescriptor(child.lambda_information.content_method_descriptor);
+		
+		final int vars_count = md_content.params.length - md_lambda.params.length;
+//		if(vars_count < 0) { // should not happen, but just in case...
+//			vars_count = 0;
+//		}
+		
+		final boolean is_static_lambda_content = child.lambda_information.is_content_method_static;
+		
+		if(!is_static_lambda_content) {  // this pointer
+			if(DecompilerContext.getOption(IFernflowerPreferences.LAMBDA_TO_ANONYMOUS_CLASS)) {
+				//meth.varproc.getThisvars().put(newvar, parent.classStruct.qualifiedName);
+			}
+		}
+
+		final String parent_class_name = parent.wrapper.getClassStruct().qualifiedName;
+		final String lambda_class_name = child.simpleName;
+		
+		final VarType lambda_class_type = new VarType(lambda_class_name, true);
+		
+		DirectGraph graph = encmeth.getOrBuildGraph();
+		
+		graph.iterateExprents(new DirectGraph.ExprentIterator() {
+			public int processExprent(Exprent exprent) {
+				
+				List<Exprent> lst = exprent.getAllExprents(true);
+				lst.add(exprent);
+				
+				for(Exprent expr: lst) {
+					
+					if(expr.type == Exprent.EXPRENT_NEW) {
+						NewExprent new_expr = (NewExprent)expr;
+						if(new_expr.isLambda() && lambda_class_type.equals(new_expr.getNewtype())) {
+							
+							InvocationExprent inv_dynamic = new_expr.getConstructor(); 
+							
+							int param_index = is_static_lambda_content ? 0 : 1;;
+							int varindex = is_static_lambda_content ? 0 : 1;
+							
+							for(int i = 0; i < vars_count; ++i) {
+							
+								Exprent param = inv_dynamic.getLstParameters().get(param_index + i);
+								
+								if(param.type == Exprent.EXPRENT_VAR) {
+									VarVersionPaar enc_varpaar = new VarVersionPaar((VarExprent)param);
+									String enc_varname = encmeth.varproc.getVarName(enc_varpaar);
+									
+									meth.varproc.setVarName(new VarVersionPaar(varindex, 0), enc_varname);
+								}
+								
+								varindex+=md_content.params[i].stack_size;
+							}
+							
+						}
+					}
+				}
+				
+				return 0;
+			}
+		});
 	}
 	
 	private void checkNotFoundClasses(ClassNode root, ClassNode node) {
@@ -166,16 +249,17 @@ public class NestedClassProcessor {
 		int cltypes = 0;
 		
 		for(ClassNode nd: node.nested) {
-			if((nd.access & CodeConstants.ACC_STATIC) == 0 && 
-					(nd.access & CodeConstants.ACC_INTERFACE) == 0) {
-				
-				cltypes |= nd.type;
-
-				HashMap<String, List<VarFieldPair>> mask = getMaskLocalVars(nd.wrapper);
-				if(mask.isEmpty()) {
-					DecompilerContext.getLogger().writeMessage("Nested class "+nd.classStruct.qualifiedName+" has no constructor!", IFernflowerLogger.WARNING);
-				} else {
-					mapVarMasks.put(nd.classStruct.qualifiedName, mask);
+			if(nd.type != ClassNode.CLASS_LAMBDA) {
+				if((nd.access & CodeConstants.ACC_STATIC) == 0 && (nd.access & CodeConstants.ACC_INTERFACE) == 0) {
+					
+					cltypes |= nd.type;
+	
+					HashMap<String, List<VarFieldPair>> mask = getMaskLocalVars(nd.wrapper);
+					if(mask.isEmpty()) {
+						DecompilerContext.getLogger().writeMessage("Nested class "+nd.classStruct.qualifiedName+" has no constructor!", IFernflowerLogger.WARNING);
+					} else {
+						mapVarMasks.put(nd.classStruct.qualifiedName, mask);
+					}
 				}
 			}
 		}

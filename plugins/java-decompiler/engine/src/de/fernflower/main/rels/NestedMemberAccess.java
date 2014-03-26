@@ -65,6 +65,10 @@ public class NestedMemberAccess {
 	
 	private void computeMethodTypes(ClassNode node) {
 		
+		if(node.type == ClassNode.CLASS_LAMBDA) {
+			return;
+		}
+		
 		for(ClassNode nd : node.nested) {
 			computeMethodTypes(nd);
 		}
@@ -218,6 +222,10 @@ public class NestedMemberAccess {
 	
 	
 	private void eliminateStaticAccess(ClassNode node) {
+		
+		if(node.type == ClassNode.CLASS_LAMBDA) {
+			return;
+		}
 		
 		for(MethodWrapper meth : node.wrapper.getMethods()) {
 			

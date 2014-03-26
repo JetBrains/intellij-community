@@ -24,8 +24,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.fernflower.code.CodeConstants;
 import de.fernflower.main.collectors.CounterContainer;
@@ -34,6 +34,7 @@ import de.fernflower.main.extern.IFernflowerLogger;
 import de.fernflower.main.extern.IFernflowerPreferences;
 import de.fernflower.main.extern.IIdentifierRenamer;
 import de.fernflower.main.rels.ClassWrapper;
+import de.fernflower.main.rels.LambdaProcessor;
 import de.fernflower.main.rels.NestedClassProcessor;
 import de.fernflower.main.rels.NestedMemberAccess;
 import de.fernflower.modules.decompiler.exps.InvocationExprent;
@@ -238,6 +239,10 @@ public class ClassesProcessor {
 			DecompilerContext.setImpcollector(new ImportCollector(root));
 			DecompilerContext.setCountercontainer(new CounterContainer());
 			
+			// lambda processing
+			LambdaProcessor lambda_proc = new LambdaProcessor();
+			lambda_proc.processClass(root);
+			
 			// add simple class names to implicit import
 			addClassnameToImport(root, DecompilerContext.getImpcollector());
 			// build wrappers for all nested classes
@@ -291,6 +296,10 @@ public class ClassesProcessor {
 	
 	private void initWrappers(ClassNode node) throws IOException {
 		
+		if(node.type == ClassNode.CLASS_LAMBDA) {
+			return;
+		}
+
 		ClassWrapper wrapper = new ClassWrapper(node.classStruct);
 		wrapper.init();
 		
@@ -333,6 +342,7 @@ public class ClassesProcessor {
 		public static final int CLASS_MEMBER = 1;
 		public static final int CLASS_ANONYMOUS = 2;
 		public static final int CLASS_LOCAL = 4;
+		public static final int CLASS_LAMBDA = 8;
 		
 		public int type;
 		
@@ -358,6 +368,28 @@ public class ClassesProcessor {
 		
 		public ClassNode parent;
 		
+		public LambdaInformation lambda_information;
+		
+		public ClassNode(String content_method_name, String content_method_descriptor, String lambda_class_name, String lambda_method_name, 
+												String lambda_method_descriptor, StructClass classStruct) { // lambda class constructor
+			this.type = CLASS_LAMBDA;
+			this.classStruct = classStruct; // 'parent' class containing the static function 
+			
+			lambda_information = new LambdaInformation();
+			
+			lambda_information.class_name = lambda_class_name;
+			lambda_information.method_name = lambda_method_name;
+			lambda_information.method_descriptor = lambda_method_descriptor;
+			
+			lambda_information.content_method_name = content_method_name;
+			lambda_information.content_method_descriptor = content_method_descriptor;
+			lambda_information.content_method_key = InterpreterUtil.makeUniqueKey(lambda_information.content_method_name, lambda_information.content_method_descriptor);
+
+			anonimousClassType = new VarType(lambda_class_name, true);
+			
+			lambda_information.is_content_method_static = ((classStruct.getMethod(content_method_name, content_method_descriptor).getAccessFlags() & CodeConstants.ACC_STATIC) != 0);
+		}
+		
 		public ClassNode(int type, StructClass classStruct) {
 			this.type = type;
 			this.classStruct = classStruct;
@@ -374,5 +406,16 @@ public class ClassesProcessor {
 			return null;
 		}
 
+		public class LambdaInformation {
+			public String class_name;
+			public String method_name;
+			public String method_descriptor;
+			
+			public String content_method_name;
+			public String content_method_descriptor;
+			public String content_method_key;
+			
+			public boolean is_content_method_static; 
+		}
 	}
 }

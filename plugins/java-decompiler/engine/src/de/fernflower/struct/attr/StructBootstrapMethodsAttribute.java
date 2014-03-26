@@ -47,4 +47,16 @@ public class StructBootstrapMethodsAttribute extends StructGeneralAttribute {
 		
 	}
 
+	public int getMethodsNumber() {
+		return method_refs.size();
+	}
+	
+	public LinkConstant getMethodReference(int index) {
+		return method_refs.get(index);
+	}
+
+	public List<PooledConstant> getMethodArguments(int index) {
+		return method_arguments.get(index);
+	}
+	
 }

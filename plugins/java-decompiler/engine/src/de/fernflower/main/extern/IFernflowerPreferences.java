@@ -49,6 +49,7 @@ public interface IFernflowerPreferences {
 	public static final String DEPRECATED_COMMENT = "dpc";
 	public static final String NEW_LINE_SEPARATOR = "nls";
 	public static final String IDEA_NOT_NULL_ANNOTATION = "inn";
+	public static final String LAMBDA_TO_ANONYMOUS_CLASS = "lac";
 	
 	public static final String LINE_SEPARATOR_WIN = "\r\n";
 	public static final String LINE_SEPARATOR_LIN = "\n";

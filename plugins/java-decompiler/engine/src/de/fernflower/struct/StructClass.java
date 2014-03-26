@@ -122,6 +122,10 @@ public class StructClass {
 		return fields.getWithKey(InterpreterUtil.makeUniqueKey(name, descriptor));
 	}
 	
+	public StructMethod getMethod(String key) {
+		return methods.getWithKey(key);
+	}
+	
 	public StructMethod getMethod(String name, String descriptor) {
 		return methods.getWithKey(InterpreterUtil.makeUniqueKey(name, descriptor));
 	}

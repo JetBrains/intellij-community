@@ -39,15 +39,16 @@ import de.fernflower.modules.decompiler.vars.VarVersionEdge;
 import de.fernflower.modules.decompiler.vars.VarVersionNode;
 import de.fernflower.modules.decompiler.vars.VarVersionPaar;
 import de.fernflower.modules.decompiler.vars.VarVersionsGraph;
+import de.fernflower.struct.StructClass;
 import de.fernflower.struct.StructMethod;
+import de.fernflower.util.FastSparseSetFactory.FastSparseSet;
 import de.fernflower.util.InterpreterUtil;
 import de.fernflower.util.SFormsFastMapDirect;
-import de.fernflower.util.FastSparseSetFactory.FastSparseSet;
 
 
 public class StackVarsProcessor {
 
-	public void simplifyStackVars(RootStatement root, StructMethod mt) {
+	public void simplifyStackVars(RootStatement root, StructMethod mt, StructClass cl) {
 		
 		HashSet<Integer> setReorderedIfs = new HashSet<Integer>(); 
 		
@@ -66,7 +67,7 @@ public class StackVarsProcessor {
 			
 			
 			SimplifyExprentsHelper sehelper = new SimplifyExprentsHelper(ssau == null);
-			while(sehelper.simplifyStackVarsStatement(root, setReorderedIfs, ssa)) {
+			while(sehelper.simplifyStackVarsStatement(root, setReorderedIfs, ssa, cl)) {
 //				System.out.println("--------------- \r\n"+root.toJava());
 				found = true;
 			}

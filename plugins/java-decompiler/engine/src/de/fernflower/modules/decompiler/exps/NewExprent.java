@@ -25,6 +25,7 @@ import de.fernflower.code.CodeConstants;
 import de.fernflower.main.ClassWriter;
 import de.fernflower.main.DecompilerContext;
 import de.fernflower.main.ClassesProcessor.ClassNode;
+import de.fernflower.main.extern.IFernflowerPreferences;
 import de.fernflower.modules.decompiler.ExprProcessor;
 import de.fernflower.modules.decompiler.vars.CheckTypesResult;
 import de.fernflower.modules.decompiler.vars.VarVersionPaar;
@@ -47,6 +48,8 @@ public class NewExprent extends Exprent {
 	
 	private boolean anonymous;
 
+	private boolean lambda;
+	
 	private boolean enumconst;
 	
 	{
@@ -70,13 +73,19 @@ public class NewExprent extends Exprent {
 	}
 	
 	private void setAnonymous() {
+		
 		anonymous = false;
+		lambda = false;
 
 		if(newtype.type == CodeConstants.TYPE_OBJECT && newtype.arraydim == 0) {
 			ClassNode node = DecompilerContext.getClassprocessor().getMapRootClasses().get(newtype.value); 
 			
-			if(node != null && node.type == ClassNode.CLASS_ANONYMOUS) {
+			if(node != null && (node.type == ClassNode.CLASS_ANONYMOUS || node.type == ClassNode.CLASS_LAMBDA)) {
 				anonymous = true;
+				
+				if(node.type == ClassNode.CLASS_LAMBDA) {
+					lambda = true;
+				}
 			}
 		}
 	}
@@ -162,7 +171,7 @@ public class NewExprent extends Exprent {
 
 			buf.append("(");
 			
-			if(constructor != null) {
+			if(!lambda && constructor != null) {
 				
 				InvocationExprent invsuper = child.superInvocation;
 				
@@ -208,7 +217,7 @@ public class NewExprent extends Exprent {
 
 			if(!enumconst) {
 				String enclosing = null;
-				if(constructor != null) {
+				if(!lambda && constructor != null) {
 					enclosing = getQualifiedNewInstance(child.anonimousClassType.value, constructor.getLstParameters(), indent);
 				}
 				
@@ -236,10 +245,18 @@ public class NewExprent extends Exprent {
 			
 			ClassWriter clwriter = new ClassWriter();
 			try {
-				clwriter.classToJava(child, bufstrwriter, indent);
+				if(lambda) {
+					clwriter.classLambdaToJava(child, bufstrwriter, indent);
+				} else {
+					clwriter.classToJava(child, bufstrwriter, indent);
+				}
 				bufstrwriter.flush();
 			} catch(IOException ex) {
 				throw new RuntimeException(ex);
+			}
+			
+			if(lambda && !DecompilerContext.getOption(IFernflowerPreferences.LAMBDA_TO_ANONYMOUS_CLASS)) {
+				buf.setLength(0); // remove the usual 'new <class>()', it will be replaced with lambda style '() ->'  
 			}
 			
 			buf.append(strwriter.toString());
@@ -453,6 +470,10 @@ public class NewExprent extends Exprent {
 
 	public void setDirectArrayInit(boolean directArrayInit) {
 		this.directArrayInit = directArrayInit;
+	}
+
+	public boolean isLambda() {
+		return lambda;
 	}
 
 	public boolean isAnonymous() {

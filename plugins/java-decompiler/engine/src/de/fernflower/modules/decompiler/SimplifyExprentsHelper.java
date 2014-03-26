@@ -19,12 +19,12 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.fernflower.code.CodeConstants;
-import de.fernflower.main.DecompilerContext;
 import de.fernflower.main.ClassesProcessor.ClassNode;
+import de.fernflower.main.DecompilerContext;
 import de.fernflower.main.extern.IFernflowerPreferences;
 import de.fernflower.modules.decompiler.exps.ArrayExprent;
 import de.fernflower.modules.decompiler.exps.AssignmentExprent;
@@ -41,6 +41,7 @@ import de.fernflower.modules.decompiler.sforms.SSAConstructorSparseEx;
 import de.fernflower.modules.decompiler.stats.IfStatement;
 import de.fernflower.modules.decompiler.stats.Statement;
 import de.fernflower.modules.decompiler.vars.VarVersionPaar;
+import de.fernflower.struct.StructClass;
 import de.fernflower.struct.gen.VarType;
 import de.fernflower.util.FastSparseSetFactory.FastSparseSet;
 
@@ -52,7 +53,7 @@ public class SimplifyExprentsHelper {
 		this.firstInvocation = firstInvocation;
 	}
 	
-	public boolean simplifyStackVarsStatement(Statement stat, HashSet<Integer> setReorderedIfs, SSAConstructorSparseEx ssa) {
+	public boolean simplifyStackVarsStatement(Statement stat, HashSet<Integer> setReorderedIfs, SSAConstructorSparseEx ssa, StructClass cl) {
 		
 		boolean res = false;
 		
@@ -63,7 +64,7 @@ public class SimplifyExprentsHelper {
 				boolean changed = false;
 				
 				for(Statement st: stat.getStats()) {
-					res |= simplifyStackVarsStatement(st, setReorderedIfs, ssa);
+					res |= simplifyStackVarsStatement(st, setReorderedIfs, ssa, cl);
 					
 					// collapse composed if's
 					if(changed = IfHelper.mergeIfs(st, setReorderedIfs)) {
@@ -84,13 +85,13 @@ public class SimplifyExprentsHelper {
 			}
 			
 		} else {
-			res |= simplifyStackVarsExprents(stat.getExprents());
+			res |= simplifyStackVarsExprents(stat.getExprents(), cl);
 		}
 		
 		return res;
 	}
 	
-	private boolean simplifyStackVarsExprents(List<Exprent> list) {
+	private boolean simplifyStackVarsExprents(List<Exprent> list, StructClass cl) {
 		
 		boolean res = false;
 		
@@ -108,6 +109,15 @@ public class SimplifyExprentsHelper {
 				continue;
 			}
 
+			// lambda expression (Java 8)
+			ret = isLambda(current, cl);
+			if(ret != null) {
+				list.set(index, ret);
+				res = true;
+				
+				continue;
+			}
+			
 			// remove monitor exit
 			if(isMonitorExit(current)) {
 				list.remove(index);
@@ -688,6 +698,38 @@ public class SimplifyExprentsHelper {
 
 		return false;
 	}
+
+	private static Exprent isLambda(Exprent exprent, StructClass cl) {
+
+		List<Exprent> lst = exprent.getAllExprents();
+		for(Exprent expr: lst) {
+			Exprent ret = isLambda(expr, cl);
+			if(ret != null) {
+				exprent.replaceExprent(expr, ret);
+			}
+		}
+		
+		if(exprent.type == Exprent.EXPRENT_INVOCATION) {
+			InvocationExprent in = (InvocationExprent)exprent;
+		
+			if(in.getInvocationTyp() == InvocationExprent.INVOKE_DYNAMIC) {
+					
+				String lambda_class_name = cl.qualifiedName + in.getInvokeDynamicClassSuffix();
+				ClassNode lambda_class = DecompilerContext.getClassprocessor().getMapRootClasses().get(lambda_class_name);
+				
+				if(lambda_class != null) { // real lambda class found, replace invocation with an anonymous class
+					
+					NewExprent newexp = new NewExprent(new VarType(lambda_class_name, true), null, 0);
+					newexp.setConstructor(in);
+					
+					return newexp;
+				}
+			}
+		}
+		
+		return null;
+	}
+	
 	
 	private static Exprent isSimpleConstructorInvocation(Exprent exprent) {
 		

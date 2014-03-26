@@ -112,6 +112,84 @@ public class ClassWriter {
 
 	}
 	
+	public void classLambdaToJava(ClassNode node, BufferedWriter writer, int indent) throws IOException {
+
+		// get the class node with the content method
+		ClassNode node_content = node;
+		while(node_content != null && node_content.type == ClassNode.CLASS_LAMBDA) {
+			node_content = node_content.parent;
+		}
+		
+		if(node_content == null) {
+			return;
+		}
+
+		boolean lambda_to_anonymous = DecompilerContext.getOption(IFernflowerPreferences.LAMBDA_TO_ANONYMOUS_CLASS);
+		
+		ClassNode nodeold = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASSNODE);
+		DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASSNODE, node);
+		
+		ClassWrapper wrapper = node_content.wrapper;
+		StructClass cl = wrapper.getClassStruct();
+
+		DecompilerContext.getLogger().startWriteClass(node.simpleName);
+
+		// lambda method
+		StructMethod mt = cl.getMethod(node.lambda_information.content_method_key);
+		MethodWrapper meth = wrapper.getMethodWrapper(mt.getName(), mt.getDescriptor());
+		MethodDescriptor md = MethodDescriptor.parseDescriptor(node.lambda_information.method_descriptor);
+
+		if(!lambda_to_anonymous) { // lambda parameters '() ->'
+
+			StringBuilder buff = new StringBuilder("(");
+
+			boolean firstpar = true;
+			int index = 1;
+			
+			for(int i=0;i<md.params.length;i++) {
+					
+				if(!firstpar) {
+					buff.append(", ");
+				}
+				
+				String parname = meth.varproc.getVarName(new VarVersionPaar(index, 0));
+				buff.append(parname==null ? "param"+index : parname); // null iff decompiled with errors
+				
+				firstpar = false;
+				
+				index+=md.params[i].stack_size;
+			}
+			buff.append(") ->");
+			
+			writer.write(buff.toString());
+		}
+		
+		StringWriter strwriter = new StringWriter();
+		BufferedWriter bufstrwriter = new BufferedWriter(strwriter);
+
+		if(lambda_to_anonymous) {
+			methodLambdaToJava(node, node_content, mt, bufstrwriter, indent+1, false);
+		} else {
+			methodLambdaToJava(node, node_content, mt, bufstrwriter, indent, true);
+		}
+
+		bufstrwriter.flush();
+		
+		// closing up class definition
+		writer.write(" {");
+		writer.newLine();
+
+		writer.write(strwriter.toString());
+
+		writer.write(InterpreterUtil.getIndentString(indent));
+		writer.write("}");
+		writer.flush();
+
+		DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASSNODE, nodeold);
+
+		DecompilerContext.getLogger().endWriteClass();
+	}
+	
 	public void classToJava(ClassNode node, BufferedWriter writer, int indent) throws IOException {
 		
 		ClassWrapper wrapper = node.wrapper;
@@ -498,7 +576,99 @@ public class ClassWriter {
 		
 	}
 	
-	private boolean methodToJava(ClassNode node, StructMethod mt, BufferedWriter writer, int indent) throws IOException {
+	public boolean methodLambdaToJava(ClassNode node_lambda, ClassNode node_content, StructMethod mt, BufferedWriter writer, int indent, boolean code_only) throws IOException {
+		
+		ClassWrapper wrapper = node_content.wrapper;
+		
+		MethodWrapper meth = wrapper.getMethodWrapper(mt.getName(), mt.getDescriptor());
+		
+		MethodWrapper methold = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
+		DecompilerContext.setProperty(DecompilerContext.CURRENT_METHOD_WRAPPER, meth);
+
+		String indstr = InterpreterUtil.getIndentString(indent);
+
+		String method_name = node_lambda.lambda_information.method_name;
+		MethodDescriptor md = MethodDescriptor.parseDescriptor(node_lambda.lambda_information.method_descriptor);
+		
+		StringWriter strwriter = new StringWriter();
+		BufferedWriter bufstrwriter = new BufferedWriter(strwriter); 
+
+		if(!code_only) {
+			bufstrwriter.write(indstr);
+			bufstrwriter.write("public ");
+			bufstrwriter.write(method_name);
+			bufstrwriter.write("(");
+	
+			boolean firstpar = true;
+			int index = 1;
+			
+			for(int i=0;i<md.params.length;i++) {
+					
+				if(!firstpar) {
+					bufstrwriter.write(", ");
+				}
+				
+				VarType partype = md.params[i].copy();
+				
+				String strpartype = ExprProcessor.getCastTypeName(partype);
+				if(ExprProcessor.UNDEFINED_TYPE_STRING.equals(strpartype) && DecompilerContext.getOption(IFernflowerPreferences.UNDEFINED_PARAM_TYPE_OBJECT)) {
+					strpartype = ExprProcessor.getCastTypeName(VarType.VARTYPE_OBJECT);
+				}
+	
+				bufstrwriter.write(strpartype);
+				bufstrwriter.write(" ");
+				
+				String parname = meth.varproc.getVarName(new VarVersionPaar(index, 0));
+				bufstrwriter.write(parname==null?"param"+index:parname); // null iff decompiled with errors
+				
+				firstpar = false;
+				
+				index+=md.params[i].stack_size;
+			}
+			
+			bufstrwriter.write(")");
+			bufstrwriter.write(" ");
+			bufstrwriter.write("{");
+			bufstrwriter.newLine();
+		}
+		
+		RootStatement root = wrapper.getMethodWrapper(mt.getName(), mt.getDescriptor()).root;
+		
+		if(root != null && !meth.decompiledWithErrors) { // check for existence 
+			try {
+				String code = root.toJava(indent+1);
+				bufstrwriter.write(code);
+			} catch(Throwable ex) {
+				if(DecompilerContext.getLogger().getShowStacktrace()) {
+					ex.printStackTrace();
+				}
+				
+				DecompilerContext.getLogger().writeMessage("Method "+mt.getName()+" "+mt.getDescriptor()+" couldn't be written.", IFernflowerLogger.ERROR);
+				meth.decompiledWithErrors = true;
+			}
+		} 
+		
+		if(meth.decompiledWithErrors) {
+			bufstrwriter.write(InterpreterUtil.getIndentString(indent+1));
+			bufstrwriter.write("// $FF: Couldn't be decompiled");
+			bufstrwriter.newLine();
+		}
+
+		if(!code_only) {
+			bufstrwriter.write(indstr+"}");
+			bufstrwriter.newLine();
+		}
+		
+		bufstrwriter.flush();
+		
+		writer.write(strwriter.toString());
+		
+		DecompilerContext.setProperty(DecompilerContext.CURRENT_METHOD_WRAPPER, methold);
+		
+		return true;
+	}
+
+	public boolean methodToJava(ClassNode node, StructMethod mt, BufferedWriter writer, int indent) throws IOException {
 
 		ClassWrapper wrapper = node.wrapper;
 		StructClass cl = wrapper.getClassStruct();

@@ -14,10 +14,8 @@
 
 package de.fernflower.main.rels;
 
-import java.io.File;
 import java.io.IOException;
 
-import test.util.DotExporter;
 import de.fernflower.code.InstructionSequence;
 import de.fernflower.code.cfg.ControlFlowGraph;
 import de.fernflower.main.DecompilerContext;
@@ -186,7 +184,7 @@ public class MethodProcessorThread implements Runnable {
 		
 		for(;;) {
 			StackVarsProcessor stackproc = new StackVarsProcessor();
-			stackproc.simplifyStackVars(root, mt);
+			stackproc.simplifyStackVars(root, mt, cl);
 			
 //			System.out.println("~~~~~~~~~~~~~~~~~~~~~~ \r\n"+root.toJava());
 			
@@ -223,7 +221,7 @@ public class MethodProcessorThread implements Runnable {
 				SequenceHelper.condenseSequences(root);
 				
 				StackVarsProcessor stackproc = new StackVarsProcessor();
-				stackproc.simplifyStackVars(root, mt);
+				stackproc.simplifyStackVars(root, mt, cl);
 				
 				varproc.setVarVersions(root);
 			}

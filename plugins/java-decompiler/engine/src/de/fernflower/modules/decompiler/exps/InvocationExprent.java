@@ -14,6 +14,9 @@
 
 package de.fernflower.modules.decompiler.exps;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -21,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 import de.fernflower.code.CodeConstants;
+import de.fernflower.main.ClassWriter;
 import de.fernflower.main.DecompilerContext;
 import de.fernflower.main.ClassesProcessor.ClassNode;
 import de.fernflower.main.rels.MethodWrapper;
@@ -67,6 +71,8 @@ public class InvocationExprent extends Exprent {
 
 	private String stringDescriptor;
 	
+	private String invoke_dynamic_classsuffix;
+	
 	private int invocationTyp = INVOKE_VIRTUAL; 
 	
 	private List<Exprent> lstParameters = new ArrayList<Exprent>();
@@ -97,7 +103,9 @@ public class InvocationExprent extends Exprent {
 			break;
 		case CodeConstants.opc_invokedynamic:
 			invocationTyp = INVOKE_DYNAMIC;
+			
 			classname = "java/lang/Class"; // dummy class name
+			invoke_dynamic_classsuffix = "##Lambda_" + cn.index1 + "_" + cn.index2;
 		}
 		
 		if("<init>".equals(name)) {
@@ -178,13 +186,43 @@ public class InvocationExprent extends Exprent {
 		String super_qualifier = null;
 		boolean isInstanceThis = false;
 		
-		if(isStatic) {
-			if(invocationTyp != INVOKE_DYNAMIC) {
-				ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASSNODE);
-				if(node == null || !classname.equals(node.classStruct.qualifiedName)) {
-					buf.append(DecompilerContext.getImpcollector().getShortName(ExprProcessor.buildJavaClassName(classname)));
-				}
+		if(invocationTyp == INVOKE_DYNAMIC) {
+//			ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASSNODE);
+//			
+//			if(node != null) {
+//				ClassNode lambda_node = DecompilerContext.getClassprocessor().getMapRootClasses().get(node.classStruct.qualifiedName + invoke_dynamic_classsuffix);
+//				if(lambda_node != null) {
+//					
+//					String typename = ExprProcessor.getCastTypeName(lambda_node.anonimousClassType);
+//					
+//					StringWriter strwriter = new StringWriter();
+//					BufferedWriter bufstrwriter = new BufferedWriter(strwriter);
+//
+//					ClassWriter clwriter = new ClassWriter();
+//					
+//					try {
+//						bufstrwriter.write("new " + typename + "() {");
+//						bufstrwriter.newLine();
+//						
+//						
+//
+//						bufstrwriter.flush();
+//					} catch(IOException ex) {
+//						throw new RuntimeException(ex);
+//					}
+//					
+//					buf.append(strwriter.toString());
+//				
+//				}
+//			}
+			
+		} else if(isStatic) {
+			
+			ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASSNODE);
+			if(node == null || !classname.equals(node.classStruct.qualifiedName)) {
+				buf.append(DecompilerContext.getImpcollector().getShortName(ExprProcessor.buildJavaClassName(classname)));
 			}
+			
 		} else {
 
 			if(instance != null && instance.type == Exprent.EXPRENT_VAR) {
@@ -455,6 +493,10 @@ public class InvocationExprent extends Exprent {
 
 	public void setInvocationTyp(int invocationTyp) {
 		this.invocationTyp = invocationTyp;
+	}
+
+	public String getInvokeDynamicClassSuffix() {
+		return invoke_dynamic_classsuffix;
 	}	
 	
 }
