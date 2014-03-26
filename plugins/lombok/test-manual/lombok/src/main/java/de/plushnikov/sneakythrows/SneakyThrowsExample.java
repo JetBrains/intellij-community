@@ -7,7 +7,7 @@ import java.io.UnsupportedEncodingException;
 
 public class SneakyThrowsExample implements Runnable {
 
-    @SneakyThrows({UnsatisfiedLinkError.class,  UnsupportedEncodingException.class, MyException.class})
+    @SneakyThrows({UnsatisfiedLinkError.class,  UnsupportedEncodingException.class, IllegalAccessException.class})
     public String utf8ToString(byte[] bytes) {
         if(1==1) {
             return new String(bytes, "UTgF-8");
@@ -16,7 +16,7 @@ public class SneakyThrowsExample implements Runnable {
         }
     }
 
-    public class MyException {
+    public class MyException extends IllegalAccessException {
 
     }
 

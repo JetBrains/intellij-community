@@ -23,17 +23,17 @@ public class BuilderTestCase extends LombokParsingTestCase {
     doTest();
   }
 
-  // This test is lombok's homepage example with predefined elements and another inner class.
-  // TODO support Predefined inner builder class
-  public void testBuilderPredefined() throws IOException {
-    doTest();
-  }
-
   public void testBuilderSimple() throws IOException {
     doTest();
   }
 
   public void testBuilderComplex() throws IOException {
+    doTest();
+  }
+
+  // This test is lombok's homepage example with predefined elements and another inner class.
+  // TODO support Predefined inner builder class
+  public void testBuilderPredefined() throws IOException {
     doTest();
   }
 

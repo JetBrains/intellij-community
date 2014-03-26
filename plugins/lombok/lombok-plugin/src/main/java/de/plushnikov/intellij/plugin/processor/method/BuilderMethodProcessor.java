@@ -5,9 +5,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
-import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import lombok.experimental.Builder;
@@ -25,7 +23,6 @@ import java.util.List;
 public class BuilderMethodProcessor extends AbstractMethodProcessor {
 
   private final BuilderHandler builderHandler = new BuilderHandler();
-  private final AllArgsConstructorProcessor allArgsConstructorProcessor = new AllArgsConstructorProcessor();
 
   public BuilderMethodProcessor() {
     super(Builder.class, PsiMethod.class);
@@ -33,7 +30,7 @@ public class BuilderMethodProcessor extends AbstractMethodProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @NotNull ProblemBuilder builder) {
-    return builderHandler.validate(psiAnnotation, psiMethod, builder);
+    return builderHandler.validate(psiAnnotation, psiMethod, false, builder);
   }
 
   protected void processIntern(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
@@ -41,8 +38,8 @@ public class BuilderMethodProcessor extends AbstractMethodProcessor {
     if (null != psiClass) {
 
       final PsiType psiBuilderType = builderHandler.getBuilderType(psiMethod, psiClass);
-      final PsiClass psiBuilderClass = PsiTypesUtil.getPsiClass(psiBuilderType);
-      final String builderClassName = builderHandler.getBuilderClassName(null == psiBuilderClass ? psiClass : psiBuilderClass, psiAnnotation);
+
+      final String builderClassName = builderHandler.getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
       final PsiClass builderClass = PsiClassUtil.getInnerClassByName(psiClass, builderClassName);
       if (null != builderClass) {
         target.add(builderHandler.createBuilderMethod(psiClass, builderClass, psiAnnotation));

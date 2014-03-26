@@ -28,7 +28,7 @@ public class BuilderClassMethodProcessor extends AbstractMethodProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @NotNull ProblemBuilder builder) {
-    return builderHandler.validate(psiAnnotation, psiMethod, builder);
+    return builderHandler.validate(psiAnnotation, psiMethod, true, builder);
   }
 
   protected void processIntern(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {

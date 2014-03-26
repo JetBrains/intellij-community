@@ -17,7 +17,6 @@ import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
-import de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -49,22 +48,25 @@ public class BuilderHandler {
   private final static String BUILDER_METHOD_NAME = "builder";
 
   private final ToStringProcessor toStringProcessor = new ToStringProcessor();
-  private final SetterFieldProcessor setterFieldProcessor = new SetterFieldProcessor();
 
-  public boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder problemBuilder) {
+  public boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, boolean validateInnerClass, @NotNull ProblemBuilder problemBuilder) {
     final PsiType psiBuilderType = PsiClassUtil.getTypeWithGenerics(psiClass);
-    final PsiClass psiBuilderClass = PsiTypesUtil.getPsiClass(psiBuilderType);
-    final String builderClassName = getBuilderClassName(psiBuilderClass, psiAnnotation);
 
-    return validateBuilderClassName(psiClass, psiAnnotation, problemBuilder) &&
-        validateAnnotationOnRightType(psiClass, problemBuilder)
-        && validateExistingInnerClass(builderClassName, psiClass, psiAnnotation, problemBuilder);
+    return validateAnnotationOnRightType(psiClass, problemBuilder) && validate(psiClass, psiAnnotation, psiBuilderType, validateInnerClass, problemBuilder);
   }
 
-  protected boolean validateBuilderClassName(@NotNull PsiClass psiClass, PsiAnnotation psiAnnotation, ProblemBuilder builder) {
-    final Project project = psiAnnotation.getProject();
+  private boolean validate(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiType psiBuilderType, boolean validateInnerClass, @NotNull ProblemBuilder problemBuilder) {
+    final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
+
+    boolean result = validateBuilderClassName(builderClassName, psiAnnotation.getProject(), problemBuilder);
+    if (validateInnerClass) {
+      result &= validateExistingInnerClass(builderClassName, psiClass, problemBuilder);
+    }
+    return result;
+  }
+
+  protected boolean validateBuilderClassName(@NotNull String builderClassName, @NotNull Project project, @NotNull ProblemBuilder builder) {
     final PsiNameHelper psiNameHelper = JavaPsiFacade.getInstance(project).getNameHelper();
-    final String builderClassName = getBuilderClassName(psiClass, psiAnnotation);
     if (!psiNameHelper.isIdentifier(builderClassName)) {
       builder.addError("%s ist not a valid identifier", builderClassName);
       return false;
@@ -80,15 +82,13 @@ public class BuilderHandler {
     return true;
   }
 
-  public boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @NotNull ProblemBuilder problemBuilder) {
+  public boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, boolean validateInnerClass, @NotNull ProblemBuilder problemBuilder) {
     final PsiClass psiClass = psiMethod.getContainingClass();
     if (null != psiClass) {
       final PsiType psiBuilderType = getBuilderType(psiMethod, psiClass);
-      final PsiClass psiBuilderClass = PsiTypesUtil.getPsiClass(psiBuilderType);
-      final String builderClassName = getBuilderClassName(null == psiBuilderClass ? psiClass : psiBuilderClass, psiAnnotation);
-      //TODO refactore validation and separate builder class generation from method generation if builder class already exists
-      return validateAnnotationOnRightType(psiMethod, problemBuilder)
-          && validateExistingInnerClass(builderClassName, psiClass, psiAnnotation, problemBuilder);
+
+      return validateAnnotationOnRightType(psiMethod, problemBuilder) &&
+          validate(psiClass, psiAnnotation, psiBuilderType, validateInnerClass, problemBuilder);
     }
     return false;
   }
@@ -101,13 +101,12 @@ public class BuilderHandler {
     return true;
   }
 
-  protected boolean validateExistingInnerClass(@NotNull String builderClassName, @NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemBuilder builder) {
+  protected boolean validateExistingInnerClass(@NotNull String builderClassName, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     final PsiClass innerBuilderClass = PsiClassUtil.getInnerClassInternByName(psiClass, builderClassName);
     if (null != innerBuilderClass) {
-//      builder.addError("Not generated '%s' class: A class with same name already exists. This feature is not implemented at the moment.", builderClassName);
-      return false;
+      builder.addWarning("Not generated '%s' class: A class with same name already exists. This feature is not implemented at the moment.", builderClassName);
     }
-    return true;
+    return null == innerBuilderClass;
   }
 
   public PsiType getBuilderType(@NotNull PsiMethod psiMethod, @NotNull PsiClass psiClass) {
@@ -120,10 +119,11 @@ public class BuilderHandler {
     return psiBuilderTargetClass;
   }
 
-  public String getBuilderClassName(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
-    String builderClassName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, ANNOTATION_BUILDER_CLASS_NAME, String.class);
-    return StringUtils.isNotBlank(builderClassName) ? builderClassName : StringUtils.capitalize(psiClass.getName()) + BUILDER_CLASS_NAME;
-  }
+//  @NotNull
+//  private String getBuilderClassNameX(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+//    String builderClassName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, ANNOTATION_BUILDER_CLASS_NAME, String.class);
+//    return StringUtils.isNotBlank(builderClassName) ? builderClassName : StringUtils.capitalize(psiClass.getName()) + BUILDER_CLASS_NAME;
+//  }
 
   @NotNull
   public static String getBuildMethodName(@NotNull PsiAnnotation psiAnnotation) {
@@ -135,6 +135,21 @@ public class BuilderHandler {
   public static String getBuilderMethodName(@NotNull PsiAnnotation psiAnnotation) {
     final String builderMethodName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, ANNOTATION_BUILDER_METHOD_NAME, String.class);
     return StringUtils.isNotBlank(builderMethodName) ? builderMethodName : BUILDER_METHOD_NAME;
+  }
+
+  @NotNull
+  public String getBuilderClassName(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiType psiBuilderType) {
+    String builderClassName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, ANNOTATION_BUILDER_CLASS_NAME, String.class);
+    if (StringUtils.isBlank(builderClassName)) {
+      if (PsiType.VOID.equals(psiBuilderType)) {
+        return StringUtils.capitalize(PsiType.VOID.getCanonicalText()) + BUILDER_CLASS_NAME;
+      } else {
+        PsiClass psiBuilderClass = PsiTypesUtil.getPsiClass(psiBuilderType);
+        psiBuilderClass = null == psiBuilderClass ? psiClass : psiBuilderClass;
+        return StringUtils.capitalize(psiBuilderClass.getName()) + BUILDER_CLASS_NAME;
+      }
+    }
+    return builderClassName;
   }
 
   @NotNull
@@ -151,8 +166,7 @@ public class BuilderHandler {
   public PsiClass createBuilderClass(@NotNull PsiClass psiClass, @NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation) {
     final PsiType psiBuilderType = getBuilderType(psiMethod, psiClass);
 
-    PsiClass psiBuilderClass = PsiTypesUtil.getPsiClass(psiBuilderType);
-    final String builderClassName = getBuilderClassName(null == psiBuilderClass ? psiClass : psiBuilderClass, psiAnnotation);
+    final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
 
     LombokLightClassBuilder builderClass = createBuilderClass(psiClass, psiMethod, builderClassName, psiAnnotation);
     builderClass.withFields(createFields(psiMethod));
@@ -165,7 +179,7 @@ public class BuilderHandler {
   public PsiClass createBuilderClass(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     final PsiType psiBuilderType = PsiClassUtil.getTypeWithGenerics(psiClass);
 
-    final String builderClassName = getBuilderClassName(psiClass, psiAnnotation);
+    final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
 
     LombokLightClassBuilder builderClass = createBuilderClass(psiClass, psiClass, builderClassName, psiAnnotation);
     builderClass.withFields(createFields(psiClass));

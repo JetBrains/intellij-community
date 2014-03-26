@@ -14,7 +14,7 @@ public class InspectionTest extends InspectionTestCase {
   }
 
   private void doTest() throws Exception {
-    doTest(getTestName(true), new LombokInspection());
+    doTest(getTestName(true), new LombokInspection(), "java 1.5");
   }
 
   public void testIssue37() throws Exception {

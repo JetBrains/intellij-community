@@ -12,10 +12,12 @@ import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import gnu.trove.THashMap;
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 
 /**
@@ -77,12 +79,15 @@ public class LombokInspection extends BaseJavaLocalInspectionTool {
         super.visitAnnotation(annotation);
 
         final String qualifiedName = annotation.getQualifiedName();
-        if (null != qualifiedName && allProblemHandlers.containsKey(qualifiedName)) {
+        if (StringUtils.isNotBlank(qualifiedName) && allProblemHandlers.containsKey(qualifiedName)) {
+          final Collection<LombokProblem> problems = new HashSet<LombokProblem>();
+
           for (Processor inspector : allProblemHandlers.get(qualifiedName)) {
-            Collection<LombokProblem> problems = inspector.verifyAnnotation(annotation);
-            for (LombokProblem problem : problems) {
-              holder.registerProblem(annotation, problem.getMessage(), problem.getHighlightType(), problem.getQuickFixes());
-            }
+            problems.addAll(inspector.verifyAnnotation(annotation));
+          }
+
+          for (LombokProblem problem : problems) {
+            holder.registerProblem(annotation, problem.getMessage(), problem.getHighlightType(), problem.getQuickFixes());
           }
         }
       }

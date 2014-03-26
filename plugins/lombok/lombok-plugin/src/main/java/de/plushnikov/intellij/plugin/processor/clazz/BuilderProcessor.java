@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
@@ -35,7 +34,7 @@ public class BuilderProcessor extends AbstractClassProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    return builderHandler.validate(psiAnnotation, psiClass, builder);
+    return builderHandler.validate(psiAnnotation, psiClass, false, builder);
   }
 
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
@@ -46,8 +45,8 @@ public class BuilderProcessor extends AbstractClassProcessor {
     }
 
     final PsiType psiBuilderType = PsiClassUtil.getTypeWithGenerics(psiClass);
-    final PsiClass psiBuilderClass = PsiTypesUtil.getPsiClass(psiBuilderType);
-    final String builderClassName = builderHandler.getBuilderClassName(psiBuilderClass, psiAnnotation);
+
+    final String builderClassName = builderHandler.getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
     final PsiClass builderClass = PsiClassUtil.getInnerClassByName(psiClass, builderClassName);
     if (null != builderClass) {
       target.add(builderHandler.createBuilderMethod(psiClass, builderClass, psiAnnotation));
