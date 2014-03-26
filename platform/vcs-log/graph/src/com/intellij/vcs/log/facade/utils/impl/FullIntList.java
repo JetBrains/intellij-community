@@ -14,16 +14,34 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.newgraph.utils;
+package com.intellij.vcs.log.facade.utils.impl;
 
-import com.intellij.vcs.log.facade.utils.Flags;
+import com.intellij.vcs.log.facade.utils.IntList;
 import org.jetbrains.annotations.NotNull;
 
-public class MyUtils {
+public class FullIntList implements IntList {
 
-  public static void setAllValues(@NotNull Flags flags, boolean value) {
-    for (int  i = 0; i < flags.size(); i++)
-      flags.set(i, value);
+  public static FullIntList newInstance(@NotNull IntList delegateList) {
+    int[] list = new int[delegateList.size()];
+    for (int i = 0; i < list.length; i++) {
+      list[i] = delegateList.get(i);
+    }
+    return new FullIntList(list);
   }
 
+  public FullIntList(int[] list) {
+    myList = list;
+  }
+
+  private final int[] myList;
+
+  @Override
+  public int size() {
+    return myList.length;
+  }
+
+  @Override
+  public int get(int index) {
+    return myList[index];
+  }
 }

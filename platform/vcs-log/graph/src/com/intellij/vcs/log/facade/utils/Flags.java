@@ -13,17 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.vcs.log.facade.utils;
 
-package com.intellij.vcs.log.newgraph.utils;
-
-import com.intellij.vcs.log.facade.utils.Flags;
-import org.jetbrains.annotations.NotNull;
-
-public class MyUtils {
-
-  public static void setAllValues(@NotNull Flags flags, boolean value) {
-    for (int  i = 0; i < flags.size(); i++)
-      flags.set(i, value);
-  }
-
+/**
+ * @author erokhins
+ */
+public interface Flags {
+  int size();
+  boolean get(int index);
+  void set(int index, boolean value);
 }

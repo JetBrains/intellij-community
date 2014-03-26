@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.newgraph.utils;
+package com.intellij.vcs.log.facade.utils;
 
-import com.intellij.vcs.log.facade.utils.Flags;
+import com.intellij.util.BooleanFunction;
+import com.intellij.vcs.log.facade.utils.impl.ListIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 
-public class MyUtils {
-
-  public static void setAllValues(@NotNull Flags flags, boolean value) {
-    for (int  i = 0; i < flags.size(); i++)
-      flags.set(i, value);
+public class ListIntToIntMapTest extends UpdatableIntToIntMapTest {
+  @Override
+  protected UpdatableIntToIntMap createUpdatableIntToIntMap(@NotNull BooleanFunction<Integer> thisIsVisible, int longSize) {
+    return ListIntToIntMap.newInstance(thisIsVisible, longSize, 3);
   }
-
 }

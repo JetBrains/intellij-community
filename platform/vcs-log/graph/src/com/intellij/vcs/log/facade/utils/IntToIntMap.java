@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.vcs.log.facade.utils;
 
-package com.intellij.vcs.log.newgraph.utils;
+/**
+ * @author erokhins
+ */
+public interface IntToIntMap {
+  int shortSize();
+  int longSize();
+  int getLongIndex(int shortIndex); // must be very fast
 
-import com.intellij.vcs.log.facade.utils.Flags;
-import org.jetbrains.annotations.NotNull;
-
-public class MyUtils {
-
-  public static void setAllValues(@NotNull Flags flags, boolean value) {
-    for (int  i = 0; i < flags.size(); i++)
-      flags.set(i, value);
-  }
-
+  /**
+   * @param longIndex
+   * @return max shortIndex, witch getLongIndex(shortIndex) <= longIndex or 0
+   */
+  int getShortIndex(int longIndex);
 }
