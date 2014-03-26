@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,8 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.LightColors;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.util.DocumentUtil;
 
 import javax.swing.*;
@@ -56,7 +57,7 @@ public class ByteCodeViewerComponent extends JPanel implements Disposable {
     final SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(StdFileTypes.JAVA, project, null);
     ((EditorEx)myEditor).setHighlighter(editorHighlighterFactory.createEditorHighlighter(syntaxHighlighter, EditorColorsManager.getInstance().getGlobalScheme()));
     ((EditorEx)myEditor).setBackgroundColor(EditorFragmentComponent.getBackgroundColor(myEditor));
-    myEditor.getColorsScheme().setColor(EditorColors.CARET_ROW_COLOR, LightColors.SLIGHTLY_GRAY);
+    myEditor.getColorsScheme().setColor(EditorColors.CARET_ROW_COLOR, new JBColor(Gray.xF5, Gray.x39));
     ((EditorEx)myEditor).setCaretVisible(true);
 
     final EditorSettings settings = myEditor.getSettings();

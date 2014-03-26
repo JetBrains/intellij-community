@@ -37,9 +37,6 @@ public class ExpansionHint implements Hint {
     myListeners = ContainerUtil.newSmartList();
   }
 
-  /**
-   * Shows the hint as the window.
-   */
   @Override
   public void show(@NotNull JComponent parentComponent, int x, int y, @Nullable JComponent focusBackComponent, @Nullable HintHint hh) {
     myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myComponent, null)
@@ -61,10 +58,6 @@ public class ExpansionHint implements Hint {
   @Override
   public boolean isVisible() {
     return myComponent.isShowing();
-  }
-
-  public JComponent getComponent() {
-    return myComponent;
   }
 
   @Override

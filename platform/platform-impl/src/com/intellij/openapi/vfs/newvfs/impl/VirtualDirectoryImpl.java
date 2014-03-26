@@ -151,7 +151,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     @NotNull
     @Override
-    public String getName() {
+    public CharSequence getNameSequence() {
       return myName;
     }
 
@@ -161,7 +161,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
 
     @Override
-    public int compareNameTo(@NotNull String name, boolean ignoreCase) {
+    public int compareNameTo(@NotNull CharSequence name, boolean ignoreCase) {
       return compareNames(myName, name, ignoreCase);
     }
 
@@ -548,8 +548,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       Arrays.sort(childrenIds, new java.util.Comparator<FSRecords.NameId>() {
         @Override
         public int compare(FSRecords.NameId o1, FSRecords.NameId o2) {
-          String name1 = o1.name;
-          String name2 = o2.name;
+          CharSequence name1 = o1.name;
+          CharSequence name2 = o2.name;
           int cmp = compareNames(name1, name2, ignoreCase);
           if (cmp == 0 && name1 != name2) {
             LOG.error(ourPersistence + " returned duplicate file names("+name1+","+name2+")" +

@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,15 +59,20 @@ public class ProjectViewModuleNode extends AbstractModuleNode {
     final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>(contentRoots.length + 1);
     final PsiManager psiManager = PsiManager.getInstance(getProject());
     for (final VirtualFile contentRoot : contentRoots) {
-      LOG.assertTrue(contentRoot.isDirectory());
-
       if (!moduleFileIndex.isInContent(contentRoot)) continue;
 
-      final PsiDirectory psiDirectory = psiManager.findDirectory(contentRoot);
-      LOG.assertTrue(psiDirectory != null);
-
-      PsiDirectoryNode directoryNode = new PsiDirectoryNode(getProject(), psiDirectory, getSettings());
-      children.add(directoryNode);
+      AbstractTreeNode child;
+      if (contentRoot.isDirectory()) {
+        PsiDirectory directory = psiManager.findDirectory(contentRoot);
+        LOG.assertTrue(directory != null);
+        child = new PsiDirectoryNode(getProject(), directory, getSettings());
+      }
+      else {
+        PsiFile file = psiManager.findFile(contentRoot);
+        LOG.assertTrue(file != null);
+        child = new PsiFileNode(getProject(), file, getSettings());
+      }
+      children.add(child);
     }
 
     /*

@@ -111,7 +111,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
       if (baseDir == null) { // no reasonable directory -> create new temp one or use parent
         if (Registry.is("ide.open.file.in.temp.project.dir")) {
           try {
-            dummyProjectName = virtualFile.getPath();
+            dummyProjectName = virtualFile.getName();
             File directory = FileUtil.createTempDirectory(dummyProjectName, null, true);
             baseDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(directory);
             dummyProject = true;

@@ -36,6 +36,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.impl.ContentImpl;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +60,8 @@ public final class ToolWindowImpl implements ToolWindowEx {
   private final JComponent myComponent;
   private boolean myAvailable;
   private final ContentManager myContentManager;
-  private Icon myIcon = null;
+  private Icon myIcon;
+  private String myStripeTitle;
 
   private static final Content EMPTY_CONTENT = new ContentImpl(new JLabel(), "", false);
   private final ToolWindowContentUi myContentUI;
@@ -345,6 +347,12 @@ public final class ToolWindowImpl implements ToolWindowEx {
     return getSelectedContent().getDisplayName();
   }
 
+  @NotNull
+  public final String getStripeTitle() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    return ObjectUtils.notNull(myStripeTitle, myId);
+  }
+
   public final void setIcon(final Icon icon) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Icon oldIcon = getIcon();
@@ -356,11 +364,18 @@ public final class ToolWindowImpl implements ToolWindowEx {
     myChangeSupport.firePropertyChange(PROP_ICON, oldIcon, icon);
   }
 
-  public final void setTitle(final String title) {
+  public final void setTitle(String title) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final String oldTitle = getTitle();
+    String oldTitle = getTitle();
     getSelectedContent().setDisplayName(title);
     myChangeSupport.firePropertyChange(PROP_TITLE, oldTitle, title);
+  }
+
+  public final void setStripeTitle(@NotNull String stripeTitle) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    String oldTitle = myStripeTitle;
+    myStripeTitle = stripeTitle;
+    myChangeSupport.firePropertyChange(PROP_STRIPE_TITLE, oldTitle, stripeTitle);
   }
 
   private Content getSelectedContent() {

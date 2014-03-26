@@ -152,6 +152,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
           if (!myProject.isDisposed()) {
             scope.putUserData(RUN_CONFIGURATION, configuration);
             scope.putUserData(RUN_CONFIGURATION_TYPE_ID, configuration.getType().getId());
+            ExecutionEnvironment.EXECUTION_SESSION_ID_KEY.set(scope, ExecutionEnvironment.EXECUTION_SESSION_ID_KEY.get(env));
             compilerManager.make(scope, callback);
           }
           else {

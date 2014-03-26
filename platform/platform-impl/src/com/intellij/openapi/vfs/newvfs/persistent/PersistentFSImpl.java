@@ -141,7 +141,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return ContainerUtil.map2Array(nameIds, String.class, new Function<FSRecords.NameId, String>() {
       @Override
       public String fun(FSRecords.NameId id) {
-        return id.name;
+        return id.name.toString();
       }
     });
   }
@@ -172,7 +172,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     Set<String> toAdd = ContainerUtil.newHashSet(delegateNames);
     for (FSRecords.NameId nameId : current) {
-      toAdd.remove(nameId.name);
+      toAdd.remove(nameId.name.toString());
     }
 
     final TIntArrayList childrenIds = new TIntArrayList(current.length + toAdd.size());
@@ -1276,10 +1276,10 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     @NotNull
     @Override
-    public abstract String getName();
+    public abstract CharSequence getNameSequence();
 
     @Override
-    public int compareNameTo(@NotNull String name, boolean ignoreCase) {
+    public int compareNameTo(@NotNull CharSequence name, boolean ignoreCase) {
       return VirtualFileSystemEntry.compareNames(getName(), name, ignoreCase);
     }
 
@@ -1309,7 +1309,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     @NotNull
     @Override
-    public String getName() {
+    public CharSequence getNameSequence() {
       return myParentLocalFile.getName();
     }
 
@@ -1332,7 +1332,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     @NotNull
     @Override
-    public String getName() {
+    public CharSequence getNameSequence() {
       return myName;
     }
 

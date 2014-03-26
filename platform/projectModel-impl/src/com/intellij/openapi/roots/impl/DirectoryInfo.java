@@ -35,7 +35,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public final class DirectoryInfo {
+public class DirectoryInfo {
   public static final int MAX_ROOT_TYPE_ID = (1 << (Byte.SIZE - 2)) - 1;
   private final Module module; // module to which content it belongs or null
   private final VirtualFile libraryClassRoot; // class root in library
@@ -81,7 +81,7 @@ public final class DirectoryInfo {
            Comparing.equal(contentRoot, info.contentRoot) &&
            Comparing.equal(libraryClassRoot, info.libraryClassRoot) &&
            Comparing.equal(module, info.module) &&
-           Arrays.equals(orderEntries, info.orderEntries) &&
+           Arrays.equals(getOrderEntries(), info.getOrderEntries()) &&
            Comparing.equal(sourceRoot, info.sourceRoot);
   }
 
@@ -105,7 +105,7 @@ public final class DirectoryInfo {
            ", libraryClassRoot=" + getLibraryClassRoot() +
            ", contentRoot=" + getContentRoot() +
            ", sourceRoot=" + getSourceRoot() +
-           ", orderEntries=" + Arrays.toString(orderEntries) +
+           ", orderEntries=" + Arrays.toString(getOrderEntries()) +
            "}";
   }
 
@@ -117,10 +117,7 @@ public final class DirectoryInfo {
 
   @Nullable
   OrderEntry findOrderEntryWithOwnerModule(@NotNull Module ownerModule) {
-    OrderEntry[] entries = orderEntries;
-    if (entries == null) {
-      return null;
-    }
+    OrderEntry[] entries = getOrderEntries();
     if (entries.length < 10) {
       for (OrderEntry entry : entries) {
         if (entry.getOwnerModule() == ownerModule) return entry;
@@ -133,10 +130,7 @@ public final class DirectoryInfo {
 
   @NotNull
   List<OrderEntry> findAllOrderEntriesWithOwnerModule(@NotNull Module ownerModule) {
-    OrderEntry[] entries = orderEntries;
-    if (entries == null) {
-      return Collections.emptyList();
-    }
+    OrderEntry[] entries = getOrderEntries();
     if (entries.length == 1) {
       OrderEntry entry = entries[0];
       return entry.getOwnerModule() == ownerModule ? Arrays.asList(entries) : Collections.<OrderEntry>emptyList();
@@ -269,10 +263,6 @@ public final class DirectoryInfo {
 
   public VirtualFile getSourceRoot() {
     return sourceRoot;
-  }
-
-  public boolean hasSourceRoot() {
-    return getSourceRoot() != null;
   }
 
   public VirtualFile getLibraryClassRoot() {

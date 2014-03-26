@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -211,13 +211,20 @@ public final class IconLoader {
 
   @Nullable
   public static Icon findIcon(URL url) {
+    return findIcon(url, true);
+  }
+
+  @Nullable
+  public static Icon findIcon(URL url, boolean useCache) {
     if (url == null) {
       return null;
     }
     CachedImageIcon icon = ourIconsCache.get(url);
     if (icon == null) {
       icon = new CachedImageIcon(url);
-      icon = ConcurrencyUtil.cacheOrGet(ourIconsCache, url, icon);
+      if (useCache) {
+        icon = ConcurrencyUtil.cacheOrGet(ourIconsCache, url, icon);
+      }
     }
     return icon;
   }

@@ -119,4 +119,10 @@
     <description>Local variable &lt;code&gt;k&lt;/code&gt; is redundant #loc</description>
   </problem>
 
+  <problem>
+    <file>C.java</file>
+    <line>121</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant local variable</problem_class>
+    <description>Local variable &lt;code&gt;n&lt;/code&gt; is redundant #loc</description>
+  </problem>
 </problems>

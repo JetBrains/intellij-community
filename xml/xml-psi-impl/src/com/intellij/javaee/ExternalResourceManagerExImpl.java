@@ -504,39 +504,50 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
   }
 
   static class Resource {
-    String file;
-    ClassLoader classLoader;
-    Class clazz;
+    private final String myFile;
+    private final ClassLoader myClassLoader;
+    private final Class myClass;
+    private volatile String myResolvedResourcePath;
+
+    Resource(String _file, Class _class, ClassLoader _classLoader) {
+      myFile = _file;
+      myClass = _class;
+      myClassLoader = _classLoader;
+    }
+
+    Resource(String _file, Resource baseResource) {
+      this(_file, baseResource.myClass, baseResource.myClassLoader);
+    }
+
+    String directoryName() {
+      int i = myFile.lastIndexOf('/');
+      return i > 0 ? myFile.substring(0, i) : myFile;
+    }
 
     @Nullable
     String getResourceUrl() {
+      String resolvedResourcePath = myResolvedResourcePath;
+      if (resolvedResourcePath != null) return resolvedResourcePath;
 
-      if (classLoader == null && clazz == null) return file;
+      final URL resource = myClass == null ? myClassLoader.getResource(myFile) : myClass.getResource(myFile);
 
-      final URL resource = clazz == null ? classLoader.getResource(file) : clazz.getResource(file);
-
-      try {
-        if (resource == null) {
-          String message = "Cannot find standard resource. filename:" + file + " class=" + clazz + ", classLoader:" + classLoader;
-          if (ApplicationManager.getApplication().isUnitTestMode()) {
-            LOG.error(message);
-          }
-          else {
-            LOG.warn(message);
-          }
-
-          return null;
+      if (resource == null) {
+        String message = "Cannot find standard resource. filename:" + myFile + " class=" + myClass + ", classLoader:" + myClassLoader;
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          LOG.error(message);
         }
-      }
-      finally {
-        classLoader = null;
-        clazz = null;
+        else {
+          LOG.warn(message);
+        }
+
+        myResolvedResourcePath = null;
+        return null;
       }
 
       String path = FileUtil.unquote(resource.toString());
       // this is done by FileUtil for windows
       path = path.replace('\\','/');
-      file = path;
+      myResolvedResourcePath = path;
       return path;
     }
 
@@ -547,21 +558,21 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
 
       Resource resource = (Resource)o;
 
-      if (classLoader != resource.classLoader) return false;
-      if (clazz != resource.clazz) return false;
-      if (file != null ? !file.equals(resource.file) : resource.file != null) return false;
+      if (myClassLoader != resource.myClassLoader) return false;
+      if (myClass != resource.myClass) return false;
+      if (myFile != null ? !myFile.equals(resource.myFile) : resource.myFile != null) return false;
 
       return true;
     }
 
     @Override
     public int hashCode() {
-      return file.hashCode();
+      return myFile.hashCode();
     }
 
     @Override
     public String toString() {
-      return file + " for " + classLoader;
+      return myFile + " for " + myClassLoader;
     }
   }
 }

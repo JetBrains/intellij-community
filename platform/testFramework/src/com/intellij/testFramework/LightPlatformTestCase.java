@@ -34,7 +34,6 @@ import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -444,7 +443,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         }
       });
 
-      assertEmpty(unsavedDocuments);
+      assertEmpty("There are unsaved documents", Arrays.asList(unsavedDocuments));
     }
   }
 
@@ -506,7 +505,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   protected void tearDown() throws Exception {
     Project project = getProject();
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-    checkForSettingsDamage();
+    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+    CompositeException damage = checkForSettingsDamage();
     VirtualFilePointerManagerImpl filePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
     doTearDown(project, ourApplication, true);
 
@@ -518,6 +518,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
       filePointerManager.assertPointersAreDisposed();
     }
+    damage.throwIfNotEmpty();
   }
 
   public static void doTearDown(@NotNull final Project project, IdeaTestApplication application, boolean checkForEditors) throws Exception {

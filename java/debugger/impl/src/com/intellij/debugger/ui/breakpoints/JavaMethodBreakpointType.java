@@ -56,11 +56,6 @@ public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMet
     return HelpID.METHOD_BREAKPOINTS;
   }
 
-  @Override
-  public boolean isAddBreakpointButtonVisible() {
-    return false;
-  }
-
   //@Override
   public String getDisplayName() {
     return DebuggerBundle.message("method.breakpoints.tab.title");

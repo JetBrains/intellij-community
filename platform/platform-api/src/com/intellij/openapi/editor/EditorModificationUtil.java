@@ -178,6 +178,18 @@ public class EditorModificationUtil {
 
     if (editor.getCaretModel().supportsMultipleCarets()) {
       int caretCount = editor.getCaretModel().getCaretCount();
+      if (caretCount == 1 && editor.isColumnMode()) {
+        int pastedLineCount = LineTokenizer.calcLineCount(text, true);
+        deleteSelectedText(editor);
+        Caret caret = editor.getCaretModel().getPrimaryCaret();
+        for (int i = 0; i < pastedLineCount - 1; i++) {
+          caret = caret.clone(false);
+          if (caret == null) {
+            break;
+          }
+        }
+        caretCount = editor.getCaretModel().getCaretCount();
+      }
       final Iterator<String> segments = new ClipboardTextPerCaretSplitter().split(text, caretCount).iterator();
       editor.getCaretModel().runForEachCaret(new CaretAction() {
         @Override
@@ -401,6 +413,14 @@ public class EditorModificationUtil {
     else {
       insertStringAtCaret(editor, str, toProcessOverwriteMode, true);
     }
+  }
+
+  public static void typeInStringAtCaretHonorMultipleCarets(final Editor editor, @NotNull final String str) {
+    typeInStringAtCaretHonorMultipleCarets(editor, str, true, str.length());
+  }
+
+  public static void typeInStringAtCaretHonorMultipleCarets(final Editor editor, @NotNull final String str, final int caretShift) {
+    typeInStringAtCaretHonorMultipleCarets(editor, str, true, caretShift);
   }
 
   public static void typeInStringAtCaretHonorMultipleCarets(final Editor editor, @NotNull final String str, final boolean toProcessOverwriteMode) {

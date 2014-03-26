@@ -17,12 +17,9 @@ package com.intellij.remote;
 
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.remote.MutableRemoteCredentials;
-import com.intellij.remote.RemoteCredentials;
-import com.intellij.remote.RemoteSdkCredentials;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author michael.golubev
@@ -38,6 +35,8 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   public static final String PRIVATE_KEY_FILE = "PRIVATE_KEY_FILE";
   public static final String KNOWN_HOSTS_FILE = "MY_KNOWN_HOSTS_FILE";
   public static final String PASSPHRASE = "PASSPHRASE";
+  
+  public static final String SSH_PREFIX = "ssh://";
 
   private String myHost;
   private int myPort;
@@ -50,6 +49,10 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   private String myPassphrase;
   private boolean myStorePassword;
   private boolean myStorePassphrase;
+
+  public static String getCredentialsString(@NotNull RemoteCredentials cred) {
+    return SSH_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getPort();
+  }
 
   @Override
   public String getHost() {
@@ -166,6 +169,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     }
   }
 
+  @NotNull
   public String getSerializedPassword() {
     if (myAnonymous) return "";
 
@@ -187,7 +191,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     }
   }
 
-  @Nullable
+  @NotNull
   public String getSerializedPassphrase() {
     if (myStorePassphrase) {
       return PasswordUtil.encodePassword(myPassphrase);

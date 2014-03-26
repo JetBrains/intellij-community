@@ -29,12 +29,12 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.Producer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -44,11 +44,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.EventListenerList;
 import java.awt.*;
 import java.awt.event.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.Map;
 
 /**
@@ -63,7 +60,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
   private WindowInfoImpl myInfo;
   private final ToolWindowImpl myToolWindow;
   private final MyDivider myDivider;
-  private final EventListenerList myListenerList;
+  private final EventDispatcher<InternalDecoratorListener> myDispatcher = EventDispatcher.create(InternalDecoratorListener.class);
   /*
    * Actions
    */
@@ -77,7 +74,6 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
   /**
    * Catches all event from tool window and modifies decorator's appearance.
    */
-  private final ToolWindowHandler myToolWindowHandler;
   private final MyKeymapManagerListener myWeakKeymapManagerListener;
   @NonNls private static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
   @NonNls public static final String TOGGLE_PINNED_MODE_ACTION_ID = "TogglePinnedMode";
@@ -100,8 +96,6 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     myToggleDockModeAction = new ToggleDockModeAction();
     myToggleAutoHideModeAction = new TogglePinnedModeAction();
     myToggleContentUiTypeAction = new ToggleContentUiTypeAction();
-
-    myListenerList = new EventListenerList();
 
     myHeader = new ToolWindowHeader(toolWindow, info, new Producer<ActionGroup>() {
       @Override
@@ -136,9 +130,6 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     keymapManager.addWeakListener(keymapManagerListener);
 
     init();
-
-    myToolWindowHandler = new ToolWindowHandler();
-    myToolWindow.addPropertyChangeListener(myToolWindowHandler);
 
     apply(info);
   }
@@ -187,8 +178,6 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     validate();
     repaint();
 
-    //
-    updateTitle();
 
     // Push "apply" request forward
 
@@ -210,17 +199,16 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     }
   }
 
-  final void addInternalDecoratorListener(final InternalDecoratorListener l) {
-    myListenerList.add(InternalDecoratorListener.class, l);
+  final void addInternalDecoratorListener(InternalDecoratorListener l) {
+    myDispatcher.addListener(l);
   }
 
-  final void removeInternalDecoratorListener(final InternalDecoratorListener l) {
-    myListenerList.remove(InternalDecoratorListener.class, l);
+  final void removeInternalDecoratorListener(InternalDecoratorListener l) {
+    myDispatcher.removeListener(l);
   }
 
   final void dispose() {
     removeAll();
-    myToolWindow.removePropertyChangeListener(myToolWindowHandler);
     KeymapManagerEx.getInstanceEx().removeWeakListener(myWeakKeymapManagerListener);
 
     Disposer.dispose(myHeader);
@@ -228,76 +216,49 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     myProject = null;
   }
 
-  private void fireAnchorChanged(final ToolWindowAnchor anchor) {
-    final InternalDecoratorListener[] listeners = myListenerList.getListeners(InternalDecoratorListener.class);
-    for (InternalDecoratorListener listener : listeners) {
-      listener.anchorChanged(this, anchor);
-    }
+  private void fireAnchorChanged(ToolWindowAnchor anchor) {
+    myDispatcher.getMulticaster().anchorChanged(this, anchor);
   }
 
-  private void fireAutoHideChanged(final boolean autoHide) {
-    final InternalDecoratorListener[] listeners = myListenerList.getListeners(InternalDecoratorListener.class);
-    for (InternalDecoratorListener listener : listeners) {
-      listener.autoHideChanged(this, autoHide);
-    }
+  private void fireAutoHideChanged(boolean autoHide) {
+    myDispatcher.getMulticaster().autoHideChanged(this, autoHide);
   }
 
   /**
    * Fires event that "hide" button has been pressed.
    */
   final void fireHidden() {
-    final InternalDecoratorListener[] listeners = myListenerList.getListeners(InternalDecoratorListener.class);
-    for (InternalDecoratorListener listener : listeners) {
-      listener.hidden(this);
-    }
+    myDispatcher.getMulticaster().hidden(this);
   }
 
   /**
    * Fires event that "hide" button has been pressed.
    */
   final void fireHiddenSide() {
-    final InternalDecoratorListener[] listeners = myListenerList.getListeners(InternalDecoratorListener.class);
-    for (InternalDecoratorListener listener : listeners) {
-      listener.hiddenSide(this);
-    }
+    myDispatcher.getMulticaster().hiddenSide(this);
   }
 
   /**
    * Fires event that user performed click into the title bar area.
    */
   final void fireActivated() {
-    final InternalDecoratorListener[] listeners = myListenerList.getListeners(InternalDecoratorListener.class);
-    for (InternalDecoratorListener listener : listeners) {
-      listener.activated(this);
-    }
+    myDispatcher.getMulticaster().activated(this);
   }
 
-  private void fireTypeChanged(final ToolWindowType type) {
-    final InternalDecoratorListener[] listeners = myListenerList.getListeners(InternalDecoratorListener.class);
-    for (InternalDecoratorListener listener : listeners) {
-      listener.typeChanged(this, type);
-    }
+  private void fireTypeChanged(ToolWindowType type) {
+    myDispatcher.getMulticaster().typeChanged(this, type);
   }
 
   final void fireResized() {
-    final InternalDecoratorListener[] listeners = myListenerList.getListeners(InternalDecoratorListener.class);
-    for (InternalDecoratorListener listener : listeners) {
-      listener.resized(this);
-    }
+    myDispatcher.getMulticaster().resized(this);
   }
 
   private void fireSideStatusChanged(boolean isSide) {
-    final InternalDecoratorListener[] listeners = myListenerList.getListeners(InternalDecoratorListener.class);
-    for (InternalDecoratorListener listener : listeners) {
-      listener.sideStatusChanged(this, isSide);
-    }
+    myDispatcher.getMulticaster().sideStatusChanged(this, isSide);
   }
 
   private void fireContentUiTypeChanges(ToolWindowContentUiType type) {
-    final InternalDecoratorListener[] listeners = myListenerList.getListeners(InternalDecoratorListener.class);
-    for (InternalDecoratorListener listener : listeners) {
-      listener.contentUiTypeChanges(this, type);
-    }
+    myDispatcher.getMulticaster().contentUiTypeChanges(this, type);
   }
 
   private void init() {
@@ -512,30 +473,6 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     super.processComponentEvent(e);
     if (ComponentEvent.COMPONENT_RESIZED == e.getID()) {
       fireResized();
-    }
-  }
-
-  // TODO: to b removed
-  private void updateTitle() {
-    final StringBuffer fullTitle = new StringBuffer();
-    //  Due to JDK's bug #4234645 we cannot support custom decoration on Linux platform.
-    // The prblem is that Window.setLocation() doesn't work properly wjen the dialod is displayable.
-    // Therefore we use native WM decoration. When the dialog has native decoration we show window ID
-    // in the dialog's title and window title at the custom title panel. If the custom decoration
-    // is used we show composite string at the custom title panel.
-    // TODO[vova] investigate the problem under Mac OSX.
-    if (SystemInfo.isWindows || !myInfo.isFloating()) {
-      fullTitle.append(myInfo.getId());
-      final String title = myToolWindow.getTitle();
-      if (title != null && title.length() > 0) {
-        fullTitle.append(" - ").append(title);
-      }
-    }
-    else { // Unixes ans MacOSX go here when tool window is in floating mode
-      final String title = myToolWindow.getTitle();
-      if (title != null && title.length() > 0) {
-        fullTitle.append(title);
-      }
     }
   }
 
@@ -812,22 +749,6 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     public final void activeKeymapChanged(final Keymap keymap) {
       if (myHeader != null) {
         myHeader.updateTooltips();
-      }
-    }
-  }
-
-  /**
-   * Synchronizes decorator with IdeToolWindow changes.
-   */
-  private final class ToolWindowHandler implements PropertyChangeListener {
-    @Override
-    public final void propertyChange(final PropertyChangeEvent e) {
-      final String name = e.getPropertyName();
-      if (ToolWindowEx.PROP_TITLE.equals(name)) {
-        updateTitle();
-        if (myHeader != null) {
-          myHeader.repaint();
-        }
       }
     }
   }

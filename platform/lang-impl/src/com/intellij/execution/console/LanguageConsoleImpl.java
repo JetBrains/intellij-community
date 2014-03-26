@@ -92,6 +92,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private String myTitle;
   @Nullable
   private String myPrompt = "> ";
+  private TextAttributes myPromptAttributes = ConsoleViewContentType.USER_INPUT.getAttributes();
+
   private final LightVirtualFile myHistoryFile;
   private Editor myCurrentEditor;
 
@@ -332,6 +334,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     return myPrompt;
   }
 
+  public void setPromptAttributes(@NotNull TextAttributes textAttributes) {
+    myPromptAttributes = textAttributes;
+  }
+
   public void setPrompt(@Nullable String prompt) {
     // always add space to the prompt otherwise it may look ugly
     myPrompt = prompt != null && !prompt.endsWith(" ") ? prompt + " " : prompt;
@@ -344,7 +350,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        myConsoleEditor.setPrefixTextAndAttributes(prompt, ConsoleViewContentType.USER_INPUT.getAttributes());
+        myConsoleEditor.setPrefixTextAndAttributes(prompt, myPromptAttributes);
         if (myPanel.isVisible()) {
           queueUiUpdate(false);
         }
@@ -540,7 +546,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   protected void doAddPromptToHistory() {
-    addTextToHistory(myPrompt, ConsoleViewContentType.USER_INPUT.getAttributes());
+    addTextToHistory(myPrompt, myPromptAttributes);
   }
 
   // returns the real (cyclic-buffer-aware) start offset of the inserted text
@@ -583,6 +589,9 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   public void queueUiUpdate(boolean forceScrollToEnd) {
     myForceScrollToEnd.compareAndSet(false, forceScrollToEnd);
+    if (myUpdateQueue.isDisposed()) {
+      return;
+    }
     myUpdateQueue.request();
   }
 

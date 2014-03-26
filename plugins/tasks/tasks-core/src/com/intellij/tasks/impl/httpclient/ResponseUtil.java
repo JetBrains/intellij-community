@@ -50,6 +50,9 @@ public class ResponseUtil {
   }
 
   public static String getResponseContentAsString(@NotNull HttpMethod response) throws IOException {
+    // Sometimes servers don't specify encoding and HttpMethod#getResponseBodyAsString
+    // by default decodes from Latin-1, so we got to read byte stream and decode it from UTF-8
+    // manually
     //if (!response.hasBeenUsed()) {
     //  return "";
     //}

@@ -16,16 +16,17 @@
 package org.jetbrains.plugins.groovy.console;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.console.*;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileStatusNotification;
-import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -42,11 +43,11 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
@@ -98,25 +99,9 @@ public abstract class GroovyShellActionBase extends DumbAwareAction {
     selectModule(project, new Consumer<Module>() {
       @Override
       public void consume(final Module module) {
-        CompilerManager.getInstance(project).make(module, new CompileStatusNotification() {
-          @Override
-          public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
-            if (aborted) return;
-
-            final Project project = compileContext.getProject();
-
-            if (errors == 0 || askToContinueWithErrors(project)) {
-              doRunShell(module);
-            }
-          }
-        });
+        doRunShell(module);
       }
     });
-  }
-
-  private boolean askToContinueWithErrors(Project project) {
-    String question = "Compilation failed with errors. Do you want to run " + getTitle() + " anyway?";
-    return Messages.showYesNoDialog(project, question, getTitle(), JetgroovyIcons.Groovy.Groovy_32x32) == Messages.YES;
   }
 
   private void selectModule(Project project, final Consumer<Module> callback) {
@@ -213,9 +198,20 @@ public abstract class GroovyShellActionBase extends DumbAwareAction {
     }
 
     @Override
-    protected LanguageConsoleView createConsoleView() {
-      LanguageConsoleView res = new LanguageConsoleViewImpl(createConsole(getProject(), getConsoleTitle()));
+    protected List<AnAction> fillToolBarActions(DefaultActionGroup toolbarActions,
+                                                final Executor defaultExecutor,
+                                                final RunContentDescriptor contentDescriptor) {
+      BuildAndRestartConsoleAction rebuildAction = new BuildAndRestartConsoleAction(myModule, getProject(), defaultExecutor, contentDescriptor, GroovyShellActionBase.this);
+      toolbarActions.add(rebuildAction);
+      List<AnAction> actions = super.fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor);
+      actions.add(rebuildAction);
+      Disposer.register(getConsoleView(), rebuildAction);
+      return actions;
+    }
 
+    @Override
+    protected LanguageConsoleView createConsoleView() {
+      LanguageConsoleViewImpl res = new LanguageConsoleViewImpl(createConsole(getProject(), getConsoleTitle()));
       GroovyFileImpl file = (GroovyFileImpl)res.getConsole().getFile();
       assert file.getContext() == null;
       file.putUserData(GROOVY_SHELL_FILE, Boolean.TRUE);

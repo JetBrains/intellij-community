@@ -20,12 +20,14 @@ import com.google.gson.JsonParseException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
+import com.intellij.tasks.impl.TaskUtil;
+import com.intellij.tasks.impl.httpclient.ResponseUtil;
 import com.intellij.tasks.trello.model.TrelloBoard;
 import com.intellij.tasks.trello.model.TrelloCard;
 import com.intellij.tasks.trello.model.TrelloList;
@@ -42,6 +44,8 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.tasks.trello.TrelloUtil.TRELLO_API_BASE_URL;
 
 /**
  * @author Mikhail Golubev
@@ -115,7 +119,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
   @Nullable
   @Override
   public Task findTask(String id) throws Exception {
-    String url = TrelloUtil.TRELLO_API_BASE_URL + "/cards/" + id + "?actions=commentCard";
+    String url = TRELLO_API_BASE_URL + "/cards/" + id + "?actions=commentCard&fields=" + encodeUrl(TrelloCard.REQUIRED_FIELDS) ;
     try {
       return new TrelloTask(makeRequestAndDeserializeJsonResponse(url, TrelloCard.class), this);
     }
@@ -181,7 +185,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
   @NotNull
   public TrelloUser fetchUserByToken() throws Exception {
     try {
-      String url = TrelloUtil.TRELLO_API_BASE_URL + "/members/me";
+      String url = TRELLO_API_BASE_URL + "/members/me?fields=" + encodeUrl(TrelloUser.REQUIRED_FIELDS);
       return makeRequestAndDeserializeJsonResponse(url, TrelloUser.class);
     }
     catch (Exception e) {
@@ -195,7 +199,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
 
   @NotNull
   public TrelloBoard fetchBoardById(@NotNull String id) throws Exception {
-    String url = TrelloUtil.TRELLO_API_BASE_URL + "/boards/" + id;
+    String url = TRELLO_API_BASE_URL + "/boards/" + id + "?fields=" + encodeUrl(TrelloBoard.REQUIRED_FIELDS);
     try {
       return makeRequestAndDeserializeJsonResponse(url, TrelloBoard.class);
     }
@@ -207,7 +211,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
 
   @NotNull
   public TrelloList fetchListById(@NotNull String id) throws Exception {
-    String url = TrelloUtil.TRELLO_API_BASE_URL + "/lists/" + id;
+    String url = TRELLO_API_BASE_URL + "/lists/" + id + "?fields=" + encodeUrl(TrelloList.REQUIRED_FIELDS);
     try {
       return makeRequestAndDeserializeJsonResponse(url, TrelloList.class);
     }
@@ -222,7 +226,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
     if (myCurrentBoard == null) {
       throw new IllegalStateException("Board not set");
     }
-    String url = TrelloUtil.TRELLO_API_BASE_URL + "/boards/" + myCurrentBoard.getId() + "/lists";
+    String url = TRELLO_API_BASE_URL + "/boards/" + myCurrentBoard.getId() + "/lists?fields=" + encodeUrl(TrelloList.REQUIRED_FIELDS);
     return makeRequestAndDeserializeJsonResponse(url, TrelloUtil.LIST_OF_LISTS_TYPE);
   }
 
@@ -231,7 +235,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
     if (myCurrentUser == null) {
       throw new IllegalStateException("User not set");
     }
-    String url = TrelloUtil.TRELLO_API_BASE_URL + "/members/me/boards?filter=open";
+    String url = TRELLO_API_BASE_URL + "/members/me/boards?filter=open&fields=" + encodeUrl(TrelloBoard.REQUIRED_FIELDS);
     return makeRequestAndDeserializeJsonResponse(url, TrelloUtil.LIST_OF_BOARDS_TYPE);
   }
 
@@ -241,19 +245,19 @@ public final class TrelloRepository extends BaseRepositoryImpl {
     // choose most appropriate card provider
     String baseUrl;
     if (myCurrentList != null) {
-      baseUrl = TrelloUtil.TRELLO_API_BASE_URL + "/lists/" + myCurrentList.getId() + "/cards";
+      baseUrl = TRELLO_API_BASE_URL + "/lists/" + myCurrentList.getId() + "/cards";
       fromList = true;
     }
     else if (myCurrentBoard != null) {
-      baseUrl = TrelloUtil.TRELLO_API_BASE_URL + "/boards/" + myCurrentBoard.getId() + "/cards";
+      baseUrl = TRELLO_API_BASE_URL + "/boards/" + myCurrentBoard.getId() + "/cards";
     }
     else if (myCurrentUser != null) {
-      baseUrl = TrelloUtil.TRELLO_API_BASE_URL + "/members/me/cards";
+      baseUrl = TRELLO_API_BASE_URL + "/members/me/cards";
     }
     else {
       throw new IllegalStateException("Not configured");
     }
-    String allCardsUrl = baseUrl + "?actions=commentCard&filter=all";
+    String allCardsUrl = baseUrl + "?filter=all&fields=" + encodeUrl(TrelloCard.REQUIRED_FIELDS);
     List<TrelloCard> cards = makeRequestAndDeserializeJsonResponse(allCardsUrl, TrelloUtil.LIST_OF_CARDS_TYPE);
     LOG.debug("Total " + cards.size() + " cards downloaded");
     if (!myIncludeAllCards) {
@@ -291,33 +295,32 @@ public final class TrelloRepository extends BaseRepositoryImpl {
   /**
    * Make GET request to specified URL and return HTTP entity of result as Reader object
    */
-  private String makeRequest(String url) throws Exception {
+  @NotNull
+  private String makeRequest(@NotNull String url) throws Exception {
     HttpMethod method = new GetMethod(url);
     configureHttpMethod(method);
     return executeMethod(method);
   }
 
-  private String executeMethod(HttpMethod method) throws Exception {
+  @NotNull
+  private String executeMethod(@NotNull HttpMethod method) throws Exception {
     HttpClient client = getHttpClient();
-    String entityContent;
     client.executeMethod(method);
-    // Can't use HttpMethod#getResponseBodyAsString because Trello doesn't specify encoding
-    // in Content-Type header and by default this method decodes from Latin-1
-    entityContent = StreamUtil.readText(method.getResponseBodyAsStream(), "utf-8");
-    LOG.debug(entityContent);
+    String entityContent = ResponseUtil.getResponseContentAsString(method);
+    TaskUtil.prettyFormatJsonToLog(LOG, entityContent);
+    // LOG.debug("Response size: " + method.getResponseHeader("Content-Length").getValue() + " bytes");
     if (method.getStatusCode() != HttpStatus.SC_OK) {
       Header header = method.getResponseHeader("Content-Type");
       if (header != null && header.getValue().startsWith("text/plain")) {
-        throw new Exception("Request failed. Reason: " + StringUtil.capitalize(entityContent));
+        throw new Exception(TaskBundle.message("failure.server.message", StringUtil.capitalize(entityContent)));
       }
-      throw new Exception("Request failed with HTTP error: " + method.getStatusText());
+      throw new Exception(TaskBundle.message("failure.http.error", method.getStatusCode(), method.getStatusText()));
     }
-    //return new InputStreamReader(method.getResponseBodyAsStream(), "utf-8");
     return entityContent;
   }
 
   @NotNull
-  private <T> T makeRequestAndDeserializeJsonResponse(String url, Type type) throws Exception {
+  private <T> T makeRequestAndDeserializeJsonResponse(@NotNull String url, @NotNull Type type) throws Exception {
     String entityStream = makeRequest(url);
     // javac 1.6.0_23 bug workaround
     // TrelloRepository.java:286: type parameters of <T>T cannot be determined; no unique maximal instance exists for type variable T with upper bounds T,java.lang.Object
@@ -326,7 +329,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
   }
 
   @NotNull
-  private <T> T makeRequestAndDeserializeJsonResponse(String url, Class<T> cls) throws Exception {
+  private <T> T makeRequestAndDeserializeJsonResponse(@NotNull String url, @NotNull Class<T> cls) throws Exception {
     String entityStream = makeRequest(url);
     return TrelloUtil.GSON.fromJson(entityStream, cls);
   }
@@ -354,7 +357,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
   @Nullable
   @Override
   public CancellableConnection createCancellableConnection() {
-    GetMethod method = new GetMethod(TrelloUtil.TRELLO_API_BASE_URL + "/members/me/cards?limit=1");
+    GetMethod method = new GetMethod(TRELLO_API_BASE_URL + "/members/me/cards?limit=1");
     configureHttpMethod(method);
     return new HttpTestConnection<GetMethod>(method) {
       @Override

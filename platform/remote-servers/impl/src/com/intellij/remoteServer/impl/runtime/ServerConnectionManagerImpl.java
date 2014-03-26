@@ -26,7 +26,7 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
     ApplicationManager.getApplication().assertIsDispatchThread();
     ServerConnection connection = myConnections.get(server);
     if (connection == null) {
-      connection = doCreateConnection(server);
+      connection = doCreateConnection(server, this);
       myConnections.put(server, connection);
       myEventDispatcher.fireConnectionCreated(connection);
     }
@@ -36,12 +36,13 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
   @NotNull
   @Override
   public <C extends ServerConfiguration> ServerConnection createTemporaryConnection(@NotNull RemoteServer<C> server) {
-    return doCreateConnection(server);
+    return doCreateConnection(server, null);
   }
 
-  private <C extends ServerConfiguration> ServerConnection doCreateConnection(@NotNull RemoteServer<C> server) {
+  private <C extends ServerConfiguration> ServerConnection doCreateConnection(@NotNull RemoteServer<C> server,
+                                                                              ServerConnectionManagerImpl manager) {
     ServerTaskExecutorImpl executor = new ServerTaskExecutorImpl();
-    return new ServerConnectionImpl(server, server.getType().createConnector(server, executor), this);
+    return new ServerConnectionImpl(server, server.getType().createConnector(server, executor), manager, getEventDispatcher());
   }
 
   @Nullable

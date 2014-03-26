@@ -238,6 +238,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA106964() throws Exception { doTest5(false);}
   public void testIDEA107782() throws Exception { doTest5(false);}
   public void testInheritedWithDifferentArgsInTypeParams() throws Exception { doTest5(false);}
+  public void testInheritedWithDifferentArgsInTypeParams1() throws Exception { doTest5(false);}
   public void testIllegalForwardReferenceInTypeParameterDefinition() throws Exception { doTest5(false);}
 
   public void testIDEA57877() throws Exception { doTest5(false);}
@@ -338,8 +339,6 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA118527() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
   public void testIDEA120153() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
   public void testIDEA120563() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-
-  public void testSuperWildcardWithBoundPromotion() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);}
 
   public void testJavaUtilCollections_NoVerify() throws Exception {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));

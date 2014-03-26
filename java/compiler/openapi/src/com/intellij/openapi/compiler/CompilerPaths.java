@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,16 @@
 package com.intellij.openapi.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -38,7 +37,6 @@ import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Locale;
 
 /**
  * A set of utility methods for working with paths
@@ -47,16 +45,13 @@ public class CompilerPaths {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.compiler.CompilerPaths");
   private static volatile String ourSystemPath;
   private static final Comparator<String> URLS_COMPARATOR = new Comparator<String>() {
+    @Override
     public int compare(String o1, String o2) {
       return o1.compareTo(o2);
     }
   };
-  private static final String DEFAULT_GENERATED_DIR_NAME = "generated";
-
   /**
    * Returns a directory
-   * @param project
-   * @param compiler
    * @return a directory where compiler may generate files. All generated files are not deleted when the application exits
    */
   public static File getGeneratedDataDirectory(Project project, Compiler compiler) {
@@ -65,7 +60,6 @@ public class CompilerPaths {
   }
 
   /**
-   * @param project
    * @return a root directory where generated files for various compilers are stored
    */
   public static File getGeneratedDataDirectory(Project project) {
@@ -74,7 +68,6 @@ public class CompilerPaths {
   }
 
   /**
-   * @param project
    * @return a root directory where compiler caches for the given project are stored
    */
   public static File getCacheStoreDirectory(final Project project) {
@@ -92,7 +85,6 @@ public class CompilerPaths {
   }
 
   /**
-   * @param project
    * @return a directory under IDEA "system" directory where all files related to compiler subsystem are stored (such as compiler caches or generated files)
    */
   public static File getCompilerSystemDirectory(Project project) {
@@ -104,36 +96,7 @@ public class CompilerPaths {
   }
 
   public static String getCompilerSystemDirectoryName(Project project) {
-    return getPresentableName(project) + "." + project.getLocationHash();
-  }
-
-  @Nullable
-  private static String getPresentableName(final Project project) {
-    if (project.isDefault()) {
-      return project.getName();
-    }
-
-    String location = project.getPresentableUrl();
-    if (location == null) {
-      return null;
-    }
-
-    String projectName = FileUtil.toSystemIndependentName(location);
-    if (projectName.endsWith("/")) {
-      projectName = projectName.substring(0, projectName.length() - 1);
-    }
-
-    final int lastSlash = projectName.lastIndexOf('/');
-    if (lastSlash >= 0 && lastSlash + 1 < projectName.length()) {
-      projectName = projectName.substring(lastSlash + 1);
-    }
-
-    if (StringUtil.endsWithIgnoreCase(projectName, ProjectFileType.DOT_DEFAULT_EXTENSION)) {
-      projectName = projectName.substring(0, projectName.length() - ProjectFileType.DOT_DEFAULT_EXTENSION.length());
-    }
-    
-    projectName = projectName.toLowerCase(Locale.US).replace(':', '_'); // replace ':' from windows drive names
-    return projectName;
+    return ProjectUtilCore.getPresentableName(project) + "." + project.getLocationHash();
   }
 
   public static File getCompilerSystemDirectory() {
@@ -143,7 +106,6 @@ public class CompilerPaths {
   }
 
   /**
-   * @param module
    * @param forTestClasses true if directory for test sources, false - for sources.
    * @return a directory to which the sources (or test sources depending on the second partameter) should be compiled.
    * Null is returned if output directory is not specified or is not valid
@@ -190,6 +152,7 @@ public class CompilerPaths {
       }
       else {
         outPathUrl = application.runReadAction(new Computable<String>() {
+          @Override
           public String compute() {
             final String url = extension.getCompilerOutputUrlForTests();
             return url != null ? url : extension.getCompilerOutputUrl();
@@ -203,6 +166,7 @@ public class CompilerPaths {
       }
       else {
         outPathUrl = application.runReadAction(new Computable<String>() {
+          @Override
           public String compute() {
             return extension.getCompilerOutputUrl();
           }

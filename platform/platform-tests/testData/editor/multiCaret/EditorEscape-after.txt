@@ -1,2 +1,2 @@
-some text
-some other t<caret>ext
+so<caret>me text
+some other text

@@ -25,7 +25,7 @@ class ReturnTypeIncompatibility {
     }
 
     public static void main(String[] args) {
-        call<error descr="Ambiguous method call: both 'ReturnTypeIncompatibility.call(I1<P>)' and 'ReturnTypeIncompatibility.call(I2<P>)' match">(i-> {return i;})</error>;
+        call<error descr="Ambiguous method call: both 'ReturnTypeIncompatibility.call(I1<Integer>)' and 'ReturnTypeIncompatibility.call(I2<P>)' match">(i-> {return i;})</error>;
     }
 }
 

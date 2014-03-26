@@ -437,6 +437,7 @@ public class AllIcons {
     public static final Icon OverridenMethod = IconLoader.getIcon("/general/overridenMethod.png"); // 10x14
     public static final Icon OverridingMethod = IconLoader.getIcon("/general/overridingMethod.png"); // 10x14
     public static final Icon PackagesTab = IconLoader.getIcon("/general/packagesTab.png"); // 16x16
+    public static final Icon PasswordLock = IconLoader.getIcon("/general/passwordLock.png"); // 64x64
     public static final Icon PathVariables = IconLoader.getIcon("/general/pathVariables.png"); // 32x32
     public static final Icon Pin_tab = IconLoader.getIcon("/general/pin_tab.png"); // 16x16
     public static final Icon PluginManager = IconLoader.getIcon("/general/pluginManager.png"); // 32x32

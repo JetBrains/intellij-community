@@ -22,6 +22,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.Alarm;
+import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -379,7 +380,14 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
     @Override
     public Dimension getPreferredSize() {
-      return new Dimension(myImage.getWidth(), myImage.getHeight());
+      int w =  myImage.getWidth();
+      int h = myImage.getHeight();
+
+      if (myImage instanceof JBHiDPIScaledImage) {
+        w /= 2; h /= 2;
+      }
+
+      return new Dimension(w, h);
     }
 
     @Override

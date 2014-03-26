@@ -86,6 +86,9 @@ target(name: "compile", description: "Compile module python") {
     fileset(dir: "${ideaPlugins}/terminal/lib") {
       include(name: "*.jar")
     }
+    fileset(dir: "${ideaPlugins}/IntelliLang/lib") {
+      include(name: "*.jar")
+    }
   }
 
   ant.path(id: "sourcepath") {
@@ -96,6 +99,7 @@ target(name: "compile", description: "Compile module python") {
       include(name: "pydevSrc")
       include(name: "openapi/src")
       include(name: "psi-api/src")
+      include(name: "IntelliLang-python/src")
     }
   }
   //The task requires the following libraries from IntelliJ IDEA distribution:
@@ -132,6 +136,10 @@ target(name: "compile", description: "Compile module python") {
       type(type: "file")
     }
     fileset(dir: "${pluginHome}/psi-api/resources") {
+      patternset(refid: "resources.pt")
+      type(type: "file")
+    }
+    fileset(dir: "${pluginHome}/IntelliLang-python/src") {
       patternset(refid: "resources.pt")
       type(type: "file")
     }

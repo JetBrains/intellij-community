@@ -520,10 +520,20 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
     updateToolWindows();
 
-    for (Frame frame : Frame.getFrames()) {
-      updateUI(frame);
-    }
-    fireLookAndFeelChanged();
+    // Mac fix:
+    // Some image caching components like ToolWindowHeader use
+    // com.apple.laf.AquaNativeResources$CColorPaintUIResource
+    // as background color which on LAF change from Darcula to Default
+    // for mysterious reason provides WRONG color for Graphics while
+    // showing CORRECT RGB values in debug!!!
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        for (Frame frame : Frame.getFrames()) {
+          updateUI(frame);
+        }
+        fireLookAndFeelChanged();
+      }
+    });
   }
 
   public static void updateToolWindows() {

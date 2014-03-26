@@ -245,12 +245,12 @@ public class InferenceSession {
     return prepareSubstitution();
   }
 
-  private static void collectAdditionalConstraints(PsiParameter[] parameters,
-                                                   PsiExpression[] args,
-                                                   PsiMethod parentMethod,
-                                                   PsiSubstitutor siteSubstitutor,
-                                                   Set<ConstraintFormula> additionalConstraints,
-                                                   boolean varargs) {
+  private void collectAdditionalConstraints(PsiParameter[] parameters,
+                                            PsiExpression[] args,
+                                            PsiMethod parentMethod,
+                                            PsiSubstitutor siteSubstitutor,
+                                            Set<ConstraintFormula> additionalConstraints,
+                                            boolean varargs) {
     for (int i = 0; i < args.length; i++) {
       if (args[i] != null) {
         PsiType parameterType = getParameterType(parameters, i, siteSubstitutor, varargs);
@@ -267,7 +267,8 @@ public class InferenceSession {
             final JavaResolveResult result = callExpression.resolveMethodGenerics();
             if (result instanceof MethodCandidateInfo) {
               final PsiMethod method = ((MethodCandidateInfo)result).getElement();
-              LOG.assertTrue(method != null);
+              //need to get type parameters for 2 level nested expressions (they won't be covered by expression constraints on this level?!) 
+              initBounds(method.getTypeParameters());
               final PsiExpression[] newArgs = argumentList.getExpressions();
               final PsiParameter[] newParams = method.getParameterList().getParameters();
               if (newParams.length > 0) {

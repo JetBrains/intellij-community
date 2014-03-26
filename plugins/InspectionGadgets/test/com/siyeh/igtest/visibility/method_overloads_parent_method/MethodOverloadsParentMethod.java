@@ -25,3 +25,24 @@ class Parent {
     return null;
   }
 }
+
+class DefaultMethod {
+  public static interface IFoo {
+    default void foo(int i) {
+      System.out.println("IFoo.foo(int): " + i);
+    }
+
+    void bar(int i);
+    
+  }
+
+  public static class Foo implements IFoo {
+    public void foo(long l) {
+      System.out.println("Foo.foo(long): " + l);
+    }
+
+    public void bar(long l) {
+      System.out.println("Foo.bar(long): " + l);
+    }
+  }
+}

@@ -20,6 +20,7 @@ import com.intellij.ide.passwordSafe.impl.providers.ByteArrayWrapper;
 import com.intellij.ide.passwordSafe.impl.providers.EncryptionUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.security.SecureRandom;
 import java.util.Map;
@@ -42,10 +43,11 @@ public class MemoryPasswordSafe extends BasePasswordSafeProvider {
 
   /**
    * @param project the project to use
+   * @param requestor
    * @return the secret key used by provider
    */
   @Override
-  protected byte[] key(Project project) {
+  protected byte[] key(Project project, @NotNull Class requestor) {
     if (key.get() == null) {
       byte[] rnd = new byte[EncryptionUtil.SECRET_KEY_SIZE_BYTES * 16];
       new SecureRandom().nextBytes(rnd);

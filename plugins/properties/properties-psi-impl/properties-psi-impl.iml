@@ -11,6 +11,9 @@
     <orderEntry type="module" module-name="core-impl" />
     <orderEntry type="module" module-name="editor-ui-api" />
     <orderEntry type="module" module-name="analysis-api" />
+    <orderEntry type="module" module-name="lang-api" />
+    <orderEntry type="module" module-name="xml-psi-api" />
+    <orderEntry type="module" module-name="xml-psi-impl" />
   </component>
 </module>
 

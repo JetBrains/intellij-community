@@ -56,12 +56,12 @@ public class ProgramParametersConfigurator {
   public String getWorkingDir(CommonProgramRunConfigurationParameters configuration, Project project, Module module) {
     String workingDirectory = configuration.getWorkingDirectory();
     String defaultWorkingDir = getDefaultWorkingDir(project);
-
-    if (workingDirectory == null || workingDirectory.trim().length() == 0) {
+    if (StringUtil.isEmptyOrSpaces(workingDirectory)) {
       workingDirectory = defaultWorkingDir;
+      if (workingDirectory == null) {
+        return null;
+      }
     }
-    if (workingDirectory == null)
-      return null;
     workingDirectory = expandPath(workingDirectory, module, project);
     if (!FileUtil.isAbsolute(workingDirectory) && defaultWorkingDir != null) {
       if (("$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$").equals(workingDirectory)) {

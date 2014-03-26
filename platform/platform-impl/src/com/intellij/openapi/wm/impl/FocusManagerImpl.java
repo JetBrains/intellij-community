@@ -298,6 +298,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
             revalidateFurtherRequestors();
           }
 
+          command.setForced(forced);
           command.run().doWhenDone(new Runnable() {
             @Override
             public void run() {

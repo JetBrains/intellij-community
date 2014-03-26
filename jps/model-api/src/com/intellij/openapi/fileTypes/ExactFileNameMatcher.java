@@ -23,7 +23,7 @@ import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ExactFileNameMatcher implements FileNameMatcher {
+public class ExactFileNameMatcher extends FileNameMatcherEx {
   private final String myFileName;
   private final boolean myIgnoreCase;
 
@@ -37,7 +37,8 @@ public class ExactFileNameMatcher implements FileNameMatcher {
     myIgnoreCase = ignoreCase;
   }
 
-  public boolean accept(@NonNls @NotNull final String fileName) {
+  @Override
+  public boolean acceptsCharSequence(@NonNls @NotNull CharSequence fileName) {
     return Comparing.equal(fileName, myFileName, !myIgnoreCase);
   }
 

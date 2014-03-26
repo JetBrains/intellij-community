@@ -51,4 +51,9 @@ public class GitlabProject {
   public String getWebUrl() {
     return webUrl;
   }
+
+  @Override
+  public final String toString() {
+    return getName();
+  }
 }

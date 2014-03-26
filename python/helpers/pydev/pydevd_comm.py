@@ -94,23 +94,17 @@ except:
     from urllib.parse import quote #@Reimport @UnresolvedImport
 
 import pydevd_vars
-import pydev_log
 import pydevd_tracing
 import pydevd_vm_type
 import pydevd_file_utils
 import traceback
 from pydevd_utils import *
 from pydevd_utils import quote_smart as quote
+import pydev_log
 
 
 from pydevd_tracing import GetExceptionTracebackStr
 import pydevconsole
-
-try:
-    _Thread_stop = threading.Thread._Thread__stop
-except AttributeError:
-    _Thread_stop = threading.Thread._stop  # _stop in Python 3
-
 
 
 CMD_RUN = 101
@@ -258,9 +252,6 @@ class PyDBDaemonThread(threading.Thread):
         #that was not working very well because jython gave some socket errors
         self.killReceived = True
 
-    def stop(self):
-        _Thread_stop(self)
-
     def stopTrace(self):
         if self.dontTraceMe:
             pydevd_tracing.SetTrace(None) # no debugging on this thread
@@ -372,7 +363,6 @@ class WriterThread(PyDBDaemonThread):
                                 self.sock.close()
                             except:
                                 pass
-                            self.stop() #mark thread as stopped to unblock joined threads for sure (they can hang otherwise)
 
                             return #break if queue is empty and killReceived
                         else:

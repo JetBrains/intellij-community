@@ -86,29 +86,36 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
     return elementText;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return "Generate stubs for binary module " + myQualifiedName;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return "Generate binary stubs";
   }
 
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+    final PsiFile file = descriptor.getPsiElement().getContainingFile();
+    final String folder = file.getContainingDirectory().getVirtualFile().getCanonicalPath();
+
     final Task.Backgroundable backgroundable = new Task.Backgroundable(project, "Generating skeletons for binary module", false) {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
-        List<String> assemblyRefs = collectAssemblyReferences(descriptor.getPsiElement().getContainingFile());
+
+        final List<String> assemblyRefs = collectAssemblyReferences(file);
 
         try {
-          final PySkeletonRefresher refresher = new PySkeletonRefresher(project, null, mySdk, null, null);
+          final PySkeletonRefresher refresher = new PySkeletonRefresher(project, null, mySdk, null, null, folder);
 
           if (needBinaryList(myQualifiedName)) {
-            if (!generateSkeletonsForList(refresher, indicator)) return;
+            if (!generateSkeletonsForList(refresher, indicator, folder)) return;
           }
           else {
             //noinspection unchecked
@@ -128,8 +135,10 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable, new BackgroundableProcessIndicator(backgroundable));
   }
 
-  private boolean generateSkeletonsForList(@NotNull final PySkeletonRefresher refresher, ProgressIndicator indicator) throws InvalidSdkException {
-    final PySkeletonGenerator generator = new PySkeletonGenerator(refresher.getSkeletonsPath());
+  private boolean generateSkeletonsForList(@NotNull final PySkeletonRefresher refresher,
+                                           ProgressIndicator indicator,
+                                           @Nullable final String currentBinaryFilesPath) throws InvalidSdkException {
+    final PySkeletonGenerator generator = new PySkeletonGenerator(refresher.getSkeletonsPath(), mySdk, currentBinaryFilesPath);
     indicator.setIndeterminate(false);
     final String homePath = mySdk.getHomePath();
     if (homePath == null) return false;
@@ -193,7 +202,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
     }
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
     if (flavor instanceof IronPythonSdkFlavor) {
-      return getReferenceText(ref).matches("[A-Z][A-Za-z0-9]+(\\.[A-Z][A-Za-z0-9]+)*");
+      return true;
     }
     return isGtk(ref);
   }

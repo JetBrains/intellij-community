@@ -57,6 +57,7 @@ import com.intellij.ui.switcher.QuickAccessSettings;
 import com.intellij.ui.switcher.SwitchManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -69,7 +70,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.EventListenerList;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
@@ -89,7 +89,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private final Project myProject;
   private final WindowManagerEx myWindowManager;
-  private final EventListenerList myListenerList;
+  private final EventDispatcher<ToolWindowManagerListener> myDispatcher = EventDispatcher.create(ToolWindowManagerListener.class);
   private final DesktopLayout myLayout;
   private final Map<String, InternalDecorator> myId2InternalDecorator;
   private final Map<String, FloatingDecorator> myId2FloatingDecorator;
@@ -163,7 +163,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myWindowManager = windowManagerEx;
     myFileEditorManager = fem;
     myLafManager = lafManager;
-    myListenerList = new EventListenerList();
 
     if (!project.isDefault()) {
       actionManager.addAnActionListener(new AnActionListener() {
@@ -570,13 +569,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   @Override
-  public void addToolWindowManagerListener(@NotNull final ToolWindowManagerListener l) {
-    myListenerList.add(ToolWindowManagerListener.class, l);
+  public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener l) {
+    myDispatcher.addListener(l);
   }
 
   @Override
-  public void removeToolWindowManagerListener(@NotNull final ToolWindowManagerListener l) {
-    myListenerList.remove(ToolWindowManagerListener.class, l);
+  public void removeToolWindowManagerListener(@NotNull ToolWindowManagerListener l) {
+    myDispatcher.removeListener(l);
   }
 
   /**
@@ -1662,17 +1661,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void fireToolWindowRegistered(final String id) {
-    final ToolWindowManagerListener[] listeners = myListenerList.getListeners(ToolWindowManagerListener.class);
-    for (ToolWindowManagerListener listener : listeners) {
-      listener.toolWindowRegistered(id);
-    }
+    myDispatcher.getMulticaster().toolWindowRegistered(id);
   }
 
   private void fireStateChanged() {
-    final ToolWindowManagerListener[] listeners = myListenerList.getListeners(ToolWindowManagerListener.class);
-    for (ToolWindowManagerListener listener : listeners) {
-      listener.stateChanged();
-    }
+    myDispatcher.getMulticaster().stateChanged();
   }
 
   boolean isToolWindowActive(final String id) {

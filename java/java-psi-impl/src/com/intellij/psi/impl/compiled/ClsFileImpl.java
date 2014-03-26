@@ -49,6 +49,8 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.util.CachedValueProvider;
@@ -61,7 +63,7 @@ import com.intellij.util.cls.ClsFormatException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.asm4.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -416,6 +418,22 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   }
 
   @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
+    final ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
+    if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
+      final PsiClass[] classes = getClasses();
+      for (PsiClass aClass : classes) {
+        if (!processor.execute(aClass, state)) return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
   @NotNull
   public StubTree getStubTree() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -519,7 +537,8 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
     try {
       PsiJavaFileStubImpl stub = new PsiJavaFileStubImpl("do.not.know.yet", true);
-      StubBuildingVisitor<VirtualFile> visitor = new StubBuildingVisitor<VirtualFile>(file, STRATEGY, stub, 0, file.getNameWithoutExtension());
+      String className = file.getNameWithoutExtension();
+      StubBuildingVisitor<VirtualFile> visitor = new StubBuildingVisitor<VirtualFile>(file, STRATEGY, stub, 0, className);
       try {
         new ClassReader(bytes).accept(visitor, ClassReader.SKIP_FRAMES);
       }
@@ -548,15 +567,13 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       return dir.findChild(baseName + "$" + innerName + ".class");
     }
 
-    @Nullable
     @Override
-    public ClassReader readerForInnerClass(VirtualFile innerClass) {
+    public void accept(VirtualFile innerClass, StubBuildingVisitor<VirtualFile> visitor) {
       try {
-        return new ClassReader(innerClass.contentsToByteArray());
+        byte[] bytes = innerClass.contentsToByteArray();
+        new ClassReader(bytes).accept(visitor, ClassReader.SKIP_FRAMES);
       }
-      catch (IOException e) {
-        return null;
-      }
+      catch (IOException ignored) { }
     }
   };
 

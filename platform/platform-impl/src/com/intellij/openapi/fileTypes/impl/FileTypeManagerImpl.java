@@ -36,10 +36,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VFileProperty;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
@@ -305,6 +302,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @Override
   @NotNull
   public FileType getFileTypeByFileName(@NotNull String fileName) {
+    return getFileTypeByFileName((CharSequence)fileName);
+  }
+
+  @NotNull
+  private FileType getFileTypeByFileName(@NotNull CharSequence fileName) {
     FileType type = myPatternsTable.findAssociatedFileType(fileName);
     return type == null ? UnknownFileType.INSTANCE : type;
   }
@@ -332,7 +334,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
     }
 
-    fileType = getFileTypeByFileName(file.getName());
+    fileType = getFileTypeByFileName(file.getNameSequence());
     if (fileType != UnknownFileType.INSTANCE) return fileType;
 
     fileType = cachedDetectedFromContent(file);

@@ -325,7 +325,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       myInputMessageFilter = null;
     }
 
-    Disposer.register(project, this);
     myFinishProgress = new Runnable() {
       @Override
       public void run() {

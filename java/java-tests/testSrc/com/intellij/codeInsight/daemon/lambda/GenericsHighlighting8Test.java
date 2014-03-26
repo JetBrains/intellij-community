@@ -747,6 +747,12 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testCaptureInsideNestedCalls() throws Exception {
+    doTest();
+  }
+
+  public void testSuperWildcardWithBoundPromotion() { doTest();}
+  
   private void doTest() {
     doTest(false);
   }

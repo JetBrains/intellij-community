@@ -718,7 +718,7 @@ public final class EditorUtil {
     LogicalPosition first = editor.visualToLogicalPosition(new VisualPosition(start.line, 0));
     for (
       int line = first.line, offset = document.getLineStartOffset(line);
-      offset > 0;
+      offset >= 0;
       offset = document.getLineStartOffset(line))
     {
       final FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(offset);

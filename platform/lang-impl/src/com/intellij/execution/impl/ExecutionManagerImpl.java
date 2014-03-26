@@ -41,6 +41,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -141,6 +142,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
 
       if (!activeTasks.isEmpty()) {
         final long finalId = id;
+        final Key executionSessionId = Key.create("execution_session_id");
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           /** @noinspection SSBasedInspection*/
           @Override
@@ -156,6 +158,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
               }
               ExecutionEnvironment taskEnvironment = new ExecutionEnvironmentBuilder(env).setContentToReuse(null).build();
               taskEnvironment.setExecutionId(finalId);
+              ExecutionEnvironment.EXECUTION_SESSION_ID_KEY.set(taskEnvironment, executionSessionId);
               if (!provider.executeTask(projectContext, runConfiguration, taskEnvironment, task)) {
                 if (onCancelRunnable != null) {
                   SwingUtilities.invokeLater(onCancelRunnable);

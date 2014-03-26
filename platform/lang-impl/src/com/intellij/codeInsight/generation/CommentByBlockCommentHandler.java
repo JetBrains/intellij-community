@@ -36,8 +36,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.templateLanguages.MultipleLangCommentProvider;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
@@ -55,7 +55,7 @@ import java.util.List;
 public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
   private Project myProject;
   private Editor myEditor;
-  private PsiFile myFile;
+  private @NotNull PsiFile myFile;
   private Document myDocument;
   private CommenterDataHolder mySelfManagedCommenterData;
 
@@ -402,7 +402,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     if (startOffset == 0 || chars.charAt(startOffset - 1) == '\n') {
       if (endOffset == myDocument.getTextLength() || endOffset > 0 && chars.charAt(endOffset - 1) == '\n') {
         CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
-        CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
+        CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject).getCommonSettings(myFile.getLanguage());
         String space;
         if (!settings.BLOCK_COMMENT_AT_FIRST_COLUMN) {
           final FileType fileType = myFile.getFileType();

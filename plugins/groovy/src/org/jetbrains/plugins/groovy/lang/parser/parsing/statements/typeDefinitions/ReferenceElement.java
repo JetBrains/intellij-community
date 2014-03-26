@@ -53,14 +53,14 @@ public class ReferenceElement implements GroovyElementTypes {
         return NONE;
       }
 
-      return finish(clauseType, isMarker, null);
+      return finish(builder, clauseType, isMarker, null, null);
     }
 
     PsiBuilder.Marker space = builder.mark();
     ParserUtils.getToken(builder, mNLS);
 
     if (parseReferenceElement(builder) == FAIL) {
-      return finish(clauseType, isMarker, space);
+      return finish(builder, clauseType, isMarker, space, GroovyBundle.message("identifier.expected"));
     }
     else {
       space.drop();
@@ -71,21 +71,24 @@ public class ReferenceElement implements GroovyElementTypes {
       ParserUtils.getToken(builder, mNLS);
 
       if (parseReferenceElement(builder) == FAIL) {
-        return finish(clauseType, isMarker, space);
+        return finish(builder, clauseType, isMarker, space, GroovyBundle.message("identifier.expected"));
       }
       else {
         space.drop();
       }
     }
 
-    return finish(clauseType, isMarker, null);
+    return finish(builder, clauseType, isMarker, null, null);
   }
 
   @NotNull
-  private static GrReferenceListElementType<?> finish(@NotNull GrReferenceListElementType<?> clauseType,
+  private static GrReferenceListElementType<?> finish(@NotNull PsiBuilder builder,
+                                                      @NotNull GrReferenceListElementType<?> clauseType,
                                                       @NotNull PsiBuilder.Marker isMarker,
-                                                      @Nullable PsiBuilder.Marker space) {
+                                                      @Nullable PsiBuilder.Marker space,
+                                                      @Nullable String error) {
     if (space != null) space.rollbackTo();
+    if (error != null) builder.error(error);
     isMarker.done(clauseType);
     return clauseType;
   }

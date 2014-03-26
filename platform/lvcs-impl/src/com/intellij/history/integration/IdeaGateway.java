@@ -29,6 +29,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Comparing;
@@ -46,26 +47,37 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class IdeaGateway {
   private static final Key<ContentAndTimestamps> SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY
     = Key.create("LocalHistory.SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY");
 
   public boolean isVersioned(@NotNull VirtualFile f) {
+    return isVersioned(f, false);
+  }
+
+  public boolean isVersioned(@NotNull VirtualFile f, boolean shouldBeInContent) {
     if (!f.isInLocalFileSystem()) return false;
 
-    String fileName = f.getName();
-    if (!f.isDirectory() && fileName.endsWith(".class")) return false;
+    if (!f.isDirectory() && StringUtil.endsWith(f.getNameSequence(), ".class")) return false;
 
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    boolean isInContent = false;
     for (Project each : openProjects) {
       if (each.isDefault()) continue;
       if (!each.isInitialized()) continue;
       if (Comparing.equal(each.getWorkspaceFile(), f)) return false;
-      if (ProjectRootManager.getInstance(each).getFileIndex().isIgnored(f)) return false;
+      ProjectFileIndex index = ProjectRootManager.getInstance(each).getFileIndex();
+      
+      if (index.isIgnored(f)) return false;
+      isInContent |= index.isInContent(f);
     }
-
+    if (shouldBeInContent && !isInContent) return false;
+    
     // optimisation: FileTypeManager.isFileIgnored(f) already checked inside ProjectFileIndex.isIgnored()
     return openProjects.length != 0 || !FileTypeManager.getInstance().isFileIgnored(f);
   }
@@ -140,14 +152,14 @@ public class IdeaGateway {
   }
 
   @NotNull
-  public static Collection<VirtualFile> iterateDBChildren(VirtualFile f) {
+  public static Iterable<VirtualFile> iterateDBChildren(VirtualFile f) {
     if (!(f instanceof NewVirtualFile)) return Collections.emptyList();
     NewVirtualFile nf = (NewVirtualFile)f;
-    return nf.getCachedChildren();
+    return nf.iterInDbChildren();
   }
 
   @NotNull
-  public static Collection<VirtualFile> loadAndIterateChildren(VirtualFile f) {
+  public static Iterable<VirtualFile> loadAndIterateChildren(VirtualFile f) {
     if (!(f instanceof NewVirtualFile)) return Collections.emptyList();
     NewVirtualFile nf = (NewVirtualFile)f;
     return Arrays.asList(nf.getChildren());
@@ -175,7 +187,7 @@ public class IdeaGateway {
 
   private void doCreateChildrenForPathOnly(@NotNull DirectoryEntry parent,
                                            @NotNull String path,
-                                           @NotNull Collection<VirtualFile> children) {
+                                           @NotNull Iterable<VirtualFile> children) {
     for (VirtualFile child : children) {
       String name = StringUtil.trimStart(child.getName(), "/"); // on Mac FS root name is "/"
       if (!path.startsWith(name)) continue;
@@ -238,7 +250,7 @@ public class IdeaGateway {
     return newDir;
   }
 
-  private void doCreateChildren(@NotNull DirectoryEntry parent, Collection<VirtualFile> children, final boolean forDeletion) {
+  private void doCreateChildren(@NotNull DirectoryEntry parent, Iterable<VirtualFile> children, final boolean forDeletion) {
     List<Entry> entries = ContainerUtil.mapNotNull(children, new NullableFunction<VirtualFile, Entry>() {
       @Override
       public Entry fun(@NotNull VirtualFile each) {

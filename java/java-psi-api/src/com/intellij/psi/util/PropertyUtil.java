@@ -103,7 +103,7 @@ public class PropertyUtil {
     return Comparing.equal(PsiUtil.resolveClassInType(TypeConversionUtil.erasure(returnType)), method.getContainingClass());
   }
 
-  @Nullable public static String getPropertyName(PsiMethod method) {
+  @Nullable public static String getPropertyName(@NotNull PsiMethod method) {
     if (isSimplePropertyGetter(method)) {
       return getPropertyNameByGetter(method);
     }

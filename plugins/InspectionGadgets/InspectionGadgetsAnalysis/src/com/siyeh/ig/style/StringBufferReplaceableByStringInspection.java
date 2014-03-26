@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -224,8 +224,12 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
               if (argument instanceof PsiLiteralExpression) {
                 final PsiLiteralExpression literalExpression = (PsiLiteralExpression)argument;
                 if (PsiType.CHAR.equals(literalExpression.getType())) {
-                  final String text = literalExpression.getText();
-                  result.append('"').append(text.substring(1, text.length() - 1)).append('"');
+                  result.append('"');
+                  final Character c = (Character)literalExpression.getValue();
+                  if (c != null) {
+                    result.append(StringUtil.escapeStringCharacters(c.toString()));
+                  }
+                  result.append('"');
                 }
                 else {
                   result.append('"').append(literalExpression.getValue()).append('"');

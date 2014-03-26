@@ -29,10 +29,7 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.TestDataProvider;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.LightIdeaTestFixture;
 import gnu.trove.THashMap;
 
@@ -68,13 +65,15 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
     CodeStyleSettings oldCodeStyleSettings = myOldCodeStyleSettings;
     myOldCodeStyleSettings = null;
-    UsefulTestCase.doCheckForSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings());
+    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+    CompositeException damage = UsefulTestCase.doCheckForSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings());
 
     LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication(), true);
     super.tearDown();
     InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
     PersistentFS.getInstance().clearIdCache();
     ((DirectoryIndexImpl)DirectoryIndex.getInstance(project)).assertAncestorConsistent();
+    damage.throwIfNotEmpty();
   }
 
   @Override

@@ -1903,4 +1903,23 @@ new Foo().f<caret>oo(new File(''))
 
     assertTrue(resolved.hasModifierProperty(PsiModifier.STATIC))
   }
+
+  void testBaseScript() {
+    addBaseScript()
+
+    myFixture.addClass '''
+class CustomScript extends Script {
+  void foo() {}
+}'''
+
+    resolveByText('''
+import groovy.transform.BaseScript
+
+@BaseScript
+CustomScript myScript;
+
+f<caret>oo()
+''', PsiMethod)
+  }
+
 }

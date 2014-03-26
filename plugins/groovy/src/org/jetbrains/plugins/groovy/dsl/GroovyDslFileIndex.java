@@ -32,10 +32,8 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
@@ -516,8 +514,8 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     }
 
     @Override
-    public boolean acceptInput(@NotNull final VirtualFile file) {
-      return "gdsl".equals(file.getExtension());
+    public boolean acceptInput(final VirtualFile file) {
+      return StringUtil.endsWith(file.getNameSequence(), ".gdsl");
     }
   }
 
