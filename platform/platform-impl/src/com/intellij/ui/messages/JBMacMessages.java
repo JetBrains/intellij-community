@@ -165,7 +165,7 @@ public class JBMacMessages extends MacMessagesEmulation {
     if (window == null) {
       window = getForemostWindow(null);
     }
-    SheetMessage sheetMessage = new SheetMessage(window, title, message, UIUtil.getQuestionIcon(), new String [] {yesButton, noButton}, null, noButton, yesButton);
+    SheetMessage sheetMessage = new SheetMessage(window, title, message, UIUtil.getQuestionIcon(), new String [] {noButton, yesButton}, null, noButton, yesButton);
     return sheetMessage.getResult().equals(yesButton) ? Messages.YES : Messages.NO;
   }
 
