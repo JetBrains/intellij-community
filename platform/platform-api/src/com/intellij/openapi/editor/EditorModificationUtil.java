@@ -415,6 +415,14 @@ public class EditorModificationUtil {
     }
   }
 
+  public static void typeInStringAtCaretHonorMultipleCarets(final Editor editor, @NotNull final String str) {
+    typeInStringAtCaretHonorMultipleCarets(editor, str, true, str.length());
+  }
+
+  public static void typeInStringAtCaretHonorMultipleCarets(final Editor editor, @NotNull final String str, final int caretShift) {
+    typeInStringAtCaretHonorMultipleCarets(editor, str, true, caretShift);
+  }
+
   public static void typeInStringAtCaretHonorMultipleCarets(final Editor editor, @NotNull final String str, final boolean toProcessOverwriteMode) {
     typeInStringAtCaretHonorMultipleCarets(editor, str, toProcessOverwriteMode, str.length());
   }
