@@ -18,20 +18,20 @@ import java.util.List;
  * @see VcsCommitMetadata
  * @see VcsFullCommitDetails
  */
-public interface VcsShortCommitDetails {
+public interface VcsShortCommitDetails extends TimedVcsCommit {
 
+  @Override
   @NotNull
   Hash getHash();
 
   @NotNull
   VirtualFile getRoot();
 
+  @Override
   @NotNull
   List<Hash> getParents();
 
-  /**
-   * @see {@link TimedVcsCommit#getTime()}.
-   */
+  @Override
   long getTime();
 
   @NotNull

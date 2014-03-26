@@ -13,19 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.data;
+package com.intellij.vcs.log.impl;
 
-import com.intellij.vcs.log.TimedVcsCommit;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.vcs.log.VcsLogProvider;
 
-import java.util.ArrayList;
-import java.util.List;
+public class RequirementsImpl implements VcsLogProvider.Requirements {
 
-public class VcsLogSorter {
+  private final int myCommitCount;
+  private final boolean myOrdered;
 
-  @NotNull
-  public static <Commit extends TimedVcsCommit> List<Commit> sortByDateTopoOrder(@NotNull List<Commit> commits) {
-    return new VcsLogJoiner.NewCommitIntegrator<Commit>(new ArrayList<Commit>(), commits).getResultList();
+  public RequirementsImpl(int count, boolean ordered) {
+    myCommitCount = count;
+    myOrdered = ordered;
+  }
+
+  @Override
+  public int getCommitCount() {
+    return myCommitCount;
+  }
+
+  @Override
+  public boolean isOrdered() {
+    return myOrdered;
   }
 
 }

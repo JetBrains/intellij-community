@@ -34,6 +34,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.impl.RequirementsImpl;
 import com.intellij.vcs.log.util.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -440,13 +441,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
       RecentCommitsInfo info = entry.getValue();
 
       // in this case new commits won't be attached to the log, but will substitute existing ones.
-      List<TimedVcsCommit> firstBlockCommits = info.firstBlockCommits;
-      if (getLogProvider(root).supportsFastUnorderedCommits()) {
-        // => we requested unordered => have to order them ourselves
-        firstBlockCommits = new VcsLogSorter<TimedVcsCommit>().sortByDateTopoOrder(firstBlockCommits);
-        firstBlockCommits = new ArrayList<TimedVcsCommit>(firstBlockCommits.subList(0, Math.min(firstBlockCommits.size(), commitCount)));
-      }
-      logsToBuild.put(root, firstBlockCommits);
+      logsToBuild.put(root, info.firstBlockCommits);
       refsByRoot.put(root, info.newRefs);
     }
 
@@ -485,10 +480,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
 
       StopWatch sw = StopWatch.start("readFirstBlock for " + root.getName());
 
-      boolean orderedForRepo = ordered && !logProvider.supportsFastUnorderedCommits(); // will order manually
-      int commitCountForRepo = orderedForRepo ? commitsCount : commitsCount * 2; // but need to request more commits
-
-      List<? extends VcsCommitMetadata> firstBlockDetails = logProvider.readFirstBlock(root, orderedForRepo, commitCountForRepo);
+      List<? extends VcsCommitMetadata> firstBlockDetails = logProvider.readFirstBlock(root, new RequirementsImpl(commitsCount, ordered));
       sw.report();
       sw = StopWatch.start("readAllRefs for" + root.getName());
       Collection<VcsRef> newRefs = logProvider.readAllRefs(root);

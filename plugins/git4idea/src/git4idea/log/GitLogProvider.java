@@ -27,6 +27,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.VcsLogSorter;
 import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
@@ -66,17 +67,24 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsCommitMetadata> readFirstBlock(@NotNull VirtualFile root, boolean ordered, int commitCount) throws VcsException {
+  public List<? extends VcsCommitMetadata> readFirstBlock(@NotNull VirtualFile root, @NotNull Requirements requirements) throws VcsException {
     if (!isRepositoryReady(root)) {
       return Collections.emptyList();
     }
 
+    int commitCount = requirements.getCommitCount();
+    if (requirements.isOrdered()) {
+      commitCount *= 2; // need to query more to sort them manually; git log performance is equal for -1000 and -2000
+    }
     String[] params = ArrayUtil.mergeArrays(ArrayUtil.toStringArray(GitHistoryUtils.LOG_ALL), "--encoding=UTF-8", "--full-history",
                                             "--sparse", "--max-count=" + commitCount);
-    if (ordered) {
-      params = ArrayUtil.append(params, "--date-order");
+
+    List<? extends VcsCommitMetadata> firstBlock = GitHistoryUtils.loadMetadata(myProject, root, params);
+    if (requirements.isOrdered()) {
+      firstBlock = VcsLogSorter.sortByDateTopoOrder(firstBlock);
+      firstBlock = new ArrayList<VcsCommitMetadata>(firstBlock.subList(0, Math.min(firstBlock.size(), requirements.getCommitCount())));
     }
-    return GitHistoryUtils.loadMetadata(myProject, root, params);
+    return firstBlock;
   }
 
   @NotNull
@@ -257,11 +265,6 @@ public class GitLogProvider implements VcsLogProvider {
   @Override
   public Collection<String> getContainingBranches(@NotNull VirtualFile root, @NotNull Hash commitHash) throws VcsException {
     return GitBranchUtil.getBranches(myProject, root, true, true, commitHash.asString());
-  }
-
-  @Override
-  public boolean supportsFastUnorderedCommits() {
-    return true;
   }
 
   private static String prepareParameter(String paramName, String value) {
