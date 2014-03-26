@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.annotator;
+package org.jetbrains.plugins.groovy.annotator.checkers;
 
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-
-import java.util.Map;
 
 /**
  * @author Max Medvedev
@@ -46,10 +43,7 @@ public class TypeCheckedAnnotationChecker extends CustomAnnotationChecker {
           "2.1.0".equals(sdkVersion))) return false;
 
     GrAnnotationNameValuePair[] attributes = annotation.getParameterList().getAttributes();
-    Map<PsiElement, String> errorMap = ContainerUtil.newHashMap();
-    CustomAnnotationChecker.checkAnnotationArguments(errorMap, (PsiClass)resolved, classReference, attributes, false);
-    highlightErrors(holder, errorMap);
-
+    checkAnnotationArguments(holder, (PsiClass)resolved, classReference, attributes, false);
     return true;
   }
 }

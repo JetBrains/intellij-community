@@ -60,7 +60,10 @@ import com.intellij.openapi.options.ex.IdeConfigurablesGroup;
 import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -1208,44 +1211,30 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         buildToolWindows(pattern);        check();
         updatePopup();                    check();
 
-        if (!DumbServiceImpl.getInstance(project).isDumb()) {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
+        runReadAction(new Runnable() {
             public void run() {
               buildRunConfigurations(pattern);
             }
-          });
-
-          updatePopup();
-          check();
-        }
-
-        if (!DumbServiceImpl.getInstance(project).isDumb()) {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
+          }, true);
+        runReadAction(new Runnable() {
             public void run() {
               buildClasses(pattern, false);
             }
-          });
-          updatePopup();
-        }
-
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          }, true);
+        runReadAction(new Runnable() {
           public void run() {
             buildFiles(pattern);
           }
-        });
+        }, false);
 
         buildActionsAndSettings(pattern);
         updatePopup();
 
-
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
+        runReadAction(new Runnable() {
           public void run() {
             buildSymbols(pattern);
           }
-        });
-
-
-        updatePopup();
+        }, true);
       }
       catch (Exception ignore) {
         myDone.setRejected();
@@ -1257,6 +1246,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         if (!myDone.isProcessed()) {
           myDone.setDone();
         }
+      }
+    }
+
+    private void runReadAction(Runnable action, boolean checkDumb) {
+      if (!checkDumb || !DumbService.getInstance(project).isDumb()) {
+        ApplicationManager.getApplication().runReadAction(action);
+        updatePopup();
       }
     }
 
@@ -1425,7 +1421,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
         Object[] objects = mySymbolsModel.getElementsByName(o.elementName, showAll.get(), pattern);
         for (Object object : objects) {
-          if (!myListModel.contains(object)) {
+          if (!myListModel.contains(object) && !symbols.contains(object)) {
               symbols.add(object);
               symbolCounter++;
               if (symbolCounter > MAX_SYMBOLS) break;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.annotator;
+package org.jetbrains.plugins.groovy.annotator.checkers;
 
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.psi.CommonClassNames;

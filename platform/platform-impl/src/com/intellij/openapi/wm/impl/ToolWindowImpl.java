@@ -61,7 +61,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   private boolean myAvailable;
   private final ContentManager myContentManager;
   private Icon myIcon;
-  private String myTitle;
+  private String myStripeTitle;
 
   private static final Content EMPTY_CONTENT = new ContentImpl(new JLabel(), "", false);
   private final ToolWindowContentUi myContentUI;
@@ -344,7 +344,13 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   public final String getTitle() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    return ObjectUtils.notNull(myTitle, myId);
+    return getSelectedContent().getDisplayName();
+  }
+
+  @NotNull
+  public final String getStripeTitle() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    return ObjectUtils.notNull(myStripeTitle, myId);
   }
 
   public final void setIcon(final Icon icon) {
@@ -360,9 +366,16 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   public final void setTitle(String title) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final String oldTitle = getTitle();
-    myTitle = title;
+    String oldTitle = getTitle();
+    getSelectedContent().setDisplayName(title);
     myChangeSupport.firePropertyChange(PROP_TITLE, oldTitle, title);
+  }
+
+  public final void setStripeTitle(@NotNull String stripeTitle) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    String oldTitle = myStripeTitle;
+    myStripeTitle = stripeTitle;
+    myChangeSupport.firePropertyChange(PROP_STRIPE_TITLE, oldTitle, stripeTitle);
   }
 
   private Content getSelectedContent() {

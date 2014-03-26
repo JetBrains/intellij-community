@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,7 +176,8 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
 
   @Nullable
   public PsiAnnotationOwner getOwner() {
-    return (PsiAnnotationOwner)getParent();
+    PsiElement parent = getParent();
+    return parent instanceof PsiAnnotationOwner ? (PsiAnnotationOwner)parent : null;
   }
 
   @NotNull

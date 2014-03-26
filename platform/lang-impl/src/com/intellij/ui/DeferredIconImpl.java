@@ -218,7 +218,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
 
   private void setDone(@NotNull Icon result) {
     if (myEvalListener != null) {
-      myEvalListener.evalDone(myParam, result);
+      myEvalListener.evalDone(this, myParam, result);
     }
 
     myDone = true;
@@ -334,6 +334,6 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   }
 
   public interface IconListener<T> {
-    void evalDone(T key, @NotNull Icon result);
+    void evalDone(DeferredIconImpl<T> source, T key, @NotNull Icon result);
   }
 }
