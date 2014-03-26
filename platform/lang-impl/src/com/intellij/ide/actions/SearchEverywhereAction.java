@@ -1421,7 +1421,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
         Object[] objects = mySymbolsModel.getElementsByName(o.elementName, showAll.get(), pattern);
         for (Object object : objects) {
-          if (!myListModel.contains(object)) {
+          if (!myListModel.contains(object) && !symbols.contains(object)) {
               symbols.add(object);
               symbolCounter++;
               if (symbolCounter > MAX_SYMBOLS) break;
