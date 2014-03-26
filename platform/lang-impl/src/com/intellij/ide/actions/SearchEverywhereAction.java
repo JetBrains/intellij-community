@@ -60,7 +60,10 @@ import com.intellij.openapi.options.ex.IdeConfigurablesGroup;
 import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -1208,7 +1211,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         buildToolWindows(pattern);        check();
         updatePopup();                    check();
 
-        if (!DumbServiceImpl.getInstance(project).isDumb()) {
+        if (!DumbService.getInstance(project).isDumb()) {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               buildRunConfigurations(pattern);
@@ -1219,7 +1222,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           check();
         }
 
-        if (!DumbServiceImpl.getInstance(project).isDumb()) {
+        if (!DumbService.getInstance(project).isDumb()) {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               buildClasses(pattern, false);
