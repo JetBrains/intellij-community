@@ -89,7 +89,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
   private static boolean ourOpenInNewTab;
 
-  @NonNls private FileType ourFtSearchVariant = StructuralSearchUtil.DEFAULT_FILE_TYPE;
+  @NonNls private FileType ourFtSearchVariant = StructuralSearchUtil.getDefaultFileType();
   private static Language ourDialect = null;
   private static String ourContext = null;
 
@@ -388,7 +388,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
       ourFtSearchVariant = detectedFileType != null ?
                            detectedFileType :
-                           StructuralSearchUtil.DEFAULT_FILE_TYPE;
+                           StructuralSearchUtil.getDefaultFileType();
 
       // todo: detect dialect
 

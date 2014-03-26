@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -353,5 +354,8 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     }
   }
 
-
+  @Override
+  public LanguageFileType getDefaultFileType(LanguageFileType currentDefaultFileType) {
+    return StdFileTypes.JAVA;
+  }
 }

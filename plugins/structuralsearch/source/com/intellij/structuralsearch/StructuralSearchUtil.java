@@ -1,10 +1,7 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.MatchUtils;
@@ -20,7 +17,7 @@ import java.util.*;
  */
 public class StructuralSearchUtil {
   private static final List<StructuralSearchProfile> myRegisteredProfiles  = new ArrayList<StructuralSearchProfile>();
-  public static final FileType DEFAULT_FILE_TYPE = StdFileTypes.JAVA;
+  private static LanguageFileType ourDefaultFileType = null;
 
   public static boolean ourUseUniversalMatchingAlgorithm = false;
   private static StructuralSearchProfile[] ourNewStyleProfiles;
@@ -56,6 +53,19 @@ public class StructuralSearchUtil {
     return ourUseUniversalMatchingAlgorithm
            ? getNewStyleProfiles()
            :  StructuralSearchProfile.EP_NAME.getExtensions();
+  }
+
+  public static FileType getDefaultFileType() {
+    if (ourDefaultFileType == null) {
+      for (StructuralSearchProfile profile : getProfiles()) {
+        ourDefaultFileType = profile.getDefaultFileType(ourDefaultFileType);
+      }
+      if (ourDefaultFileType == null) {
+        ourDefaultFileType = StdFileTypes.XML;
+      }
+    }
+    assert isValidFileType(ourDefaultFileType) : "file type not valid for structural search: " + ourDefaultFileType.getName();
+    return ourDefaultFileType;
   }
 
   @Nullable
@@ -121,21 +131,25 @@ public class StructuralSearchUtil {
 
     List<FileType> result = new ArrayList<FileType>();
     for (FileType fileType : allFileTypes) {
-      if (fileType != StdFileTypes.GUI_DESIGNER_FORM &&
-          fileType != StdFileTypes.IDEA_MODULE &&
-          fileType != StdFileTypes.IDEA_PROJECT &&
-          fileType != StdFileTypes.IDEA_WORKSPACE &&
-          fileType != FileTypes.ARCHIVE &&
-          fileType != FileTypes.UNKNOWN &&
-          fileType != FileTypes.PLAIN_TEXT &&
-          !(fileType instanceof AbstractFileType) &&
-          !fileType.isBinary() &&
-          !fileType.isReadOnly()) {
+      if (isValidFileType(fileType)) {
         result.add(fileType);
       }
     }
 
     return result.toArray(new FileType[result.size()]);
+  }
+
+  private static boolean isValidFileType(FileType fileType) {
+    return fileType != StdFileTypes.GUI_DESIGNER_FORM &&
+        fileType != StdFileTypes.IDEA_MODULE &&
+        fileType != StdFileTypes.IDEA_PROJECT &&
+        fileType != StdFileTypes.IDEA_WORKSPACE &&
+        fileType != FileTypes.ARCHIVE &&
+        fileType != FileTypes.UNKNOWN &&
+        fileType != FileTypes.PLAIN_TEXT &&
+        !(fileType instanceof AbstractFileType) &&
+        !fileType.isBinary() &&
+        !fileType.isReadOnly();
   }
 
   public static String shieldSpecialChars(String word) {

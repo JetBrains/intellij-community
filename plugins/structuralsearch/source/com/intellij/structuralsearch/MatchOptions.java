@@ -26,7 +26,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
   private boolean recursiveSearch;
   private boolean caseSensitiveMatch;
   private boolean resultIsContextMatch = false;
-  private FileType myFileType = StructuralSearchUtil.DEFAULT_FILE_TYPE;
+  private FileType myFileType = StructuralSearchUtil.getDefaultFileType();
   private Language myDialect = null;
   private int maxMatches = Integer.MAX_VALUE;
 
@@ -251,7 +251,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
       }
     }
 
-    return StructuralSearchUtil.DEFAULT_FILE_TYPE;
+    return StructuralSearchUtil.getDefaultFileType();
   }
 
   public boolean equals(Object o) {

@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
@@ -189,5 +190,9 @@ public abstract class StructuralSearchProfile {
 
   public PsiElement extendMatchOnePsiFile(PsiElement file) {
     return file;
+  }
+
+  public LanguageFileType getDefaultFileType(@Nullable LanguageFileType fileType) {
+    return fileType;
   }
 }

@@ -54,4 +54,12 @@ public class PhpStructuralSearchProfile extends StructuralSearchProfileBase {
   public Class<? extends TemplateContextType> getTemplateContextTypeClass() {
     return PhpTemplateContextType.class;
   }
+
+  @Override
+  public LanguageFileType getDefaultFileType(LanguageFileType fileType) {
+    if (fileType != null) {
+      return fileType;
+    }
+    return PhpFileType.INSTANCE;
+  }
 }
