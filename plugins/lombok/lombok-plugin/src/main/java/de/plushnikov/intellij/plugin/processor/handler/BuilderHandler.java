@@ -95,7 +95,7 @@ public class BuilderHandler {
 
   protected boolean validateAnnotationOnRightType(@NotNull PsiMethod psiMethod, @NotNull ProblemBuilder builder) {
     if (!psiMethod.hasModifierProperty(PsiModifier.STATIC) && !psiMethod.isConstructor()) {
-      builder.addError(ErrorMessages.canBeUsedOnStaticMethodOnly(Builder.class));
+      builder.addError("%s is only supported on types, constructors, and static methods", Builder.class);
       return false;
     }
     return true;

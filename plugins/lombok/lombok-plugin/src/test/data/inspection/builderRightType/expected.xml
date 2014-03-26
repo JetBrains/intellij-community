@@ -15,4 +15,9 @@
     <line>9</line>
     <description>@lombok.experimental.Builder can be used on classes only</description>
   </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>34</line>
+    <description>@Builder is only supported on types, constructors, and static methods</description>
+  </problem>
 </problems>
