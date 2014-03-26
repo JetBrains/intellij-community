@@ -22,4 +22,15 @@ public interface EvaluateContext {
 
   @NotNull
   AsyncResult<Value> evaluate(@NotNull String expression);
+
+  /**
+   * optional to implement, some protocols, WIP for example, require you to release remote objects
+   */
+  @NotNull
+  EvaluateContext withLoader(@NotNull String objectGroup);
+
+  /**
+   * call only if withLoader was called before
+   */
+  void releaseObjects();
 }

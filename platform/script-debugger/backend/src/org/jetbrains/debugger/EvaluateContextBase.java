@@ -10,4 +10,14 @@ public abstract class EvaluateContextBase implements EvaluateContext {
   public AsyncResult<Value> evaluate(@NotNull String expression) {
     return evaluate(expression, null);
   }
+
+  @NotNull
+  @Override
+  public EvaluateContext withLoader(@NotNull String objectGroup) {
+    return this;
+  }
+
+  @Override
+  public void releaseObjects() {
+  }
 }
