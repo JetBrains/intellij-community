@@ -20,10 +20,12 @@ import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.console.ProcessBackedConsoleExecuteActionHandler;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,8 +39,11 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
 
 /**
  * @author traff
@@ -279,6 +284,9 @@ public class PydevConsoleExecuteActionHandler extends ProcessBackedConsoleExecut
   }
 
   private void ipythonInPrompt(LanguageConsoleImpl console, Editor currentEditor){
+    TextAttributes attributes = ConsoleViewContentType.USER_INPUT.getAttributes();
+    attributes.setFontType(Font.PLAIN);
+    console.setPromptAttributes(attributes);
     console.setPrompt("In[" + myIpythonInputPromptCount + "]:");
     PyConsoleUtil.scrollDown(currentEditor);
   }
