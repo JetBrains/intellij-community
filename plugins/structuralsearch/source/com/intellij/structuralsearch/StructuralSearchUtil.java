@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.MatchUtils;
 import com.intellij.tokenindex.LanguageTokenizer;
 import com.intellij.tokenindex.Tokenizer;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ public class StructuralSearchUtil {
 
   public static boolean ourUseUniversalMatchingAlgorithm = false;
   private static StructuralSearchProfile[] ourNewStyleProfiles;
+  private static List<PredefinedConfiguration> ourPredefinedConfigurations = null;
 
   private StructuralSearchUtil() {
   }
@@ -146,5 +148,16 @@ public class StructuralSearchUtil {
     }
 
     return buf.toString();
+  }
+
+  public static List<PredefinedConfiguration> getPredefinedTemplates() {
+    if (ourPredefinedConfigurations == null) {
+      final List<PredefinedConfiguration> result = new ArrayList<PredefinedConfiguration>();
+      for (StructuralSearchProfile profile : getProfiles()) {
+        Collections.addAll(result, profile.getPredefinedTemplates());
+      }
+      ourPredefinedConfigurations = Collections.unmodifiableList(result);
+    }
+    return ourPredefinedConfigurations;
   }
 }

@@ -195,4 +195,8 @@ public abstract class StructuralSearchProfile {
   public LanguageFileType getDefaultFileType(@Nullable LanguageFileType fileType) {
     return fileType;
   }
+
+  PredefinedConfiguration[] getPredefinedTemplates() {
+    return PredefinedConfiguration.EMPTY_ARRAY;
+  }
 }

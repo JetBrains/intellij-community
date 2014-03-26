@@ -34,6 +34,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.structuralsearch.PredefinedConfiguration.createSearchTemplateInfo;
+
 /**
  * @author Eugene.Kudelevsky
  */
@@ -357,5 +359,10 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   @Override
   public LanguageFileType getDefaultFileType(LanguageFileType currentDefaultFileType) {
     return StdFileTypes.JAVA;
+  }
+
+  @Override
+  PredefinedConfiguration[] getPredefinedTemplates() {
+    return JavaPredefinedConfigurations.createPredefinedTemplates();
   }
 }

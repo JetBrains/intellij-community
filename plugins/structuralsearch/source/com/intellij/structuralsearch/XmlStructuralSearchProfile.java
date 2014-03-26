@@ -29,6 +29,8 @@ import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.structuralsearch.PredefinedConfiguration.createSearchTemplateInfo;
+
 /**
  * @author Eugene.Kudelevsky
  */
@@ -203,6 +205,24 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
         }
       }
       element.getParent().deleteChildRange(firstToDelete, lastToDelete);
+    }
+  }
+
+  @Override
+  PredefinedConfiguration[] getPredefinedTemplates() {
+    return XmlPredefinedConfigurations.createPredefinedTemplates();
+  }
+
+  private static class XmlPredefinedConfigurations {
+    private static final String HTML_XML = SSRBundle.message("xml_html.category");
+
+    private static PredefinedConfiguration[] createPredefinedTemplates() {
+      return new PredefinedConfiguration[]{
+        createSearchTemplateInfo("xml tag", "<'a/>", HTML_XML, StdFileTypes.XML),
+        createSearchTemplateInfo("xml attribute", "<'_tag 'attribute=\"'_value\"/>", HTML_XML, StdFileTypes.XML),
+        createSearchTemplateInfo("xml attribute value", "<'_tag '_attribute=\"'value\"/>", HTML_XML, StdFileTypes.XML),
+        createSearchTemplateInfo("xml/html tag value", "<table>'_content*</table>", HTML_XML, StdFileTypes.HTML),
+      };
     }
   }
 }

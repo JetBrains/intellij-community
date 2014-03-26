@@ -2,7 +2,9 @@ package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.structuralsearch.PredefinedConfiguration;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -17,6 +19,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -48,7 +51,7 @@ public class ExistingTemplatesComponent {
     String lastCategory = null;
     LinkedList<Object> nodesToExpand = new LinkedList<Object>();
 
-    final PredefinedConfiguration[] predefined = PredefinedConfiguration.getPredefinedTemplates();
+    final List<PredefinedConfiguration> predefined = StructuralSearchUtil.getPredefinedTemplates();
     for (final PredefinedConfiguration info : predefined) {
       final DefaultMutableTreeNode node = new DefaultMutableTreeNode(info);
 
@@ -67,7 +70,7 @@ public class ExistingTemplatesComponent {
       parent.add(node);
     }
 
-    parent = new DefaultMutableTreeNode(PredefinedConfiguration.USER_DEFINED_TYPE);
+    parent = new DefaultMutableTreeNode(SSRBundle.message("user.defined.category"));
     userTemplatesNode = parent;
     root.add(parent);
     nodesToExpand.add(parent);

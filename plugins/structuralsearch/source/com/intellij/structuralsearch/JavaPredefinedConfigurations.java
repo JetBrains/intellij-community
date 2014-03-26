@@ -1,16 +1,13 @@
-package com.intellij.structuralsearch.plugin.ui;
+package com.intellij.structuralsearch;
 
-import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
-import com.intellij.structuralsearch.MatchOptions;
-import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import org.jetbrains.annotations.NonNls;
+import static com.intellij.structuralsearch.PredefinedConfiguration.createSearchTemplateInfo;
+import static com.intellij.structuralsearch.PredefinedConfiguration.createSearchTemplateInfoSimple;
 
 /**
- * Template info
- */
-public class PredefinedConfiguration extends Configuration {
+* @author Bas Leijdekkers
+*/
+class JavaPredefinedConfigurations {
+
   private static final String EXPRESSION_TYPE = SSRBundle.message("expressions.category");
   private static final String INTERESTING_TYPE = SSRBundle.message("interesting.category");
   private static final String J2EE_TYPE = SSRBundle.message("j2ee.category");
@@ -19,59 +16,11 @@ public class PredefinedConfiguration extends Configuration {
   private static final String METADATA_TYPE = SSRBundle.message("metadata.category");
   private static final String MISC_TYPE = SSRBundle.message("misc.category");
   private static final String GENERICS_TYPE = SSRBundle.message("generics.category");
-  private static final String HTML_XML = SSRBundle.message("xml_html.category");
 
-  private final Configuration configuration;
-  private final String category;
-  static final Object USER_DEFINED_TYPE = SSRBundle.message("user.defined.category");
-
-  private PredefinedConfiguration(Configuration configuration, String category) {
-    this.configuration = configuration;
-    this.category = category;
-  }
-
-  private static PredefinedConfiguration createSearchTemplateInfo(String name, @NonNls String criteria, String category) {
-    return createSearchTemplateInfo(name, criteria, category, StdFileTypes.JAVA);
-  }
-  private static PredefinedConfiguration createSearchTemplateInfo(String name, @NonNls String criteria, String category, FileType fileType) {
-    final SearchConfiguration config = new SearchConfiguration();
-    config.setPredefined(true);
-    config.setName(name);
-    config.getMatchOptions().setSearchPattern(criteria);
-    config.getMatchOptions().setFileType(fileType);
-    MatcherImplUtil.transform( config.getMatchOptions() );
-
-    return new PredefinedConfiguration(config,category);
-  }
-
-  private static PredefinedConfiguration createSearchTemplateInfoSimple(String name, @NonNls String criteria, String category) {
-    final PredefinedConfiguration info = createSearchTemplateInfo(name,criteria,category);
-    info.configuration.getMatchOptions().setRecursiveSearch(false);
-
-    return info;
-  }
-
-  String getCategory() {
-    return category;
-  }
-
-  Configuration getConfiguration() {
-    return configuration;
-  }
-
-  private static class PredefinedConfigurationHolder {
-    private static final PredefinedConfiguration[] infos = createPredefinedTemplates();
-  }
-
-  static PredefinedConfiguration[] getPredefinedTemplates() {
-
-    return PredefinedConfigurationHolder.infos;
-  }
-
-  private static PredefinedConfiguration[] createPredefinedTemplates() {
+  public static PredefinedConfiguration[] createPredefinedTemplates() {
     return new PredefinedConfiguration[] {
       // Expression patterns
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.method.calls"),"'_Instance?.'MethodCall('_Parameter*)",EXPRESSION_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.method.calls"), "'_Instance?.'MethodCall('_Parameter*)", EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.new.expressions"), "new 'Constructor('_Argument*)", EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.lambdas"), "('_Parameter) -> ", EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.field.selections"),"'_Instance?.'Field",EXPRESSION_TYPE),
@@ -182,7 +131,7 @@ public class PredefinedConfiguration extends Configuration {
         "class '_A {\n  {\n    'Statement*;\n  }\n}",
         CLASS_TYPE
       ),
-      
+
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.enums"),
         "enum 'Enum {}",
@@ -238,14 +187,14 @@ public class PredefinedConfiguration extends Configuration {
                                "}", METADATA_TYPE),
 
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.not.annotated.methods"),
-                                     "class '_Class {\n" +
-                                     "  @'_Annotation{0,0}\n" +
-                                     "  '_MethodType+ 'MethodName+('_ParameterType* '_ParameterName*);\n" +
-                                     "}", METADATA_TYPE),
-      
+                               "class '_Class {\n" +
+                               "  @'_Annotation{0,0}\n" +
+                               "  '_MethodType+ 'MethodName+('_ParameterType* '_ParameterName*);\n" +
+                               "}", METADATA_TYPE),
+
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.annotation.declarations"),
-                                     "@interface 'Interface {}", METADATA_TYPE),
-      
+                               "@interface 'Interface {}", METADATA_TYPE),
+
       // J2EE templates
       createSearchTemplateInfoSimple(SSRBundle.message("predefined.configuration.struts.1.1.actions"),"public class 'StrutsActionClass extends '_ParentClass*:Action {\n" +
                                                                                                       "  public ActionForward 'AnActionMethod:*execute (ActionMapping '_action,\n" +
@@ -340,23 +289,6 @@ public class PredefinedConfiguration extends Configuration {
       //createSearchTemplateInfo("fields selected","'_?.'_:[ref('Field)] ", INTERESTING_TYPE),
       //createSearchTemplateInfo("symbols used","'_:[ref('Symbol)] ", INTERESTING_TYPE),
       //createSearchTemplateInfo("types used","'_:[ref('Type)] '_;", INTERESTING_TYPE),
-
-      createSearchTemplateInfo("xml tag", "<'a/>", HTML_XML, StdFileTypes.XML),
-      createSearchTemplateInfo("xml attribute", "<'_tag 'attribute=\"'_value\"/>", HTML_XML, StdFileTypes.XML),
-      createSearchTemplateInfo("xml attribute value", "<'_tag '_attribute=\"'value\"/>", HTML_XML, StdFileTypes.XML),
-      createSearchTemplateInfo("xml/html tag value", "<table>'_content*</table>", HTML_XML, StdFileTypes.HTML),
     };
-  }
-
-  public String toString() {
-    return configuration.getName();
-  }
-
-  public MatchOptions getMatchOptions() {
-    return configuration.getMatchOptions();
-  }
-
-  public String getName() {
-    return configuration.getName();
   }
 }
