@@ -16,7 +16,6 @@
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
@@ -48,8 +47,6 @@ public abstract class BreakpointPanelProvider<B> {
 
   @Nullable
   public abstract GutterIconRenderer getBreakpointGutterIconRenderer(Object breakpoint);
-
-  public abstract AnAction[] getAddBreakpointActions(@NotNull Project project);
 
   public abstract void onDialogClosed(final Project project);
 
