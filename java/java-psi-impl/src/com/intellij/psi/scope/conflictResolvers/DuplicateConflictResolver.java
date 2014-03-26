@@ -18,6 +18,7 @@ package com.intellij.psi.scope.conflictResolvers;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.HashMap;
@@ -47,7 +48,7 @@ public class DuplicateConflictResolver implements PsiConflictResolver{
       final PsiElement element = info.getElement();
       Object key;
       if (element instanceof PsiMethod) {
-        key = ((PsiMethod)element).getSignature(info.getSubstitutor());
+        key = ((PsiMethod)element).getSignature(((MethodCandidateInfo)info).getSubstitutor(false));
       }
       else {
         key = PsiUtilCore.getName(element);

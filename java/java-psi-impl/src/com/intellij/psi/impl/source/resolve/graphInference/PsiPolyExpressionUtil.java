@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.psi.*;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +59,8 @@ public class PsiPolyExpressionUtil {
         }
       }
     } else if (expression instanceof PsiMethodCallExpression) {
-      return isMethodCallPolyExpression(expression, ((PsiMethodCallExpression)expression).resolveMethod());
+      final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(((PsiMethodCallExpression)expression).getArgumentList());
+      return isMethodCallPolyExpression(expression, candidateProperties != null ? candidateProperties.getMethod() : ((PsiMethodCallExpression)expression).resolveMethod());
     }
     else if (expression instanceof PsiConditionalExpression) {
       final ConditionalKind conditionalKind = isBooleanOrNumeric(expression);

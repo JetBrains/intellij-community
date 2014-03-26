@@ -16,6 +16,7 @@
 
 package com.intellij.vcs.log.newgraph.utils;
 
+import com.intellij.vcs.log.facade.utils.Flags;
 import org.jetbrains.annotations.NotNull;
 
 public class MyUtils {

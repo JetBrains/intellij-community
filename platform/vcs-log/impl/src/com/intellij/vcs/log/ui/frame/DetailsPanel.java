@@ -20,7 +20,7 @@ import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.graph.render.PrintParameters;
+import com.intellij.vcs.log.printer.idea.PrintParameters;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.RefPainter;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;

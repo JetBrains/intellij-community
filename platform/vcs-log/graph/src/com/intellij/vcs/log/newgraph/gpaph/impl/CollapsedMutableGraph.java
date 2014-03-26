@@ -30,8 +30,9 @@ import com.intellij.vcs.log.newgraph.gpaph.actions.LinearBranchesExpansionIntern
 import com.intellij.vcs.log.newgraph.gpaph.fragments.FragmentGenerator;
 import com.intellij.vcs.log.newgraph.gpaph.fragments.GraphFragment;
 import com.intellij.vcs.log.newgraph.utils.DfsUtil;
-import com.intellij.vcs.log.newgraph.utils.Flags;
-import com.intellij.vcs.log.newgraph.utils.impl.TreeIntToIntMap;
+import com.intellij.vcs.log.facade.utils.Flags;
+import com.intellij.vcs.log.facade.utils.UpdatableIntToIntMap;
+import com.intellij.vcs.log.facade.utils.impl.ListIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -51,7 +52,7 @@ public class CollapsedMutableGraph extends MutableGraphWithHiddenNodes<Collapsed
     final Flags visibleNodes = graphFlags.getVisibleNodes();
     final Flags visibleNodesInBranches = graphFlags.getVisibleNodesInBranches();
     setAllValues(visibleNodes, true);
-    TreeIntToIntMap intToIntMap = TreeIntToIntMap.newInstance(new BooleanFunction<Integer>() {
+    UpdatableIntToIntMap intToIntMap = ListIntToIntMap.newInstance(new BooleanFunction<Integer>() {
       @Override
       public boolean fun(Integer integer) {
         return visibleNodes.get(integer) && visibleNodesInBranches.get(integer);
@@ -72,7 +73,7 @@ public class CollapsedMutableGraph extends MutableGraphWithHiddenNodes<Collapsed
 
   private CollapsedMutableGraph(@NotNull PermanentGraph permanentGraph,
                                 @NotNull PermanentGraphLayout layout,
-                                @NotNull TreeIntToIntMap intToIntMap,
+                                @NotNull UpdatableIntToIntMap intToIntMap,
                                 @NotNull Flags thickFlags,
                                 @NotNull DfsUtil dfsUtil,
                                 @NotNull Set<Integer> branchNodeIndexes,
@@ -150,7 +151,7 @@ public class CollapsedMutableGraph extends MutableGraphWithHiddenNodes<Collapsed
     private final Flags visibleNodes;
 
     @NotNull
-    private final TreeIntToIntMap intToIntMap;
+    private final UpdatableIntToIntMap intToIntMap;
 
     @NotNull
     private final DfsUtil myDfsUtil;
@@ -164,7 +165,7 @@ public class CollapsedMutableGraph extends MutableGraphWithHiddenNodes<Collapsed
     public GraphWithElementsInfoImpl(@NotNull PermanentGraph permanentGraph,
                                      @NotNull Flags visibleNodesInBranches,
                                      @NotNull Flags visibleNodes,
-                                     @NotNull TreeIntToIntMap intToIntMap, @NotNull DfsUtil dfsUtil) {
+                                     @NotNull UpdatableIntToIntMap intToIntMap, @NotNull DfsUtil dfsUtil) {
       myPermanentGraph = permanentGraph;
       this.visibleNodesInBranches = visibleNodesInBranches;
       this.visibleNodes = visibleNodes;
