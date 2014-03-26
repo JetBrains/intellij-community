@@ -151,7 +151,9 @@ public class SheetController {
   void requestFocus() {
     final JComponent focusedComponent = (myDoNotAskOption == null) ? myFocusedButton : doNotAskCheckBox;
     if (focusedComponent == null) return; // it might be we have only one button. it is a default one in that case
-    focusedComponent.requestFocusInWindow();
+    if (SystemInfo.isAppleJvm) {
+      focusedComponent.requestFocus();
+    }
   }
 
   JPanel getPanel(final JDialog w) {
