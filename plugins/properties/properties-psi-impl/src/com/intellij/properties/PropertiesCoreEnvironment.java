@@ -17,6 +17,7 @@ public class PropertiesCoreEnvironment {
       appEnvironment.registerFileType(PropertiesFileType.INSTANCE, "properties");
       SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExplicitExtension(PropertiesLanguage.INSTANCE, new PropertiesSyntaxHighlighterFactory());
       appEnvironment.addExplicitExtension(LanguageParserDefinitions.INSTANCE, PropertiesLanguage.INSTANCE, new PropertiesParserDefinition());
+      SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExplicitExtension(PropertiesLanguage.INSTANCE, new PropertiesSyntaxHighlighterFactory());
     }
   }
 
