@@ -148,7 +148,8 @@ public class Messages {
           .showMessageDialog(title, message, options, false, parentWindow, defaultOptionIndex, defaultOptionIndex, doNotAskOption);
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
+      LOG.error(exception);
     }
 
     return showIdeaMessageDialog(project, message, title, options, defaultOptionIndex, icon, doNotAskOption);
@@ -202,7 +203,8 @@ public class Messages {
                              focusedOptionIndex, null);
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
+      LOG.error(exception);
     }
 
     MessageDialog dialog = new MoreInfoMessageDialog(project, message, title, moreInfo, options, defaultOptionIndex, focusedOptionIndex, icon);
@@ -229,7 +231,8 @@ public class Messages {
                                                              defaultOptionIndex, defaultOptionIndex, null);
         }
       }
-      catch (Exception ignored) {
+      catch (Exception exception) {
+        LOG.error(exception);
       }
 
       MessageDialog dialog = new MessageDialog(parent, message, title, options, defaultOptionIndex, defaultOptionIndex, icon, false);
@@ -261,7 +264,8 @@ public class Messages {
                                                            doNotAskOption);
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
+      LOG.error(exception);
     }
 
     //what's it? if (application.isUnitTestMode()) throw new RuntimeException(message);
@@ -302,7 +306,8 @@ public class Messages {
         return;
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
+      LOG.error(exception);
     }
 
     showDialog(project, message, title, new String[]{OK_BUTTON}, 0, icon);
@@ -315,7 +320,8 @@ public class Messages {
         return;
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
+      LOG.error(exception);
     }
 
     showDialog(parent, message, title, new String[]{OK_BUTTON}, 0, icon);
@@ -333,7 +339,8 @@ public class Messages {
         MacMessages.getInstance().showOkMessageDialog(title, message, OK_BUTTON);
         return;
       }
-    }catch (Exception ignored) {
+    }catch (Exception exception) {
+      LOG.error(exception);
     }
     showDialog(message, title, new String[]{OK_BUTTON}, 0, icon);
   }
@@ -353,7 +360,8 @@ public class Messages {
           .showYesNoDialog(title, message, yesText, noText, WindowManager.getInstance().suggestParentWindow(project));
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
+      LOG.error(exception);
     }
 
     int result = showDialog(project, message, title, new String[]{yesText, noText}, 0, icon) == 0 ? YES : NO;
@@ -373,7 +381,8 @@ public class Messages {
                                                          WindowManager.getInstance().suggestParentWindow(project));
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
+      LOG.error(exception);
     }
 
     int result = showYesNoDialog(project, message, title, YES_BUTTON, NO_BUTTON, icon);
@@ -393,7 +402,8 @@ public class Messages {
         return MacMessages.getInstance().showYesNoDialog(title, message, YES_BUTTON, NO_BUTTON, SwingUtilities.getWindowAncestor(parent));
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
+      LOG.error(exception);
     }
 
     int result = showDialog(parent, message, title, new String[]{YES_BUTTON, NO_BUTTON}, 0, icon) == 0 ? YES : NO;
@@ -417,7 +427,8 @@ public class Messages {
         return MacMessages.getInstance().showYesNoDialog(title, message, yesText, noText, null, doNotAskOption);
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
+      LOG.error(exception);
     }
 
     int result = showDialog(message, title, new String[]{yesText, noText}, 0, icon, doNotAskOption) == 0 ? YES : NO;
@@ -452,7 +463,8 @@ public class Messages {
         return MacMessages.getInstance().showYesNoDialog(title, message, YES_BUTTON, NO_BUTTON, null);
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
+      LOG.error(exception);
     }
 
     int result = showYesNoDialog(message, title, YES_BUTTON, NO_BUTTON, icon);
@@ -483,7 +495,8 @@ public class Messages {
         return result == YES ? OK : CANCEL;
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
+      LOG.error(exception);
     }
 
     return showDialog(project, message, title, new String[]{okText, cancelText}, 0, icon, doNotAskOption) == 0 ? OK : CANCEL;
@@ -517,7 +530,8 @@ public class Messages {
         return result == YES ? OK : CANCEL;
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
+      LOG.error(exception);
     }
 
     return showDialog(parent, message, title, new String[]{okText, cancelText}, 0, icon) == 0 ? OK : CANCEL;
@@ -570,7 +584,8 @@ public class Messages {
         return result == YES ? OK : CANCEL;
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
+      LOG.error(exception);
     }
 
     return showDialog(message, title, new String[]{okText, cancelText}, 0, icon, doNotAskOption) == 0 ? OK : CANCEL;
@@ -614,7 +629,7 @@ public class Messages {
         return;
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
     }
 
     showDialog(project, message, title, new String[]{OK_BUTTON}, 0, getErrorIcon());
@@ -627,7 +642,7 @@ public class Messages {
         return;
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
     }
 
     showDialog(component, message, title, new String[]{OK_BUTTON}, 0, getErrorIcon());
@@ -641,7 +656,7 @@ public class Messages {
         return;
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
     }
 
     showDialog(component, message, CommonBundle.getErrorTitle(), new String[]{OK_BUTTON}, 0, getErrorIcon());
@@ -660,7 +675,7 @@ public class Messages {
         return;
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
     }
 
     showDialog(message, title, new String[]{OK_BUTTON}, 0, getErrorIcon());
@@ -673,7 +688,7 @@ public class Messages {
         return;
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
     }
 
     showDialog(project, message, title, new String[]{OK_BUTTON}, 0, getWarningIcon());
@@ -686,7 +701,7 @@ public class Messages {
         return;
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
     }
 
     showDialog(component, message, title, new String[]{OK_BUTTON}, 0, getWarningIcon());
@@ -705,7 +720,7 @@ public class Messages {
         return;
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
     }
 
     showDialog(message, title, new String[]{OK_BUTTON}, 0, getWarningIcon());
@@ -733,7 +748,7 @@ public class Messages {
                                                                WindowManager.getInstance().suggestParentWindow(project), null);
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
     }
 
     int buttonNumber = showDialog(project, message, title, new String[]{yes, no, cancel}, 0, icon);
@@ -765,7 +780,7 @@ public class Messages {
                                                                SwingUtilities.getWindowAncestor(parent), null);
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
     }
 
     int buttonNumber = showDialog(parent, message, title, new String[]{yes, no, cancel}, 0, icon);
@@ -801,7 +816,7 @@ public class Messages {
         return MacMessages.getInstance().showYesNoCancelDialog(title, message, yes, no, cancel, null, doNotAskOption);
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
     }
 
     int buttonNumber = showDialog(message, title, new String[]{yes, no, cancel}, 0, icon, doNotAskOption);
@@ -1089,7 +1104,7 @@ public class Messages {
         return;
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
     }
 
     showMessageDialog(component, message, title, getInformationIcon());
@@ -1105,7 +1120,7 @@ public class Messages {
         return;
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
     }
 
     showMessageDialog(project, message, title, getInformationIcon());
@@ -1126,7 +1141,7 @@ public class Messages {
         return;
       }
     }
-    catch (Exception ignored) {
+    catch (Exception exception) {
     }
 
     showMessageDialog(message, title, getInformationIcon());
@@ -1395,7 +1410,7 @@ public class Messages {
             Method method = Class.forName("java.awt.Window").getDeclaredMethod("setOpacity", float.class);
             if (method != null) method.invoke(getPeer().getWindow(), .8f);
           }
-          catch (Exception ignored) {
+          catch (Exception exception) {
           }
         }
         setAutoAdjustable(false);
