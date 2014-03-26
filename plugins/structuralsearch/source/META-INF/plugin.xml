@@ -25,6 +25,7 @@
     <postStartupActivity
         implementation="com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspectionCompiledPatternsCache"/>
     <!--<fileBasedIndex implementation="com.intellij.tokenindex.TokenIndex"/>-->
+    <structuralsearch.profile implementation="com.intellij.structuralsearch.XmlStructuralSearchProfile"/>
   </extensions>
 
   <resource-bundle>messages.SSRBundle</resource-bundle>

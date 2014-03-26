@@ -16,16 +16,10 @@ import java.util.*;
  * @author Eugene.Kudelevsky
  */
 public class StructuralSearchUtil {
-  private static final List<StructuralSearchProfile> myRegisteredProfiles  = new ArrayList<StructuralSearchProfile>();
   private static LanguageFileType ourDefaultFileType = null;
 
   public static boolean ourUseUniversalMatchingAlgorithm = false;
   private static StructuralSearchProfile[] ourNewStyleProfiles;
-
-  static {
-    Collections
-      .addAll(myRegisteredProfiles, new XmlStructuralSearchProfile());
-  }
 
   private StructuralSearchUtil() {
   }
@@ -76,12 +70,6 @@ public class StructuralSearchUtil {
         return profile;
       }
     }
-    for (StructuralSearchProfile profile : myRegisteredProfiles) {
-      if (profile.isMyLanguage(language)) {
-        return profile;
-      }
-    }
-
     return null;
   }
 
@@ -105,11 +93,6 @@ public class StructuralSearchUtil {
   public static StructuralSearchProfile getProfileByFileType(FileType fileType) {
 
     for (StructuralSearchProfile profile : getProfiles()) {
-      if (profile.canProcess(fileType)) {
-        return profile;
-      }
-    }
-    for (StructuralSearchProfile profile : myRegisteredProfiles) {
       if (profile.canProcess(fileType)) {
         return profile;
       }
