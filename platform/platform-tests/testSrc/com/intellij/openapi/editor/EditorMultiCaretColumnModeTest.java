@@ -297,6 +297,32 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                       "ccccc");
   }
 
+  public void testSelectToDocumentStart() throws Exception {
+    init("line1\n" +
+         "line2\n" +
+         "line3\n" +
+         "line4");
+    mouse().clickAt(1, 1).dragTo(2, 2).release();
+    executeAction("EditorTextStartWithSelection");
+    checkResultByText("<selection><caret>l</selection>ine1\n" +
+                      "<selection><caret>l</selection>ine2\n" +
+                      "line3\n" +
+                      "line4");
+  }
+
+  public void testSelectToDocumentEnd() throws Exception {
+    init("line1\n" +
+         "line2\n" +
+         "line3\n" +
+         "line4");
+    mouse().clickAt(1, 1).dragTo(2, 2).release();
+    executeAction("EditorTextEndWithSelection");
+    checkResultByText("line1\n" +
+                      "l<selection>ine2<caret></selection>\n" +
+                      "l<selection>ine3<caret></selection>\n" +
+                      "l<selection>ine4<caret></selection>");
+  }
+
   private void init(String text) throws IOException {
     configureFromFileText(getTestName(false) + ".txt", text);
     setEditorVisibleSize(1000, 1000);
