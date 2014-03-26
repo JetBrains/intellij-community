@@ -1211,44 +1211,30 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         buildToolWindows(pattern);        check();
         updatePopup();                    check();
 
-        if (!DumbService.getInstance(project).isDumb()) {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
+        runReadAction(new Runnable() {
             public void run() {
               buildRunConfigurations(pattern);
             }
-          });
-
-          updatePopup();
-          check();
-        }
-
-        if (!DumbService.getInstance(project).isDumb()) {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
+          }, true);
+        runReadAction(new Runnable() {
             public void run() {
               buildClasses(pattern, false);
             }
-          });
-          updatePopup();
-        }
-
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          }, true);
+        runReadAction(new Runnable() {
           public void run() {
             buildFiles(pattern);
           }
-        });
+        }, false);
 
         buildActionsAndSettings(pattern);
         updatePopup();
 
-
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
+        runReadAction(new Runnable() {
           public void run() {
             buildSymbols(pattern);
           }
-        });
-
-
-        updatePopup();
+        }, true);
       }
       catch (Exception ignore) {
         myDone.setRejected();
@@ -1260,6 +1246,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         if (!myDone.isProcessed()) {
           myDone.setDone();
         }
+      }
+    }
+
+    private void runReadAction(Runnable action, boolean checkDumb) {
+      if (!checkDumb || !DumbService.getInstance(project).isDumb()) {
+        ApplicationManager.getApplication().runReadAction(action);
+        updatePopup();
       }
     }
 
