@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiInvalidElementAccessException;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ReflectionUtil;
@@ -188,10 +187,6 @@ public class DomImplUtil {
   }
 
   private static boolean isNameSuitable(final EvaluatedXmlName evaluatedXmlName, final XmlTag tag, final XmlFile file) {
-    if (!tag.isValid()) {
-      TreeElement parent = ((TreeElement) tag).getTreeParent();
-      throw new AssertionError("Invalid child tag of valid parent. Parent:" + (parent == null ? null : parent.getPsi().isValid()));
-    }
     return isNameSuitable(evaluatedXmlName, tag.getLocalName(), tag.getName(), tag.getNamespace(), file);
   }
 
