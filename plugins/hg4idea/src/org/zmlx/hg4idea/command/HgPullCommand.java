@@ -20,7 +20,9 @@ import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgErrorUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -76,6 +78,10 @@ public class HgPullCommand {
     final HgCommandExecutor executor = new HgCommandExecutor(project, source);
     executor.setShowOutput(true);
     HgCommandResult result = executor.executeInCurrentThread(repo, "pull", arguments);
+    if (!project.isDisposed()) {
+      HgRepositoryManager manager = HgUtil.getRepositoryManager(project);
+      manager.updateRepository(repo);
+    }
     if (HgErrorUtil.isAuthorizationError(result)) {
       new HgCommandResultNotifier(project)
         .notifyError(result, "Authorization required", "http authorization required for <code>" + source + "</code>");
