@@ -110,7 +110,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private int myInEditorPaintCounter = 0;
   private long myStartTime = 0;
   @Nullable
-  private Splash mySplash;
+  private final Splash mySplash;
   private boolean myDoNotSave;
   private volatile boolean myDisposeInProgress = false;
 
@@ -1036,7 +1036,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @NonNls
   private static String describe(Thread o) {
     if (o == null) return "null";
-    return o.toString() + " " + System.identityHashCode(o);
+    return o + " " + System.identityHashCode(o);
   }
 
   @Nullable
@@ -1335,6 +1335,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public boolean isWriteAccessAllowed() {
     return myLock.writeLock().isHeldByCurrentThread();
+  }
+
+  @Override
+  public boolean isWriteActionInProgress() {
+    return myLock.writeLock().getHoldCount() != 0;
   }
 
   public void editorPaintStart() {

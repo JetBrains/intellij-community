@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,12 @@ public interface ApplicationEx extends Application {
   String getName();
 
   boolean holdsReadLock();
+
+  /**
+   * @return true if the EDT performs write action now.
+   * @see #runWriteAction(Runnable)
+   */
+  boolean isWriteActionInProgress();
 
   void doNotSave();
   void doNotSave(boolean value);

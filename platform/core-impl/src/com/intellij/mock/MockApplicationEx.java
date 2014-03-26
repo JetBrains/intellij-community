@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,5 +120,10 @@ public class MockApplicationEx extends MockApplication implements ApplicationEx 
   public boolean tryRunReadAction(@NotNull Runnable runnable) {
     runReadAction(runnable);
     return true;
+  }
+
+  @Override
+  public boolean isWriteActionInProgress() {
+    return false;
   }
 }
