@@ -105,7 +105,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
   @Override
   public boolean watchableAsEvaluationExpression() {
-    return true;
+    return context.watchableAsEvaluationExpression();
   }
 
   @NotNull
@@ -434,7 +434,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
   @Override
   @Nullable
   public String getEvaluationExpression() {
-    if (!context.watchableAsEvaluationExpression()) {
+    if (!watchableAsEvaluationExpression()) {
       return null;
     }
 

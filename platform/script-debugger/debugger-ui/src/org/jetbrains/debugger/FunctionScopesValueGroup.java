@@ -14,11 +14,11 @@ class FunctionScopesValueGroup extends XValueGroup {
   private final FunctionValue value;
   private final VariableContext variableContext;
 
-  public FunctionScopesValueGroup(@NotNull FunctionValue value, @NotNull VariableContext context) {
+  public FunctionScopesValueGroup(@NotNull FunctionValue value, @NotNull VariableContext variableContext) {
     super("Function scopes");
 
     this.value = value;
-    variableContext = context;
+    this.variableContext = variableContext;
   }
 
   @Override
