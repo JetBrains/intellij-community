@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -376,6 +376,23 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
     @Override
     public PsiElement getPsiElement() {
       return myHandler.getXmlElement();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      StubAnchor anchor = (StubAnchor)o;
+
+      if (myHandler != null ? !myHandler.equals(anchor.myHandler) : anchor.myHandler != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return myHandler != null ? myHandler.hashCode() : 0;
     }
   }
 }
