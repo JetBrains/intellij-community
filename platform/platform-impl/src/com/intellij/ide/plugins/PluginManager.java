@@ -193,7 +193,7 @@ public class PluginManager extends PluginManagerCore {
   }
 
   @Nullable
-  public static IdeaPluginDescriptor getPlugin(PluginId id) {
+  public static IdeaPluginDescriptor getPlugin(@Nullable PluginId id) {
     final IdeaPluginDescriptor[] plugins = getPlugins();
     for (final IdeaPluginDescriptor plugin : plugins) {
       if (Comparing.equal(id, plugin.getPluginId())) {
