@@ -56,21 +56,24 @@ class RootIndex {
   private final Map<VirtualFile, DirectoryInfo> myInfoCache = ContainerUtil.newConcurrentMap();
   private final List<JpsModuleSourceRootType<?>> myRootTypes = ContainerUtil.newArrayList();
   private final TObjectIntHashMap<JpsModuleSourceRootType<?>> myRootTypeId = new TObjectIntHashMap<JpsModuleSourceRootType<?>>();
+  @NotNull private final Project myProject;
+  private volatile Map<VirtualFile, OrderEntry[]> myOrderEntries;
 
   RootIndex(@NotNull final Project project) {
+    myProject = project;
     final RootInfo info = buildRootInfo(project);
 
     Set<VirtualFile> allRoots = info.getAllRoots();
     for (VirtualFile root : allRoots) {
       List<VirtualFile> hierarchy = getHierarchy(root, allRoots, info);
-      Pair<DirectoryInfo, String> pair = hierarchy == null ? new Pair<DirectoryInfo, String>(null, null) : info.calcDirectoryInfo(root, hierarchy);
+      Pair<DirectoryInfo, String> pair = hierarchy == null ? new Pair<DirectoryInfo, String>(null, null) : calcDirectoryInfo(root, hierarchy, info);
       cacheInfos(root, root, pair.first);
       myPackagePrefixRoots.putValue(pair.second, root);
       if (info.shouldMarkAsProjectExcluded(root, hierarchy)) {
         myProjectExcludedRoots.add(root);
       }
     }
-    
+
     myModuleExcludedRoots = info.excludedFromModule.keySet();
   }
 
@@ -78,17 +81,14 @@ class RootIndex {
     final RootInfo info = new RootInfo();
     for (final Module module : ModuleManager.getInstance(project).getModules()) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-      final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
-      final ContentEntry[] contentEntries = moduleRootManager.getContentEntries();
-      final VirtualFile[] contentRoots = moduleRootManager.getContentRoots();
 
-      for (final VirtualFile contentRoot : contentRoots) {
+      for (final VirtualFile contentRoot : moduleRootManager.getContentRoots()) {
         if (!info.contentRootOf.containsKey(contentRoot)) {
           info.contentRootOf.put(contentRoot, module);
         }
       }
 
-      for (ContentEntry contentEntry : contentEntries) {
+      for (ContentEntry contentEntry : moduleRootManager.getContentEntries()) {
         for (VirtualFile excludeRoot : contentEntry.getExcludeFolderFiles()) {
           info.excludedFromModule.put(excludeRoot, module);
         }
@@ -105,21 +105,8 @@ class RootIndex {
         }
       }
 
-      for (OrderEntry orderEntry : orderEntries) {
-        // init ordered entries
-        if (orderEntry instanceof ModuleOrderEntry) {
-          final Module depModule = ((ModuleOrderEntry)orderEntry).getModule();
-          if (depModule != null) {
-            VirtualFile[] importedClassRoots = OrderEnumerator.orderEntries(depModule).exportedOnly().recursively().classes().usingCache().getRoots();
-            for (VirtualFile importedClassRoot : importedClassRoots) {
-              info.depEntries.putValue(importedClassRoot, orderEntry);
-            }
-          }
-          for (VirtualFile sourceRoot : orderEntry.getFiles(OrderRootType.SOURCES)) {
-            info.depEntries.putValue(sourceRoot, orderEntry);
-          }
-        }
-        else if (orderEntry instanceof LibraryOrSdkOrderEntry) {
+      for (OrderEntry orderEntry : moduleRootManager.getOrderEntries()) {
+        if (orderEntry instanceof LibraryOrSdkOrderEntry) {
           final LibraryOrSdkOrderEntry entry = (LibraryOrSdkOrderEntry)orderEntry;
           final VirtualFile[] sourceRoots = entry.getRootFiles(OrderRootType.SOURCES);
           final VirtualFile[] classRoots = entry.getRootFiles(OrderRootType.CLASSES);
@@ -127,14 +114,14 @@ class RootIndex {
           // Init library sources
           for (final VirtualFile sourceRoot : sourceRoots) {
             info.classAndSourceRoots.add(sourceRoot);
-            info.libSourceRootEntries.putValue(sourceRoot, orderEntry);
+            info.libraryOrSdkSources.add(sourceRoot);
             info.packagePrefix.put(sourceRoot, "");
           }
 
           // init library classes
           for (final VirtualFile classRoot : classRoots) {
             info.classAndSourceRoots.add(classRoot);
-            info.libClassRootEntries.putValue(classRoot, orderEntry);
+            info.libraryOrSdkClasses.add(classRoot);
             info.packagePrefix.put(classRoot, "");
           }
 
@@ -162,6 +149,77 @@ class RootIndex {
     }
     return info;
   }
+
+  private Map<VirtualFile, OrderEntry[]> getOrderEntries() {
+    Map<VirtualFile, OrderEntry[]> result = myOrderEntries;
+    if (result != null) return result;
+
+    MultiMap<VirtualFile, OrderEntry> libClassRootEntries = MultiMap.createSmartList();
+    MultiMap<VirtualFile, OrderEntry> libSourceRootEntries = MultiMap.createSmartList();
+    MultiMap<VirtualFile, OrderEntry> depEntries = MultiMap.createSmartList();
+
+    for (final Module module : ModuleManager.getInstance(myProject).getModules()) {
+      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+      for (OrderEntry orderEntry : moduleRootManager.getOrderEntries()) {
+        if (orderEntry instanceof ModuleOrderEntry) {
+          final Module depModule = ((ModuleOrderEntry)orderEntry).getModule();
+          if (depModule != null) {
+            VirtualFile[] importedClassRoots = OrderEnumerator.orderEntries(depModule).exportedOnly().recursively().classes().usingCache().getRoots();
+            for (VirtualFile importedClassRoot : importedClassRoots) {
+              depEntries.putValue(importedClassRoot, orderEntry);
+            }
+          }
+          for (VirtualFile sourceRoot : orderEntry.getFiles(OrderRootType.SOURCES)) {
+            depEntries.putValue(sourceRoot, orderEntry);
+          }
+        }
+        else if (orderEntry instanceof LibraryOrSdkOrderEntry) {
+          final LibraryOrSdkOrderEntry entry = (LibraryOrSdkOrderEntry)orderEntry;
+          for (final VirtualFile sourceRoot : entry.getRootFiles(OrderRootType.SOURCES)) {
+            libSourceRootEntries.putValue(sourceRoot, orderEntry);
+          }
+          for (final VirtualFile classRoot : entry.getRootFiles(OrderRootType.CLASSES)) {
+            libClassRootEntries.putValue(classRoot, orderEntry);
+          }
+        }
+      }
+    }
+
+    RootInfo rootInfo = buildRootInfo(myProject);
+    result = ContainerUtil.newHashMap();
+    Set<VirtualFile> allRoots = rootInfo.getAllRoots();
+    for (VirtualFile file : allRoots) {
+      List<VirtualFile> hierarchy = getHierarchy(file, allRoots, rootInfo);
+      result.put(file, hierarchy == null ? OrderEntry.EMPTY_ARRAY : calcOrderEntries(rootInfo, depEntries, libClassRootEntries, libSourceRootEntries, hierarchy));
+    }
+    myOrderEntries = result;
+    return result;
+  }
+
+  private static OrderEntry[] calcOrderEntries(RootInfo info,
+                                               MultiMap<VirtualFile, OrderEntry> depEntries,
+                                               MultiMap<VirtualFile, OrderEntry> libClassRootEntries,
+                                               MultiMap<VirtualFile, OrderEntry> libSourceRootEntries, List<VirtualFile> hierarchy) {
+    @Nullable VirtualFile libraryClassRoot = info.findLibraryRootInfo(hierarchy, false);
+    @Nullable VirtualFile librarySourceRoot = info.findLibraryRootInfo(hierarchy, true);
+    Set<OrderEntry> orderEntries = ContainerUtil.newLinkedHashSet();
+    orderEntries.addAll(info.getLibraryOrderEntries(hierarchy, libraryClassRoot, librarySourceRoot, libClassRootEntries, libSourceRootEntries));
+    for (VirtualFile root : hierarchy) {
+      orderEntries.addAll(depEntries.get(root));
+    }
+    VirtualFile moduleContentRoot = info.findModuleRootInfo(hierarchy);
+    if (moduleContentRoot != null) {
+      ContainerUtil.addIfNotNull(orderEntries, info.getModuleSourceEntry(hierarchy, moduleContentRoot, libClassRootEntries));
+    }
+    if (orderEntries.isEmpty()) {
+      return null;
+    }
+
+    OrderEntry[] array = orderEntries.toArray(new OrderEntry[orderEntries.size()]);
+    Arrays.sort(array, DirectoryInfo.BY_OWNER_MODULE);
+    return array;
+  }
+
 
   public void checkConsistency() {
     for (VirtualFile file : myProjectExcludedRoots) {
@@ -338,19 +396,18 @@ class RootIndex {
     // getDirectoriesByPackageName used to be in this order, some clients might rely on that
     @NotNull final LinkedHashSet<VirtualFile> classAndSourceRoots = ContainerUtil.newLinkedHashSet();
 
+    @NotNull final Set<VirtualFile> libraryOrSdkSources = ContainerUtil.newHashSet();
+    @NotNull final Set<VirtualFile> libraryOrSdkClasses = ContainerUtil.newHashSet();
     @NotNull final Map<VirtualFile, Module> contentRootOf = ContainerUtil.newHashMap();
     @NotNull final MultiMap<VirtualFile, Module> sourceRootOf = MultiMap.createSet();
     @NotNull final TObjectIntHashMap<VirtualFile> rootTypeId = new TObjectIntHashMap<VirtualFile>();
-    @NotNull final MultiMap<VirtualFile, OrderEntry> libClassRootEntries = MultiMap.createSmartList();
-    @NotNull final MultiMap<VirtualFile, OrderEntry> libSourceRootEntries = MultiMap.createSmartList();
-    @NotNull final MultiMap<VirtualFile, OrderEntry> depEntries = MultiMap.createSmartList();
     @NotNull final MultiMap<VirtualFile, Library> excludedFromLibraries = MultiMap.createSmartList();
     @NotNull final MultiMap<VirtualFile, Library> classOfLibraries = MultiMap.createSmartList();
     @NotNull final MultiMap<VirtualFile, Library> sourceOfLibraries = MultiMap.createSmartList();
     @NotNull final Set<VirtualFile> excludedFromProject = ContainerUtil.newHashSet();
     @NotNull final Map<VirtualFile, Module> excludedFromModule = ContainerUtil.newHashMap();
     @NotNull final Map<VirtualFile, String> packagePrefix = ContainerUtil.newHashMap();
-    
+
     Set<VirtualFile> getAllRoots() {
       LinkedHashSet<VirtualFile> result = ContainerUtil.newLinkedHashSet();
       result.addAll(classAndSourceRoots);
@@ -371,7 +428,7 @@ class RootIndex {
         }
       }) == null;
     }
-    
+
     @Nullable
     private VirtualFile findModuleRootInfo(List<VirtualFile> hierarchy) {
       for (VirtualFile root : hierarchy) {
@@ -392,44 +449,15 @@ class RootIndex {
       Set<Library> librariesToIgnore = ContainerUtil.newHashSet();
       for (VirtualFile root : hierarchy) {
         librariesToIgnore.addAll(excludedFromLibraries.get(root));
-        if (source && libSourceRootEntries.containsKey(root) &&
+        if (source && libraryOrSdkSources.contains(root) &&
             (!sourceOfLibraries.containsKey(root) || !librariesToIgnore.containsAll(sourceOfLibraries.get(root)))) {
           return root;
-        } else if (!source && libClassRootEntries.containsKey(root) &&
+        } else if (!source && libraryOrSdkClasses.contains(root) &&
                    (!classOfLibraries.containsKey(root) || !librariesToIgnore.containsAll(classOfLibraries.get(root)))) {
           return root;
         }
       }
       return null;
-    }
-
-    @NotNull
-    private Pair<DirectoryInfo, String> calcDirectoryInfo(VirtualFile root, @NotNull final List<VirtualFile> hierarchy) {
-      VirtualFile moduleContentRoot = findModuleRootInfo(hierarchy);
-      VirtualFile libraryClassRoot = findLibraryRootInfo(hierarchy, false);
-      VirtualFile librarySourceRoot = findLibraryRootInfo(hierarchy, true);
-      if (moduleContentRoot == null && libraryClassRoot == null && librarySourceRoot == null) {
-        return new Pair<DirectoryInfo, String>(null, null);
-      }
-
-      VirtualFile sourceRoot = findPackageRootInfo(hierarchy, moduleContentRoot, null, librarySourceRoot);
-
-      VirtualFile moduleSourceRoot = findPackageRootInfo(hierarchy, moduleContentRoot, null, null);
-      boolean inModuleSources = moduleSourceRoot != null;
-      boolean inLibrarySource = librarySourceRoot != null;
-      int typeId = moduleSourceRoot != null ? rootTypeId.get(moduleSourceRoot) : 0;
-
-      OrderEntry[] entries = getOrderEntries(hierarchy, moduleContentRoot, libraryClassRoot, librarySourceRoot);
-      DirectoryInfo directoryInfo = new DirectoryInfo(contentRootOf.get(moduleContentRoot),
-                                                      moduleContentRoot,
-                                                      sourceRoot,
-                                                      libraryClassRoot,
-                                                      (byte)DirectoryInfo.createSourceRootTypeData(inModuleSources, inLibrarySource, typeId),
-                                                      entries);
-
-      String packagePrefix = calcPackagePrefix(root, hierarchy, moduleContentRoot, libraryClassRoot, librarySourceRoot);
-
-      return Pair.create(directoryInfo, packagePrefix);
     }
 
     private String calcPackagePrefix(VirtualFile root,
@@ -467,31 +495,28 @@ class RootIndex {
       return null;
     }
 
-    private void collectDependencyOrderEntries(List<VirtualFile> hierarchy, Set<OrderEntry> result) {
-      for (VirtualFile root : hierarchy) {
-        result.addAll(depEntries.get(root));
-      }
-    }
-
-    private void collectLibraryOrderEntries(List<VirtualFile> hierarchy,
-                                            @Nullable VirtualFile libraryClassRoot,
-                                            @Nullable VirtualFile librarySourceRoot,
-                                            Set<OrderEntry> result) {
+    private LinkedHashSet<OrderEntry> getLibraryOrderEntries(List<VirtualFile> hierarchy,
+                                                             @Nullable VirtualFile libraryClassRoot,
+                                                             @Nullable VirtualFile librarySourceRoot,
+                                                             MultiMap<VirtualFile, OrderEntry> libClassRootEntries,
+                                                             MultiMap<VirtualFile, OrderEntry> libSourceRootEntries) {
+      LinkedHashSet<OrderEntry> orderEntries = ContainerUtil.newLinkedHashSet();
       for (VirtualFile root : hierarchy) {
         if (root == libraryClassRoot && !sourceRootOf.containsKey(root)) {
-          result.addAll(libClassRootEntries.get(root));
+          orderEntries.addAll(libClassRootEntries.get(root));
         }
         if (root == librarySourceRoot && libraryClassRoot == null) {
-          result.addAll(libSourceRootEntries.get(root));
+          orderEntries.addAll(libSourceRootEntries.get(root));
         }
         if (libClassRootEntries.containsKey(root) || sourceRootOf.containsKey(root) && librarySourceRoot == null) {
           break;
         }
       }
+      return orderEntries;
     }
 
     @Nullable
-    private ModuleSourceOrderEntry getModuleSourceEntry(List<VirtualFile> hierarchy, @NotNull VirtualFile moduleContentRoot) {
+    private ModuleSourceOrderEntry getModuleSourceEntry(List<VirtualFile> hierarchy, @NotNull VirtualFile moduleContentRoot, MultiMap<VirtualFile, OrderEntry> libClassRootEntries) {
       Module module = contentRootOf.get(moduleContentRoot);
       for (VirtualFile root : hierarchy) {
         if (sourceRootOf.get(root).contains(module)) {
@@ -504,24 +529,42 @@ class RootIndex {
       return null;
     }
 
-    private OrderEntry[] getOrderEntries(List<VirtualFile> hierarchy,
-                                         @Nullable VirtualFile moduleContentRoot,
-                                         @Nullable VirtualFile libraryClassRoot,
-                                         @Nullable VirtualFile librarySourceRoot) {
-      LinkedHashSet<OrderEntry> orderEntries = ContainerUtil.newLinkedHashSet();
-      collectLibraryOrderEntries(hierarchy, libraryClassRoot, librarySourceRoot, orderEntries);
-      collectDependencyOrderEntries(hierarchy, orderEntries);
-      if (moduleContentRoot != null) {
-        ContainerUtil.addIfNotNull(orderEntries, getModuleSourceEntry(hierarchy, moduleContentRoot));
-      }
-      if (orderEntries.isEmpty()) {
-        return null;
-      }
-
-      OrderEntry[] array = orderEntries.toArray(new OrderEntry[orderEntries.size()]);
-      Arrays.sort(array, DirectoryInfo.BY_OWNER_MODULE);
-      return array;
-    }
   }
+
+  @NotNull
+  private Pair<DirectoryInfo, String> calcDirectoryInfo(final VirtualFile root, @NotNull final List<VirtualFile> hierarchy, RootInfo info) {
+    VirtualFile moduleContentRoot = info.findModuleRootInfo(hierarchy);
+    VirtualFile libraryClassRoot = info.findLibraryRootInfo(hierarchy, false);
+    VirtualFile librarySourceRoot = info.findLibraryRootInfo(hierarchy, true);
+    if (moduleContentRoot == null && libraryClassRoot == null && librarySourceRoot == null) {
+      return new Pair<DirectoryInfo, String>(null, null);
+    }
+
+    VirtualFile sourceRoot = info.findPackageRootInfo(hierarchy, moduleContentRoot, null, librarySourceRoot);
+
+    VirtualFile moduleSourceRoot = info.findPackageRootInfo(hierarchy, moduleContentRoot, null, null);
+    boolean inModuleSources = moduleSourceRoot != null;
+    boolean inLibrarySource = librarySourceRoot != null;
+    int typeId = moduleSourceRoot != null ? info.rootTypeId.get(moduleSourceRoot) : 0;
+
+    DirectoryInfo directoryInfo = new DirectoryInfo(info.contentRootOf.get(moduleContentRoot),
+                                                    moduleContentRoot,
+                                                    sourceRoot,
+                                                    libraryClassRoot,
+                                                    (byte)DirectoryInfo.createSourceRootTypeData(inModuleSources, inLibrarySource, typeId),
+                                                    null) {
+      @NotNull
+      @Override
+      public OrderEntry[] getOrderEntries() {
+        OrderEntry[] entries = RootIndex.this.getOrderEntries().get(root);
+        return entries == null ? OrderEntry.EMPTY_ARRAY : entries;
+      }
+    };
+
+    String packagePrefix = info.calcPackagePrefix(root, hierarchy, moduleContentRoot, libraryClassRoot, librarySourceRoot);
+
+    return Pair.create(directoryInfo, packagePrefix);
+  }
+
 
 }

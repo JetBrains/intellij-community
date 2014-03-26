@@ -163,6 +163,16 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void setTitle(String title) {
     }
 
+    @NotNull
+    @Override
+    public String getStripeTitle() {
+      return "";
+    }
+
+    @Override
+    public void setStripeTitle(@NotNull String title) {
+    }
+
     @Override
     public boolean isAvailable() {
       return false;

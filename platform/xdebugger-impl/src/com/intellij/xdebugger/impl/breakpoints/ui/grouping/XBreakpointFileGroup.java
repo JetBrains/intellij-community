@@ -15,11 +15,9 @@
  */
 package com.intellij.xdebugger.impl.breakpoints.ui.grouping;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.presentation.VirtualFilePresentation;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,25 +27,7 @@ import javax.swing.*;
  * @author nik
  */
 public class XBreakpointFileGroup extends XBreakpointGroup {
-  public static final XBreakpointFileGroup UNKNOWN = new XBreakpointFileGroup() {
-    @NotNull
-    @Override
-    public String getName() {
-      return XDebuggerBundle.message("xbreakpoint.group.unknown");
-    }
-
-    @Nullable
-    @Override
-    public Icon getIcon(boolean isOpen) {
-      return AllIcons.FileTypes.Text;
-    }
-  };
-
   private final VirtualFile myFile;
-
-  private XBreakpointFileGroup() {
-    myFile = null;
-  }
 
   public XBreakpointFileGroup(@NotNull VirtualFile file) {
     myFile = file;
@@ -63,7 +43,6 @@ public class XBreakpointFileGroup extends XBreakpointGroup {
     return myFile.getPresentableUrl();
   }
 
-  @Nullable
   public VirtualFile getFile() {
     return myFile;
   }

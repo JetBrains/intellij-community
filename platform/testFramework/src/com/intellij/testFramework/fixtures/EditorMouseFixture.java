@@ -37,6 +37,10 @@ public class EditorMouseFixture {
   }
 
   public EditorMouseFixture pressAt(int visualLine, int visualColumn) {
+    return pressAt(1, visualLine, visualColumn);
+  }
+
+  private EditorMouseFixture pressAt(int clickCount, int visualLine, int visualColumn) {
     JComponent component = myEditor.getContentComponent();
     Point p = getPoint(visualLine, visualColumn);
     component.dispatchEvent(new MouseEvent(component,
@@ -45,13 +49,17 @@ public class EditorMouseFixture {
                                            getModifiers(),
                                            myX = p.x,
                                            myY = p.y,
-                                           1,
+                                           clickCount,
                                            false,
                                            myButton));
     return this;
   }
 
   public EditorMouseFixture release() {
+    return release(1);
+  }
+
+  private EditorMouseFixture release(int clickCount) {
     int oldLastId = myLastId;
     JComponent component = myEditor.getContentComponent();
     component.dispatchEvent(new MouseEvent(component,
@@ -60,7 +68,7 @@ public class EditorMouseFixture {
                                            getModifiers(),
                                            myX,
                                            myY,
-                                           1,
+                                           clickCount,
                                            false,
                                            myButton));
     if (oldLastId == MouseEvent.MOUSE_PRESSED) {
@@ -70,7 +78,7 @@ public class EditorMouseFixture {
                                              getModifiers(),
                                              myX,
                                              myY,
-                                             1,
+                                             clickCount,
                                              false,
                                              myButton));
     }
@@ -79,6 +87,14 @@ public class EditorMouseFixture {
 
   public EditorMouseFixture clickAt(int visualLine, int visualColumn) {
     return pressAt(visualLine, visualColumn).release();
+  }
+
+  public EditorMouseFixture doubleClickAt(int visualLine, int visualColumn) {
+    return clickAt(visualLine, visualColumn).pressAt(2, visualLine, visualColumn).release(2);
+  }
+
+  public EditorMouseFixture tripleClickAt(int visualLine, int visualColumn) {
+    return doubleClickAt(visualLine, visualColumn).pressAt(3, visualLine, visualColumn).release(3);
   }
 
   public EditorMouseFixture dragTo(int visualLine, int visualColumn) {

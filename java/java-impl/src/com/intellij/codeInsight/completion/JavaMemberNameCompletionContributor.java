@@ -109,7 +109,9 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     String propertyName = null;
     if (variableKind == VariableKind.PARAMETER) {
       final PsiMethod method = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
-      propertyName = PropertyUtil.getPropertyName(method);
+      if (method != null) {
+        propertyName = PropertyUtil.getPropertyName(method);
+      }
       if (method != null && method.getName().startsWith("with")) {
         propertyName = StringUtil.decapitalize(method.getName().substring(4));
       }
@@ -133,7 +135,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       addLookupItems(set, null, matcher, project, getOverlappedNameVersions(matcher.getPrefix(), suggestedNames, ""));
     }
     PsiElement parent = PsiTreeUtil.getParentOfType(var, PsiCodeBlock.class);
-    if(parent == null) parent = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
+    if(parent == null) parent = PsiTreeUtil.getParentOfType(var, PsiMethod.class, PsiLambdaExpression.class);
     addLookupItems(set, suggestedNameInfo, matcher, project, getUnresolvedReferences(parent, false));
     if (var instanceof PsiParameter && parent instanceof PsiMethod) {
       addSuggestionsInspiredByFieldNames(set, matcher, var, project, codeStyleManager);

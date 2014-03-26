@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.annotator;
+package org.jetbrains.plugins.groovy.annotator.checkers;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -52,8 +52,9 @@ public abstract class CustomAnnotationChecker {
   public boolean checkApplicability(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {return false;}
 
   @Nullable
-  public static String isAnnotationApplicable(@NotNull GrAnnotation annotation, final PsiElement parent) {
-    PsiElement ownerToUse = parent instanceof PsiModifierList ? parent.getParent() : parent;
+  public static String isAnnotationApplicable(@NotNull GrAnnotation annotation, @Nullable PsiAnnotationOwner owner) {
+    if (!(owner instanceof PsiElement)) return null;
+    PsiElement ownerToUse = owner instanceof PsiModifierList ? ((PsiElement)owner).getParent() : (PsiElement)owner;
     PsiAnnotation.TargetType[] elementTypeFields = GrAnnotationImpl.getApplicableElementTypeFields(ownerToUse);
     if (elementTypeFields.length != 0 && !GrAnnotationImpl.isAnnotationApplicableTo(annotation, elementTypeFields)) {
       String annotationTargetText = JavaErrorMessages.message("annotation.target." + elementTypeFields[0]);
@@ -64,10 +65,11 @@ public abstract class CustomAnnotationChecker {
     return null;
   }
 
-  public static void checkAnnotationArguments(@NotNull Map<PsiElement, String> holder,
+  public static void checkAnnotationArguments(@NotNull AnnotationHolder holder,
                                               @NotNull PsiClass annotation,
                                               @NotNull GrCodeReferenceElement refToHighlight,
-                                              @NotNull GrAnnotationNameValuePair[] attributes, boolean checkMissedAttributes) {
+                                              @NotNull GrAnnotationNameValuePair[] attributes,
+                                              boolean checkMissedAttributes) {
     Set<String> usedAttrs = new HashSet<String>();
 
     if (attributes.length > 0) {
@@ -99,7 +101,7 @@ public abstract class CustomAnnotationChecker {
     }
 
     if (checkMissedAttributes && !missedAttrs.isEmpty()) {
-      holder.put(refToHighlight, GroovyBundle.message("missed.attributes", StringUtil.join(missedAttrs, ", ")));
+      holder.createErrorAnnotation(refToHighlight, GroovyBundle.message("missed.attributes", StringUtil.join(missedAttrs, ", ")));
     }
   }
 
@@ -108,17 +110,17 @@ public abstract class CustomAnnotationChecker {
                                            @NotNull String name,
                                            @NotNull Set<String> usedAttrs,
                                            @Nullable GrAnnotationMemberValue value,
-                                           @NotNull Map<PsiElement, String> holder) {
+                                           @NotNull AnnotationHolder holder) {
     if (usedAttrs.contains(name)) {
-      holder.put(identifierToHighlight, GroovyBundle.message("duplicate.attribute"));
+      holder.createErrorAnnotation(identifierToHighlight, GroovyBundle.message("duplicate.attribute"));
     }
 
     usedAttrs.add(name);
 
     final PsiMethod[] methods = annotation.findMethodsByName(name, false);
     if (methods.length == 0) {
-      holder.put(identifierToHighlight,
-                 GroovyBundle.message("at.interface.0.does.not.contain.attribute", annotation.getQualifiedName(), name));
+      holder.createErrorAnnotation(identifierToHighlight,
+                                   GroovyBundle.message("at.interface.0.does.not.contain.attribute", annotation.getQualifiedName(), name));
     }
     else {
       final PsiMethod method = methods[0];
@@ -129,7 +131,7 @@ public abstract class CustomAnnotationChecker {
     }
   }
 
-  public static void checkAnnotationValueByType(@NotNull Map<PsiElement, String> holder,
+  public static void checkAnnotationValueByType(@NotNull AnnotationHolder holder,
                                                 @NotNull GrAnnotationMemberValue value,
                                                 @Nullable PsiType ltype,
                                                 boolean skipArrays) {
@@ -146,7 +148,8 @@ public abstract class CustomAnnotationChecker {
       }
 
       if (rtype != null && !checkAnnoTypeAssignable(ltype, rtype, value, skipArrays)) {
-        holder.put(value, GroovyBundle.message("cannot.assign", rtype.getPresentableText(), ltype.getPresentableText()));
+        holder.createErrorAnnotation(value,
+                                     GroovyBundle.message("cannot.assign", rtype.getPresentableText(), ltype.getPresentableText()));
       }
     }
 
@@ -155,7 +158,7 @@ public abstract class CustomAnnotationChecker {
       if (resolved instanceof PsiClass) {
         final PsiClassType rtype = JavaPsiFacade.getElementFactory(value.getProject()).createType((PsiClass)resolved, PsiSubstitutor.EMPTY);
         if (!checkAnnoTypeAssignable(ltype, rtype, value, skipArrays)) {
-          holder.put(value, GroovyBundle.message("cannot.assign", rtype.getPresentableText(), ltype.getPresentableText()));
+          holder.createErrorAnnotation(value, GroovyBundle.message("cannot.assign", rtype.getPresentableText(), ltype.getPresentableText()));
         }
       }
     }
@@ -172,7 +175,7 @@ public abstract class CustomAnnotationChecker {
       else {
         final PsiType rtype = TypesUtil.getTupleByAnnotationArrayInitializer((GrAnnotationArrayInitializer)value);
         if (!checkAnnoTypeAssignable(ltype, rtype, value, skipArrays)) {
-          holder.put(value, GroovyBundle.message("cannot.assign", rtype.getPresentableText(), ltype.getPresentableText()));
+          holder.createErrorAnnotation(value, GroovyBundle.message("cannot.assign", rtype.getPresentableText(), ltype.getPresentableText()));
         }
       }
     }

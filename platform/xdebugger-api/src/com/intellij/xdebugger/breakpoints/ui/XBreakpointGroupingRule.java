@@ -53,7 +53,7 @@ public abstract class XBreakpointGroupingRule<B, G extends XBreakpointGroup> {
     return XBreakpointsGroupingPriorities.DEFAULT;
   }
 
-  @NotNull
+  @Nullable
   public abstract G getGroup(@NotNull B breakpoint, @NotNull Collection<G> groups);
 
   @Nullable

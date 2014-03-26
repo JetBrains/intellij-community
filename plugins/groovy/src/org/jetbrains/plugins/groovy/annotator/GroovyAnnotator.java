@@ -55,6 +55,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.annotator.checkers.AnnotationChecker;
+import org.jetbrains.plugins.groovy.annotator.checkers.CustomAnnotationChecker;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrModifierFix;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
@@ -1447,48 +1449,12 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   @Override
   public void visitAnnotation(GrAnnotation annotation) {
-    final GrCodeReferenceElement ref = annotation.getClassReference();
-    final PsiElement resolved = ref.resolve();
-
-    if (resolved == null) return;
-    assert resolved instanceof PsiClass;
-
-    PsiClass anno = (PsiClass)resolved;
-    String qname = anno.getQualifiedName();
-    if (!anno.isAnnotationType() && GrAnnotationCollector.findAnnotationCollector(anno) == null) {
-      if (qname != null) {
-        myHolder.createErrorAnnotation(ref, GroovyBundle.message("class.is.not.annotation", qname));
-      }
-      return;
-    }
-
-    for (CustomAnnotationChecker checker : CustomAnnotationChecker.EP_NAME.getExtensions()) {
-      if (checker.checkApplicability(myHolder, annotation)) return;
-    }
-
-    String description = CustomAnnotationChecker.isAnnotationApplicable(annotation, annotation.getParent());
-    if (description != null) {
-      myHolder.createErrorAnnotation(ref, description).registerFix(new GrRemoveAnnotationIntention());
-    }
+    new AnnotationChecker(myHolder).checkApplicability(annotation, annotation.getOwner());
   }
 
   @Override
   public void visitAnnotationArgumentList(GrAnnotationArgumentList annotationArgumentList) {
-    final GrAnnotation annotation = (GrAnnotation)annotationArgumentList.getParent();
-
-    final PsiClass anno = ResolveUtil.resolveAnnotation(annotationArgumentList);
-    if (anno == null) return;
-
-    for (CustomAnnotationChecker checker : CustomAnnotationChecker.EP_NAME.getExtensions()) {
-      if (checker.checkArgumentList(myHolder, annotation)) return;
-    }
-
-    Map<PsiElement, String> errors = ContainerUtil.newHashMap();
-    CustomAnnotationChecker.checkAnnotationArguments(errors, anno, annotation.getClassReference(), annotationArgumentList.getAttributes(),
-                                                     true);
-    for (Map.Entry<PsiElement, String> entry : errors.entrySet()) {
-      myHolder.createErrorAnnotation(entry.getKey(), entry.getValue());
-    }
+    new AnnotationChecker(myHolder).checkAnnotationArgumentList((GrAnnotation)annotationArgumentList.getParent());
   }
 
   @Override
@@ -1500,11 +1466,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
     final PsiType type = annotationMethod.getReturnType();
 
-    Map<PsiElement, String> errors = ContainerUtil.newHashMap();
-    CustomAnnotationChecker.checkAnnotationValueByType(errors, value, type, false);
-    for (Map.Entry<PsiElement, String> entry : errors.entrySet()) {
-      myHolder.createErrorAnnotation(entry.getKey(), entry.getValue());
-    }
+    CustomAnnotationChecker.checkAnnotationValueByType(myHolder, value, type, false);
   }
 
   @Override

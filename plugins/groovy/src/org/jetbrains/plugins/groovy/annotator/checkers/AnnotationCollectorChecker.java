@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.annotator;
+package org.jetbrains.plugins.groovy.annotator.checkers;
 
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.openapi.util.Condition;
@@ -25,8 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierL
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-
-import java.util.Map;
 
 /**
  * @author Medvdedev Max
@@ -42,12 +40,10 @@ public class AnnotationCollectorChecker extends CustomAnnotationChecker {
   public boolean checkArgumentList(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {
     if (!isInAliasDeclaration(annotation)) return false;
 
-    Map<PsiElement, String> errors = ContainerUtil.newHashMap();
     final PsiClass clazz = (PsiClass)annotation.getClassReference().resolve();
     if (clazz == null) return true;
     final GrAnnotationNameValuePair[] attributes = annotation.getParameterList().getAttributes();
-    CustomAnnotationChecker.checkAnnotationArguments(errors, clazz, annotation.getClassReference(), attributes, false);
-    highlightErrors(holder, errors);
+    CustomAnnotationChecker.checkAnnotationArguments(holder, clazz, annotation.getClassReference(), attributes, false);
 
     return true;
   }

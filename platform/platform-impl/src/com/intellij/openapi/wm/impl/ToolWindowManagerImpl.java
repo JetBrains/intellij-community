@@ -575,7 +575,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   @Override
   public void removeToolWindowManagerListener(@NotNull ToolWindowManagerListener l) {
-    myDispatcher.addListener(l);
+    myDispatcher.removeListener(l);
   }
 
   /**

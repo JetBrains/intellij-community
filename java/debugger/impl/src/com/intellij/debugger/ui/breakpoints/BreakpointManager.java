@@ -133,6 +133,16 @@ public class BreakpointManager {
 
       @Override
       public void changeEvent(@NotNull DebuggerContextImpl newContext, int event) {
+        if (event == DebuggerSession.EVENT_ATTACHED) {
+          // notify about possibly slow method breakpoints
+          for (XLineBreakpoint breakpoint : getXBreakpointManager().getBreakpoints(JavaMethodBreakpointType.class)) {
+            if (breakpoint.isEnabled()) {
+              XDebugSessionImpl.NOTIFICATION_GROUP.createNotification("Method breakpoints may dramatically slow down debugging", MessageType.WARNING).notify(
+                myProject);
+              break;
+            }
+          }
+        }
         if (newContext.getDebuggerSession() != myPreviousSession || event == DebuggerSession.EVENT_DETACHED) {
           updateBreakpointsUI();
           myPreviousSession = newContext.getDebuggerSession();

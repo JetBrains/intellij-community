@@ -271,6 +271,32 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                       "ccS<caret>cc");
   }
 
+  public void testCopyPasteOfShortLines() throws Exception {
+    init("a\n" +
+         "bbb\n" +
+         "ccccc");
+    mouse().clickAt(0, 2).dragTo(2, 4).release();
+    executeAction("EditorCopy");
+    executeAction("EditorLineStart");
+    executeAction("EditorPaste");
+    checkResultByText("  <caret>a\n" +
+                      "b <caret>bbb\n" +
+                      "cc<caret>ccccc");
+  }
+
+  public void testPasteOfBlockToASingleCaret() throws Exception {
+    init("a\n" +
+         "bbb\n" +
+         "ccccc");
+    mouse().clickAt(1, 2).dragTo(2, 4).release();
+    executeAction("EditorCopy");
+    mouse().clickAt(0, 2);
+    executeAction("EditorPaste");
+    checkResultByText("a b <caret>\n" +
+                      "bbcc<caret>b\n" +
+                      "ccccc");
+  }
+
   private void init(String text) throws IOException {
     configureFromFileText(getTestName(false) + ".txt", text);
     setEditorVisibleSize(1000, 1000);

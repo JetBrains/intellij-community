@@ -63,9 +63,20 @@ public class GithubRepository extends BaseRepositoryImpl {
     setUrl(GithubApiUtil.DEFAULT_GITHUB_HOST);
   }
 
+  @NotNull
   @Override
-  public void testConnection() throws Exception {
-    getIssues("", 10, 0);
+  public CancellableConnection createCancellableConnection() {
+    return new CancellableConnection() {
+      @Override
+      protected void doTest() throws Exception {
+        getIssues("", 10, false);
+      }
+
+      @Override
+      public void cancel() {
+        // TODO
+      }
+    };
   }
 
   @Override

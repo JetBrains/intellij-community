@@ -123,9 +123,19 @@ public interface ToolWindow extends BusyObject {
 
   /**
    * Sets new window title.
-   * @exception IllegalStateException if tool window isn't installed.
    */
   void setTitle(String title);
+
+  /**
+   * @return window stripe button text.
+   */
+  @NotNull
+  String getStripeTitle();
+
+  /**
+   * Sets new window stripe button text.
+   */
+  void setStripeTitle(@NotNull String title);
 
   /**
    * @return whether the window is available or not.

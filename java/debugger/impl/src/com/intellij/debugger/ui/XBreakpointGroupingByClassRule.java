@@ -42,18 +42,17 @@ class XBreakpointGroupingByClassRule<B> extends XBreakpointGroupingRule<B, XBrea
     return XBreakpointsGroupingPriorities.BY_CLASS;
   }
 
-  @NotNull
   @Override
   public XBreakpointClassGroup getGroup(@NotNull B b, @NotNull Collection<XBreakpointClassGroup> groups) {
     if (b instanceof XBreakpoint) {
       Breakpoint javaBreakpoint = BreakpointManager.findBreakpoint((XBreakpoint)b);
       if (javaBreakpoint == null) {
-        return XBreakpointClassGroup.UNKNOWN;
+        return null;
       }
       String className = javaBreakpoint.getShortClassName();
       String packageName = javaBreakpoint.getPackageName();
       if (className == null) {
-        return XBreakpointClassGroup.UNKNOWN;
+        return null;
       }
       for (XBreakpointClassGroup group : groups) {
         if (group.getClassName().equals(className) && group.getPackageName().equals(packageName))  {
@@ -62,7 +61,7 @@ class XBreakpointGroupingByClassRule<B> extends XBreakpointGroupingRule<B, XBrea
       }
       return new XBreakpointClassGroup(packageName, className);
     }
-    return XBreakpointClassGroup.UNKNOWN;
+    return null;
   }
 
   @Nullable
