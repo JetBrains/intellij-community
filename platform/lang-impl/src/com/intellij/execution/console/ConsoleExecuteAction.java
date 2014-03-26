@@ -144,7 +144,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
       myPreserveMarkup = preserveMarkup;
     }
 
-    public final ConsoleHistoryModel getConsoleHistoryModel() {
+    public ConsoleHistoryModel getConsoleHistoryModel() {
       return myCommandHistoryModel;
     }
 
