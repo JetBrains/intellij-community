@@ -26,9 +26,9 @@ import java.util.Set;
 class SkeletonTestTask extends PyExecutionFixtureTestTask {
 
   /**
-   * Tag
+   * Tags for this task to run
    */
-  private static final Set<String> IRON_TAGS = Sets.newHashSet("iron");
+  private static final Set<String> IRON_TAGS = Sets.newHashSet(PyIronPythonTest.IRON_TAG);
   /**
    * Number of seconds we wait for skeleton generation external process (should be enough)
    */

@@ -14,14 +14,14 @@ import com.jetbrains.env.PyTestRemoteSdkProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assume;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author traff
@@ -37,10 +37,50 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
 
   protected static final boolean IS_ENV_CONFIGURATION = System.getProperty("pycharm.env") != null;
 
+  /**
+   * Tags that should exist between all tags, available on all interpreters for test to run.
+   * See {@link #PyEnvTestCase(String...)}
+   */
+  @Nullable
+  private final String[] myRequiredTags;
 
-  @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
-  public PyEnvTestCase() {
+  /**
+   * @param requiredTags tags that should exist on some interpreter for this test to run.
+   *                           if some of these tags do not exist on any interpreter, all test methods would be skipped using
+   *                           {@link org.junit.Assume}.
+   *                           See <a href="http://junit.sourceforge.net/javadoc/org/junit/Assume.html">Assume manual</a>.
+   *                           Check [IDEA-122939] and [IDEA-22193] as well.
+   *
+   */
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
+  protected PyEnvTestCase(@NotNull final String... requiredTags) {
+    myRequiredTags = requiredTags.length > 0 ? requiredTags.clone() : null;
+
     PyTestCase.initPlatformPrefix();
+  }
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    if (myRequiredTags != null) { // Ensure all tags exist between available interpreters
+      Assume.assumeThat(
+        "Can't find some tags between all available interpreter, test (all methods) will be skipped",
+        getAvailableTags(),
+        Matchers.hasItems(myRequiredTags)
+        );
+    }
+  }
+
+  /**
+   * @return all tags available between all interpreters
+   */
+  @NotNull
+  private static Collection<String> getAvailableTags() {
+    final Collection<String> allAvailableTags = new HashSet<String>();
+    for (final String pythonRoot : getPythonRoots()) {
+      allAvailableTags.addAll(loadEnvTags(pythonRoot));
+    }
+    return allAvailableTags;
   }
 
   @Override
