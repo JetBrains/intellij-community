@@ -50,7 +50,7 @@ public class SuspendContextImpl extends XSuspendContext {
   @NotNull
   private static AsyncResult<String> evaluateExpression(@NotNull EvaluateContext evaluateContext, @NotNull String expression) {
     final AsyncResult<String> result = new AsyncResult<String>();
-    evaluateContext.evaluate(expression, null).doWhenDone(new Consumer<Value>() {
+    evaluateContext.evaluate(expression).doWhenDone(new Consumer<Value>() {
       @Override
       public void consume(final Value value) {
         if (value == null) {
