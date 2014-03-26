@@ -153,6 +153,8 @@ public class SheetController {
     if (focusedComponent == null) return; // it might be we have only one button. it is a default one in that case
     if (SystemInfo.isAppleJvm) {
       focusedComponent.requestFocus();
+    } else {
+      focusedComponent.requestFocusInWindow();
     }
   }
 
