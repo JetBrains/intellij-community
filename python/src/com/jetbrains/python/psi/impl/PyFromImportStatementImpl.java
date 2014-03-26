@@ -100,9 +100,9 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     List<PyImportElement> result = new ArrayList<PyImportElement>();
     final ASTNode importKeyword = getNode().findChildByType(PyTokenTypes.IMPORT_KEYWORD);
     if (importKeyword != null) {
-      for(ASTNode node = importKeyword.getTreeNext(); node != null; node = node.getTreeNext()) {
+      for (ASTNode node = importKeyword.getTreeNext(); node != null; node = node.getTreeNext()) {
         if (node.getElementType() == PyElementTypes.IMPORT_ELEMENT) {
-          result.add((PyImportElement) node.getPsi());
+          result.add((PyImportElement)node.getPsi());
         }
       }
     }
@@ -121,7 +121,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
 
     int result = 0;
     ASTNode seeker = getNode().getFirstChildNode();
-    while(seeker != null && (seeker.getElementType() == PyTokenTypes.FROM_KEYWORD || seeker.getElementType() == TokenType.WHITE_SPACE)) {
+    while (seeker != null && (seeker.getElementType() == PyTokenTypes.FROM_KEYWORD || seeker.getElementType() == TokenType.WHITE_SPACE)) {
       seeker = seeker.getTreeNext();
     }
     while (seeker != null && seeker.getElementType() == PyTokenTypes.DOT) {
@@ -146,7 +146,9 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     return findChildByType(PyTokenTypes.RPAR);
   }
 
-  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor, @NotNull final ResolveState state, final PsiElement lastParent,
+  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
+                                     @NotNull final ResolveState state,
+                                     final PsiElement lastParent,
                                      @NotNull final PsiElement place) {
     // import is per-file
     if (place.getContainingFile() != getContainingFile()) {
@@ -165,7 +167,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     }
     else {
       PyImportElement[] importElements = getImportElements();
-      for(PyImportElement element: importElements) {
+      for (PyImportElement element : importElements) {
         if (!processor.execute(element, state)) {
           return false;
         }
@@ -192,7 +194,8 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     ASTNode prevNode = result;
     do {
       prevNode = prevNode.getTreePrev();
-    } while(prevNode != null && prevNode.getElementType() == TokenType.WHITE_SPACE);
+    }
+    while (prevNode != null && prevNode.getElementType() == TokenType.WHITE_SPACE);
 
     if (prevNode != null && prevNode.getElementType() == PyElementTypes.IMPORT_ELEMENT &&
         result.getElementType() == PyElementTypes.IMPORT_ELEMENT) {
@@ -227,5 +230,23 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
       }
     }
     return ResolveImportUtil.resolveFromImportStatementSource(this, qName);
+  }
+
+  @NotNull
+  @Override
+  public List<String> getFullyQualifiedObjectNames() {
+    final PyReferenceExpression source = getImportSource();
+    String prefix = "";
+    if (source != null) {
+      prefix = source.getText() + ".";
+    }
+    final List<String> unqualifiedNames = PyImportStatementImpl.getImportElementNames(getImportElements());
+
+    final List<String> result = new ArrayList<String>(unqualifiedNames.size());
+
+    for (final String unqualifiedName : unqualifiedNames) {
+      result.add(prefix + unqualifiedName);
+    }
+    return result;
   }
 }
