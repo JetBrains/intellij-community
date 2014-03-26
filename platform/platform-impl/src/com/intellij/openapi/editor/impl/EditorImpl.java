@@ -307,6 +307,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private VisualPosition myTargetMultiSelectionPosition;
   private boolean myMultiSelectionInProgress;
   private boolean myLastPressCreatedCaret;
+  private boolean myCurrentDragIsSubstantial;
 
   private CaretImpl myPrimaryCaret;
 
@@ -4229,7 +4230,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       else {
         if (isColumnMode() || e.isAltDown()) {
           if (myCaretModel.supportsMultipleCarets()) {
-            selectionModel.setBlockSelection(myLastMousePressedLocation, newLogicalCaret);
+            if (myCurrentDragIsSubstantial || !newLogicalCaret.equals(myLastMousePressedLocation)) {
+              selectionModel.setBlockSelection(myLastMousePressedLocation, newLogicalCaret);
+              myCurrentDragIsSubstantial = true;
+            }
           } else {
             final LogicalPosition blockStart = selectionModel.hasBlockSelection() ? selectionModel.getBlockStart() : oldLogicalCaret;
             selectionModel.setBlockSelection(blockStart, getCaretModel().getLogicalPosition());
@@ -5506,6 +5510,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     private void runMousePressedCommand(@NotNull final MouseEvent e) {
       myLastMousePressedLocation = xyToLogicalPosition(e.getPoint());
+      myCurrentDragIsSubstantial = false;
 
       final int clickOffset = logicalPositionToOffset(myLastMousePressedLocation);
       putUserData(EditorActionUtil.EXPECTED_CARET_OFFSET, clickOffset);
