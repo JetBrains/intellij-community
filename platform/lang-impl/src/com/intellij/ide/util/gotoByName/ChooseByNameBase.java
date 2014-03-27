@@ -26,6 +26,8 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.actions.GotoFileAction;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -82,7 +84,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
@@ -1235,6 +1236,8 @@ public abstract class ChooseByNameBase {
 
     private MyTextField() {
       super(40);
+      setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(this));
+      setBorder(new DarculaTextBorder());
       enableEvents(AWTEvent.KEY_EVENT_MASK);
       myCompletionKeyStroke = getShortcut(IdeActions.ACTION_CODE_COMPLETION);
       forwardStroke = getShortcut(IdeActions.ACTION_GOTO_FORWARD);
@@ -1250,18 +1253,6 @@ public abstract class ChooseByNameBase {
           }
         }
       });
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      Dimension size = super.getPreferredSize();
-      Border border = super.getBorder();
-      if (border != null && UIUtil.isUnderAquaLookAndFeel()) {
-        Insets insets = border.getBorderInsets(this);
-        size.height += insets.top + insets.bottom;
-        size.width += insets.left + insets.right;
-      }
-      return size;
     }
 
     @Nullable
