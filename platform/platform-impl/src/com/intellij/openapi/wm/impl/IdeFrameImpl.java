@@ -37,6 +37,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -539,15 +540,17 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     return myFrameDecorator != null && myFrameDecorator.isInFullScreen();
   }
 
+  @NotNull
   @Override
-  public void toggleFullScreen(boolean state) {
+  public ActionCallback toggleFullScreen(boolean state) {
     if (myFrameDecorator != null) {
-      myFrameDecorator.toggleFullScreen(state);
+      return myFrameDecorator.toggleFullScreen(state);
     }
     IdeFrame[] frames = WindowManager.getInstance().getAllProjectFrames();
     for (IdeFrame frame : frames) {
       ((IdeFrameImpl)frame).updateBorder();
     }
+    return ActionCallback.DONE;
   }
 
   @Override
