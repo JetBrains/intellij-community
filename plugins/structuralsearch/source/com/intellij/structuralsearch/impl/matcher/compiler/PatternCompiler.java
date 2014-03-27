@@ -120,17 +120,17 @@ public class PatternCompiler {
       return Collections.emptyList();
     }
 
-    LinkedList<PsiElement> elements = doCompile(project, options, pattern, new ConstantPrefixProvider(applicablePrefixes[0]), context);
-    if (elements.size() == 0) {
+    List<PsiElement> elements = doCompile(project, options, pattern, new ConstantPrefixProvider(applicablePrefixes[0]), context);
+    if (elements.isEmpty()) {
       return elements;
     }
 
-    final PsiFile file = elements.getFirst().getContainingFile();
+    final PsiFile file = elements.get(0).getContainingFile();
     if (file == null) {
       return elements;
     }
 
-    final PsiElement last = elements.getLast();
+    final PsiElement last = elements.get(elements.size() - 1);
     final Pattern[] patterns = new Pattern[applicablePrefixes.length];
 
     for (int i = 0; i < applicablePrefixes.length; i++) {
@@ -170,13 +170,13 @@ public class PatternCompiler {
                                                     String[] prefixSequence,
                                                     int index) {
     if (index >= prefixSequence.length) {
-      final LinkedList<PsiElement> elements = doCompile(project, options, pattern, new ArrayPrefixProvider(prefixSequence), context);
-      if (elements.size() == 0) {
+      final List<PsiElement> elements = doCompile(project, options, pattern, new ArrayPrefixProvider(prefixSequence), context);
+      if (elements.isEmpty()) {
         return elements;
       }
 
-      final PsiElement parent = elements.getFirst().getParent();
-      final PsiElement last = elements.getLast();
+      final PsiElement parent = elements.get(0).getParent();
+      final PsiElement last = elements.get(elements.size() - 1);
       final int[] varEndOffsets = findAllTypedVarOffsets(parent.getContainingFile(), substitutionPatterns);
       final int patternEndOffset = last.getTextRange().getEndOffset();
       return checkErrorElements(parent, patternEndOffset, patternEndOffset, varEndOffsets, false) != Boolean.TRUE
@@ -189,12 +189,12 @@ public class PatternCompiler {
     for (String applicablePrefix : applicablePrefixes) {
       prefixSequence[index] = applicablePrefix;
 
-      LinkedList<PsiElement> elements = doCompile(project, options, pattern, new ArrayPrefixProvider(prefixSequence), context);
-      if (elements.size() == 0) {
+      List<PsiElement> elements = doCompile(project, options, pattern, new ArrayPrefixProvider(prefixSequence), context);
+      if (elements.isEmpty()) {
         return elements;
       }
 
-      final PsiFile file = elements.getFirst().getContainingFile();
+      final PsiFile file = elements.get(0).getContainingFile();
       if (file == null) {
         return elements;
       }
@@ -202,7 +202,7 @@ public class PatternCompiler {
       final int[] varEndOffsets = findAllTypedVarOffsets(file, substitutionPatterns);
       final int offset = varEndOffsets[index];
 
-      final int patternEndOffset = elements.getLast().getTextRange().getEndOffset();
+      final int patternEndOffset = elements.get(elements.size() - 1).getTextRange().getEndOffset();
       final Boolean result = checkErrorElements(file, offset, patternEndOffset, varEndOffsets, false);
 
       if (result == Boolean.TRUE) {
@@ -331,11 +331,11 @@ public class PatternCompiler {
     }
   }
 
-  private static LinkedList<PsiElement> doCompile(Project project,
-                                                  MatchOptions options,
-                                                  CompiledPattern result,
-                                                  PrefixProvider prefixProvider,
-                                                  CompileContext context) {
+  private static List<PsiElement> doCompile(Project project,
+                                            MatchOptions options,
+                                            CompiledPattern result,
+                                            PrefixProvider prefixProvider,
+                                            CompileContext context) {
     result.clearHandlers();
     context.init(result, options, project, options.getScope() instanceof GlobalSearchScope);
 
@@ -513,7 +513,7 @@ public class PatternCompiler {
 
     GlobalCompilingVisitor compilingVisitor = new GlobalCompilingVisitor();
     compilingVisitor.compile(matchStatements,context);
-    LinkedList<PsiElement> elements = new LinkedList<PsiElement>();
+    ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
 
     for (PsiElement matchStatement : matchStatements) {
       if (!filter.accepts(matchStatement)) {
