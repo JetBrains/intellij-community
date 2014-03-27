@@ -119,7 +119,7 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
       myCustomManager.addCertificate(endPoint);
       return true;
     }
-    boolean accepted = CertificatesManager.showAcceptDialog(new Callable<DialogWrapper>() {
+    boolean accepted = CertificateManager.showAcceptDialog(new Callable<DialogWrapper>() {
       @Override
       public DialogWrapper call() throws Exception {
         // TODO may be another kind of warning, if default trust store is missing
