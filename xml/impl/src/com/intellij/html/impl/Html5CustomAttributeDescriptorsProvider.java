@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlAttributeDescriptorsProvider;
@@ -28,6 +27,7 @@ import com.intellij.xml.impl.schema.AnyXmlAttributeDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -45,30 +45,27 @@ public class Html5CustomAttributeDescriptorsProvider implements XmlAttributeDesc
     }
     final List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(tag.getProject());
-    FileBasedIndex.getInstance().processAllKeys(Html5CustomAttributesIndex.INDEX_ID, new Processor<String>() {
-      @Override
-      public boolean process(String s) {
-        final boolean canProcessKey = !FileBasedIndex.getInstance().processValues(Html5CustomAttributesIndex.INDEX_ID, s,
-                                                                                  null, new FileBasedIndex.ValueProcessor<Void>() {
-            @Override
-            public boolean process(VirtualFile file, Void value) {
-              return false;
-            }
-          }, scope);
-        if (!canProcessKey) return true;
-
-        boolean add = true;
-        for (String attr : currentAttrs) {
-          if (attr.startsWith(s)) {
-            add = false;
+    final Collection<String> keys = FileBasedIndex.getInstance().getAllKeys(Html5CustomAttributesIndex.INDEX_ID, tag.getProject());
+    for (String key : keys) {
+      final boolean canProcessKey = !FileBasedIndex.getInstance().processValues(Html5CustomAttributesIndex.INDEX_ID, key,
+                                                                                null, new FileBasedIndex.ValueProcessor<Void>() {
+          @Override
+          public boolean process(VirtualFile file, Void value) {
+            return false;
           }
+        }, scope);
+      if (!canProcessKey) continue;
+
+      boolean add = true;
+      for (String attr : currentAttrs) {
+        if (attr.startsWith(key)) {
+          add = false;
         }
-        if (add) {
-          result.add(new AnyXmlAttributeDescriptor(s));
-        }
-        return true;
       }
-    }, scope, null);
+      if (add) {
+        result.add(new AnyXmlAttributeDescriptor(key));
+      }
+    }
 
     return result.toArray(new XmlAttributeDescriptor[result.size()]);
   }
