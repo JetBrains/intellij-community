@@ -43,16 +43,21 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 
 public class MainWatchPanel extends WatchPanel implements DataProvider {
 
@@ -66,25 +71,67 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
     final AnAction newWatchAction  = ActionManager.getInstance().getAction(DebuggerActions.NEW_WATCH);
     newWatchAction.registerCustomShortcutSet(CommonShortcuts.INSERT, watchTree);
 
-    final ClickListener mouseListener = new DoubleClickListener() {
+    final Alarm quitePeriod = new Alarm();
+    final Alarm editAlarm = new Alarm();
+    final ClickListener mouseListener = new ClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
-        AnAction editWatchAction = ActionManager.getInstance().getAction(DebuggerActions.EDIT_WATCH);
+      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
+        if (!SwingUtilities.isLeftMouseButton(event) ||
+            ((event.getModifiers() & (InputEvent.SHIFT_MASK | InputEvent.ALT_MASK | InputEvent.CTRL_MASK | InputEvent.META_MASK)) !=0) ) {
+          return false;
+        }
+        Rectangle bounds = watchTree.getRowBounds(watchTree.getLeadSelectionRow());
+        bounds.width = watchTree.getWidth();
+        if (!bounds.contains(event.getPoint())) {
+          return false;
+        }
+        final AnAction editWatchAction = ActionManager.getInstance().getAction(DebuggerActions.EDIT_WATCH);
         Presentation presentation = editWatchAction.getTemplatePresentation().clone();
         DataContext context = DataManager.getInstance().getDataContext(watchTree);
-
-        AnActionEvent actionEvent = new AnActionEvent(null, context, "WATCH_TREE", presentation, ActionManager.getInstance(), 0);
-        editWatchAction.actionPerformed(actionEvent);
-        return true;
+        final AnActionEvent actionEvent = new AnActionEvent(null, context, "WATCH_TREE", presentation, ActionManager.getInstance(), 0);
+        Runnable runnable = new Runnable() {
+          public void run() {
+            editWatchAction.actionPerformed(actionEvent);
+          }
+        };
+        if (editAlarm.isEmpty() && quitePeriod.isEmpty()) {
+          editAlarm.addRequest(runnable, UIUtil.getMultiClickInterval());
+        } else {
+          editAlarm.cancelAllRequests();
+        }
+        return false;
       }
     };
     ListenerUtil.addClickListener(watchTree, mouseListener);
+
+    final FocusListener focusListener = new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        quitePeriod.addRequest(EmptyRunnable.getInstance(), UIUtil.getMultiClickInterval());
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+        editAlarm.cancelAllRequests();
+      }
+    };
+    ListenerUtil.addFocusListener(watchTree, focusListener);
+
+    final TreeSelectionListener selectionListener = new TreeSelectionListener() {
+      @Override
+      public void valueChanged(TreeSelectionEvent e) {
+        quitePeriod.addRequest(EmptyRunnable.getInstance(), UIUtil.getMultiClickInterval());
+      }
+    };
+    watchTree.addTreeSelectionListener(selectionListener);
 
     final AnAction editWatchAction  = ActionManager.getInstance().getAction(DebuggerActions.EDIT_WATCH);
     editWatchAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), watchTree);
     registerDisposable(new Disposable() {
       public void dispose() {
         ListenerUtil.removeClickListener(watchTree, mouseListener);
+        ListenerUtil.removeFocusListener(watchTree, focusListener);
+        watchTree.removeTreeSelectionListener(selectionListener);
         removeWatchesAction.unregisterCustomShortcutSet(watchTree);
         newWatchAction.unregisterCustomShortcutSet(watchTree);
         editWatchAction.unregisterCustomShortcutSet(watchTree);
