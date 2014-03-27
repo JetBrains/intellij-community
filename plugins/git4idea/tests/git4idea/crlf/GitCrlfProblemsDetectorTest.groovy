@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 package git4idea.crlf
-import com.intellij.dvcs.test.MockVirtualFile
+
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.test.GitSingleRepoTest
 
@@ -122,7 +123,7 @@ win6 crlf=input
     assertTrue "Warning should be done, since one of the files has CRLFs and no related attributes",
            GitCrlfProblemsDetector.detect(myProject, myPlatformFacade, myGit,
                                           ["unix", "win1", "win2", "win3", "src/win4", "src/win5", "src/win6", "src/win7"]
-                                                  .collect { it -> MockVirtualFile.fromPath(it, myProjectRoot.path) as VirtualFile})
+                                                  .collect { it -> VfsUtil.findFileByIoFile(new File(myProjectRoot.path, it), true)})
                    .shouldWarn()
   }
 
@@ -131,7 +132,7 @@ win6 crlf=input
   }
 
   private GitCrlfProblemsDetector detect(String relPath) {
-    return detect(createVirtualFile(relPath))
+    return detect(VfsUtil.findFileByIoFile(createFile(relPath), true))
   }
 
   private GitCrlfProblemsDetector detect(VirtualFile file) {
@@ -143,16 +144,11 @@ win6 crlf=input
   }
 
   private void createFile(String relPath, String content) {
-    String path = createFile(relPath)
-    File file = new File(path)
+    File file = createFile(relPath)
     FileUtil.appendToFile(file, content)
   }
 
-  private VirtualFile createVirtualFile(String relPath) {
-    return new MockVirtualFile(createFile(relPath))
-  }
-
-  private String createFile(String relPath) {
+  private File createFile(String relPath) {
     List<String> split = StringUtil.split(relPath, "/")
     File parent = new File(myProjectRoot.path)
     for (Iterator<String> it = split.iterator(); it.hasNext(); ) {
@@ -164,7 +160,7 @@ win6 crlf=input
       }
       else {
         file.createNewFile()
-        return file.getPath()
+        return file
       }
     }
     return parent;
