@@ -117,6 +117,10 @@ public class SheetController {
       }
     }
 
+    if (myFocusedButton == null) {
+      myFocusedButton = myDefaultButton;
+    }
+
     if (myResult == null) {
       myResult = buttonTitles[0];
     }
