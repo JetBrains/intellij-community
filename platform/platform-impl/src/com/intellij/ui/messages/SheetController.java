@@ -208,6 +208,7 @@ public class SheetController {
           //todo make bottom corners
           g.fill(dialog);
         }
+        paintShadowFromParent(g);
       }
 
     };
@@ -318,6 +319,11 @@ public class SheetController {
     g2d.clearRect(0, 0, SHEET_NC_WIDTH, SHEET_HEIGHT);
     g2d.drawImage(myShadowImage, 0, -SHADOW_BORDER, null);
     g2d.clearRect(SHADOW_BORDER, 0, SHEET_WIDTH, SHEET_HEIGHT);
+  }
+
+  private void paintShadowFromParent(Graphics2D g2d) {
+    g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .35f));
+    g2d.drawImage(myShadowImage, 0, - SHEET_HEIGHT, null);
   }
 
   private void layoutButtons(final JButton[] buttons, JPanel panel) {
