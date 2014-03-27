@@ -76,7 +76,7 @@ public abstract class GitPlatformTest extends UsefulTestCase {
     myProjectPath = myProjectRoot.getPath();
 
     myGitSettings = GitVcsSettings.getInstance(myProject);
-    myGitSettings.getAppSettings().setPathToGit(GitExecutor.GIT_EXECUTABLE);
+    myGitSettings.getAppSettings().setPathToGit(GitExecutor.PathHolder.GIT_EXECUTABLE);
 
     myDialogManager = (TestDialogManager)ServiceManager.getService(DialogManager.class);
     myVcsNotifier = (TestVcsNotifier)ServiceManager.getService(myProject, VcsNotifier.class);
