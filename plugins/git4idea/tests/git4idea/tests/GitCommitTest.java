@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import git4idea.test.GitPlatformTest;
+import git4idea.test.GitSingleRepoTest;
 import git4idea.test.GitTestUtil;
 import org.testng.annotations.Test;
 
@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.intellij.openapi.vcs.Executor.overwrite;
 import static git4idea.test.GitExecutor.*;
 
-public class GitCommitTest extends GitPlatformTest {
+public class GitCommitTest extends GitSingleRepoTest {
 
   /**
    * Tests that merge commit after resolving a conflict works fine if there is a file with spaces in its path.
@@ -40,9 +40,6 @@ public class GitCommitTest extends GitPlatformTest {
    */
   @Test
   public void testMergeCommitWithSpacesInPath() throws IOException {
-    createRepository(myProjectPath);
-    cd(myProjectPath);
-
     final String PATH = "dir with spaces/file with spaces.txt";
     GitTestUtil.createFileStructure(myProjectRoot, PATH);
     addCommit("created some file structure");

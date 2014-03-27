@@ -31,8 +31,7 @@ import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.history.browser.GitHeavyCommit;
 import git4idea.history.browser.SHAHash;
-import git4idea.test.GitPlatformTest;
-import git4idea.test.GitTestUtil;
+import git4idea.test.GitSingleRepoTest;
 import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.Test;
 
@@ -52,7 +51,7 @@ import static git4idea.test.GitTestUtil.USER_NAME;
  * There are some known problems with newlines and whitespaces in commit messages, these are ignored by the tests for now.
  * (see #convertWhitespacesToSpacesAndRemoveDoubles).
  */
-public class GitHistoryUtilsTest extends GitPlatformTest {
+public class GitHistoryUtilsTest extends GitSingleRepoTest {
 
   private File bfile;
   private List<GitTestRevision> myRevisions;
@@ -88,11 +87,6 @@ public class GitHistoryUtilsTest extends GitPlatformTest {
       "sixth content",
       "seventh content",
     };
-
-    String rootDir = myProjectRoot.getPath();
-    cd(rootDir);
-    GitTestUtil.initRepo(rootDir, false);
-    GitTestUtil.registerRepo(myProject, rootDir);
 
     // initial
     int commitIndex = 0;
@@ -145,6 +139,11 @@ public class GitHistoryUtilsTest extends GitPlatformTest {
 
     assertEquals(myRevisionsAfterRename.size(), 5);
     cd(myProjectPath);
+  }
+
+  @Override
+  protected boolean makeInitialCommit() {
+    return false;
   }
 
   // Inspired by IDEA-89347
@@ -334,6 +333,7 @@ public class GitHistoryUtilsTest extends GitPlatformTest {
     addCommit("recreated bfile");
 
     refresh();
+    myRepo.update();
 
     final ItemLatestState state = GitHistoryUtils.getLastRevision(myProject, toFilePath(bfile));
     assertTrue(!state.isItemExists());

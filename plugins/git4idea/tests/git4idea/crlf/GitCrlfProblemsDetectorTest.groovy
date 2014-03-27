@@ -18,12 +18,12 @@ import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import git4idea.test.GitPlatformTest
+import git4idea.test.GitSingleRepoTest
 
 import static com.intellij.openapi.vcs.Executor.cd
 import static git4idea.test.GitExecutor.git
 
-class GitCrlfProblemsDetectorTest extends GitPlatformTest {
+class GitCrlfProblemsDetectorTest extends GitSingleRepoTest {
 
   private String myOldGlobalAutoCrlfValue
   private String myOldSystemAutoCrlfValue
@@ -39,8 +39,6 @@ class GitCrlfProblemsDetectorTest extends GitPlatformTest {
     }
     myOldSystemAutoCrlfValue = git ("config --system core.autocrlf", true)
     git ("config --system --unset core.autocrlf", true)
-
-    createRepository(myProjectRoot.getPath())
   }
 
   public void tearDown() {

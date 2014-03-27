@@ -61,7 +61,7 @@ public class GitTestUtil {
     }
   }
 
-  public static void initRepo(@NotNull String repoRoot, boolean makeInitialCommit) {
+  private static void initRepo(@NotNull String repoRoot, boolean makeInitialCommit) {
     cd(repoRoot);
     git("init");
     setupUsername();

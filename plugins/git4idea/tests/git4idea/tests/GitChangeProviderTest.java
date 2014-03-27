@@ -30,7 +30,7 @@ import com.intellij.testFramework.vcs.MockChangelistBuilder;
 import com.intellij.testFramework.vcs.MockDirtyScope;
 import git4idea.GitVcs;
 import git4idea.status.GitChangeProvider;
-import git4idea.test.GitPlatformTest;
+import git4idea.test.GitSingleRepoTest;
 import git4idea.test.GitTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +51,7 @@ import static git4idea.test.GitExecutor.*;
  * 2. Manually adds them to a dirty scope.
  * 3. Calls ChangeProvider.getChanges() and checks that the changes are there.
  */
-public abstract class GitChangeProviderTest extends GitPlatformTest {
+public abstract class GitChangeProviderTest extends GitSingleRepoTest {
 
   protected GitChangeProvider myChangeProvider;
   protected VcsModifiableDirtyScope myDirtyScope;
@@ -71,7 +71,6 @@ public abstract class GitChangeProviderTest extends GitPlatformTest {
     assertNotNull(myVcs);
     myChangeProvider = (GitChangeProvider) myVcs.getChangeProvider();
 
-    GitTestUtil.createRepository(myProject, myProjectPath, false);
     GitTestUtil.createFileStructure(myProjectRoot, "a.txt", "b.txt", "dir/c.txt", "dir/subdir/d.txt");
     addCommit("initial");
 
@@ -86,6 +85,11 @@ public abstract class GitChangeProviderTest extends GitPlatformTest {
     myDirtyScope = new MockDirtyScope(myProject, myVcs);
 
     cd(myProjectPath);
+  }
+
+  @Override
+  protected boolean makeInitialCommit() {
+    return false;
   }
 
   @Nullable

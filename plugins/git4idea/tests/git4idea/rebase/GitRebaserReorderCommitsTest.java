@@ -18,7 +18,7 @@ package git4idea.rebase;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.Git;
-import git4idea.test.GitPlatformTest;
+import git4idea.test.GitSingleRepoTest;
 import git4idea.test.GitTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.BuiltInServerManager;
@@ -35,7 +35,7 @@ import static git4idea.test.GitExecutor.*;
  * NB: we don't test merge commits here, since {@link GitRebaser#reoderCommitsIfNeeded(VirtualFile, String, List)}
  * doesn't handle it for now.
  */
-public class GitRebaserReorderCommitsTest extends GitPlatformTest {
+public class GitRebaserReorderCommitsTest extends GitSingleRepoTest {
 
   private GitRebaser myRebaser;
   private String myFirstCommit;
@@ -47,6 +47,11 @@ public class GitRebaserReorderCommitsTest extends GitPlatformTest {
     myFirstCommit = makeCommit();
     GitTestUtil.setDefaultBuiltInServerPort();
     BuiltInServerManager.getInstance().waitForStart();
+  }
+
+  @Override
+  protected boolean makeInitialCommit() {
+    return false;
   }
 
   public void testReorderingNothingShouldDoNothing() throws Exception {
