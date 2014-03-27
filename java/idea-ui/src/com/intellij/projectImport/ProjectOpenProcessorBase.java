@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,11 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * User: anna
- * Date: 12-Jul-2007
  */
 package com.intellij.projectImport;
 
@@ -38,13 +33,11 @@ import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,8 +48,11 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
+/**
+ * @author anna
+ * @since 12-Jul-2007
+ */
 public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> extends ProjectOpenProcessor {
-
   private final T myBuilder;
 
   protected ProjectOpenProcessorBase(@NotNull final T builder) {
@@ -176,16 +172,14 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
           existingName = "'" + projectFile.getName() + "'";
           pathToOpen = projectFilePath;
         }
-        int result = Messages.showYesNoCancelDialog(projectToClose,
-                                                    IdeBundle.message("project.import.open.existing",
-                                                                      existingName,
-                                                                      projectFile.getParent(),
-                                                                      virtualFile.getName()),
-                                                    IdeBundle.message("title.open.project"),
-                                                    IdeBundle.message("project.import.open.existing.openExisting"),
-                                                    IdeBundle.message("project.import.open.existing.reimport"),
-                                                    CommonBundle.message("button.cancel"),
-                                                    Messages.getQuestionIcon());
+        int result = Messages.showYesNoCancelDialog(
+          projectToClose,
+          IdeBundle.message("project.import.open.existing", existingName, projectFile.getParent(), virtualFile.getName()),
+          IdeBundle.message("title.open.project"),
+          IdeBundle.message("project.import.open.existing.openExisting"),
+          IdeBundle.message("project.import.open.existing.reimport"),
+          CommonBundle.message("button.cancel"),
+          Messages.getQuestionIcon());
         if (result == Messages.CANCEL) return null;
         shouldOpenExisting = result == Messages.YES;
       }
@@ -195,13 +189,7 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
         try {
           projectToOpen = ProjectManagerEx.getInstanceEx().loadProject(pathToOpen);
         }
-        catch (IOException e) {
-          return null;
-        }
-        catch (JDOMException e) {
-          return null;
-        }
-        catch (InvalidDataException e) {
+        catch (Exception e) {
           return null;
         }
       }
@@ -214,15 +202,20 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
 
         projectToOpen.save();
 
-
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             Sdk jdk = wizardContext.getProjectJdk();
-            if (jdk != null) NewProjectUtil.applyJdkToProject(projectToOpen, jdk);
+            if (jdk != null) {
+              NewProjectUtil.applyJdkToProject(projectToOpen, jdk);
+            }
 
-            final String projectDirPath = wizardContext.getProjectFileDirectory();
-            CompilerProjectExtension.getInstance(projectToOpen).setCompilerOutputUrl(getUrl(
-              StringUtil.endsWithChar(projectDirPath, '/') ? projectDirPath + "classes" : projectDirPath + "/classes"));
+            String projectDirPath = wizardContext.getProjectFileDirectory();
+            String path = StringUtil.endsWithChar(projectDirPath, '/') ? projectDirPath + "classes" : projectDirPath + "/classes";
+            CompilerProjectExtension extension = CompilerProjectExtension.getInstance(projectToOpen);
+            if (extension != null) {
+              extension.setCompilerOutputUrl(getUrl(path));
+            }
           }
         });
 
@@ -246,9 +239,7 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
     try {
       path = FileUtil.resolveShortWindowsName(path);
     }
-    catch (IOException e) {
-      //file doesn't exist
-    }
-    return VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(path));
+    catch (IOException ignored) { }
+    return VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(path));
   }
 }
