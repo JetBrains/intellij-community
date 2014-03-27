@@ -36,8 +36,8 @@ import java.awt.image.BufferedImage;
 public class SheetController {
 
   private static String fontName = "Lucida Grande";
-  private static Font regularFont = new Font(fontName, Font.PLAIN, 12);
-  private static Font boldFont = new Font(fontName, Font.BOLD, 14).deriveFont(Font.BOLD);
+  private static Font regularFont = new Font(fontName, Font.PLAIN, 10);
+  private static Font boldFont = new Font(fontName, Font.BOLD, 12).deriveFont(Font.BOLD);
   private final DialogWrapper.DoNotAskOption myDoNotAskOption;
   private JCheckBox doNotAskCheckBox;
   private boolean myDoNotAskResult;
@@ -50,7 +50,7 @@ public class SheetController {
 
   private static int RIGHT_OFFSET = 15;
 
-  public int SHADOW_BORDER = 10;
+  public int SHADOW_BORDER = 5;
 
   // SHEET
   public int SHEET_WIDTH = 400;
@@ -128,7 +128,7 @@ public class SheetController {
 
     ShadowRenderer renderer = new ShadowRenderer();
     renderer.setSize(SHADOW_BORDER);
-    renderer.setOpacity(.95f);
+    renderer.setOpacity(.75f);
     renderer.setColor(new JBColor(JBColor.BLACK, Gray._10));
     myShadowImage = renderer.createShadow(mySheetStencil);
   }
@@ -195,7 +195,7 @@ public class SheetController {
       protected void paintComponent(Graphics g2d) {
         final Graphics2D g = (Graphics2D) g2d.create();
         super.paintComponent(g);
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .95f));
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .85f));
 
         g.setColor(new JBColor(Gray._225, UIUtil.getPanelBackground()));
         Rectangle2D dialog  = new Rectangle2D.Double(SHADOW_BORDER, 0, SHEET_WIDTH, SHEET_HEIGHT);
