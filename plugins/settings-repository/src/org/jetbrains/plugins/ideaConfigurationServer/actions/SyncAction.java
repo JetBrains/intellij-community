@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.plugins.ideaConfigurationServer.IcsBundle;
 import org.jetbrains.plugins.ideaConfigurationServer.IcsManager;
+import org.jetbrains.plugins.ideaConfigurationServer.SyncType;
 
 class SyncAction extends DumbAwareAction {
   @Override
@@ -17,7 +18,7 @@ class SyncAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    IcsManager.getInstance().sync().doWhenDone(new Runnable() {
+    IcsManager.getInstance().sync(SyncType.MERGE).doWhenDone(new Runnable() {
       @Override
       public void run() {
         new Notification(IcsManager.PLUGIN_NAME, IcsBundle.message("sync.done.title"), IcsBundle.message("sync.done.message"), NotificationType.INFORMATION).notify(null);

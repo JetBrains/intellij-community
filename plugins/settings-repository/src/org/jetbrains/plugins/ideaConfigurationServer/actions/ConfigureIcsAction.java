@@ -7,6 +7,6 @@ import org.jetbrains.plugins.ideaConfigurationServer.IcsSettingsPanel;
 class ConfigureIcsAction extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    new IcsSettingsPanel().show();
+    new IcsSettingsPanel(e.getProject()).show();
   }
 }

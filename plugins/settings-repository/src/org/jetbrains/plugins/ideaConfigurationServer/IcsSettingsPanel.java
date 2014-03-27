@@ -2,6 +2,7 @@ package org.jetbrains.plugins.ideaConfigurationServer;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
@@ -9,7 +10,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.Consumer;
 import com.intellij.util.io.URLUtil;
 import org.eclipse.jgit.lib.Constants;
 import org.jetbrains.annotations.NotNull;
@@ -32,8 +32,8 @@ public class IcsSettingsPanel extends DialogWrapper {
   private JCheckBox shareProjectWorkspaceCheckBox;
   private final JButton syncButton;
 
-  public IcsSettingsPanel() {
-    super(true);
+  public IcsSettingsPanel(@Nullable final Project project) {
+    super(project, true);
 
     IcsManager icsManager = IcsManager.getInstance();
     IcsSettings settings = icsManager.getSettings();
@@ -46,25 +46,13 @@ public class IcsSettingsPanel extends DialogWrapper {
     // todo TextComponentUndoProvider should not depends on app settings
     //new TextComponentUndoProvider(urlTextField);
 
-    syncButton = new JButton(IcsBundle.message("settings.panel.syncNow"));
+    syncButton = new JButton(IcsBundle.message("settings.panel.sync.repositories"));
     syncButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        if (!saveRemoteRepositoryUrl()) {
-          return;
+        if (saveRemoteRepositoryUrl()) {
+          new SyncRepositoriesDialog(panel).show();
         }
-
-        IcsManager.getInstance().sync().doWhenDone(new Runnable() {
-          @Override
-          public void run() {
-            Messages.showInfoMessage(getContentPane(), IcsBundle.message("sync.done.message"), IcsBundle.message("sync.done.title"));
-          }
-        }).doWhenRejected(new Consumer<String>() {
-          @Override
-          public void consume(String error) {
-            Messages.showErrorDialog(getContentPane(), IcsBundle.message("sync.rejected.message", StringUtil.notNullize(error, "Internal error")), IcsBundle.message("sync.rejected.title"));
-          }
-        });
       }
     });
     updateSyncButtonState();

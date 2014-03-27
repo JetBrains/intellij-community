@@ -216,7 +216,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
   }
 
   @NotNull
-  public ActionCallback sync() {
+  public ActionCallback sync(@NotNull SyncType syncType) {
     commitAlarm.cancel();
     final ActionCallback actionCallback = new ActionCallback(3);
     ProgressManager.getInstance().run(new Task.Modal(null, IcsBundle.message("task.sync.title"), true) {
