@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -111,7 +112,9 @@ public class TerminalSshModule extends LineCommandAdapter implements CommandRunt
       }
     };
 
-    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(command);
+    // Use ModalityState.any() as currently ssh credentials in terminal mode are requested in the thread that reads output and not in
+    // the thread that started progress
+    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(command, ModalityState.any());
 
     unknownHost = null;
     fingerprintAlgorithm = null;
