@@ -726,9 +726,11 @@ def layoutJps(String home, String targetDir, String buildNumber, Closure additio
         module("forms-compiler")
         module("instrumentation-util")
         module("jps-builders")
-        module("jps-plugin-system")
         module("jps-standalone-builder")
         module("java-runtime")
+      }
+      jar("jps-plugin-system.jar") {
+        module("jps-plugin-system")
       }
       jar("groovy-jps-plugin.jar") {
         module("groovy-jps-plugin")
