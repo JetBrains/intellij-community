@@ -19,6 +19,7 @@ import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisito
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.util.ArrayUtil;
@@ -196,7 +197,7 @@ public abstract class StructuralSearchProfile {
     return fileType;
   }
 
-  PredefinedConfiguration[] getPredefinedTemplates() {
-    return PredefinedConfiguration.EMPTY_ARRAY;
+  Configuration[] getPredefinedTemplates() {
+    return Configuration.EMPTY_ARRAY;
   }
 }

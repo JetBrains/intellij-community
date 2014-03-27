@@ -1,7 +1,9 @@
 package com.intellij.structuralsearch;
 
-import static com.intellij.structuralsearch.PredefinedConfiguration.createSearchTemplateInfo;
-import static com.intellij.structuralsearch.PredefinedConfiguration.createSearchTemplateInfoSimple;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
+
+import static com.intellij.structuralsearch.PredefinedConfigurationUtil.createSearchTemplateInfo;
+import static com.intellij.structuralsearch.PredefinedConfigurationUtil.createSearchTemplateInfoSimple;
 
 /**
 * @author Bas Leijdekkers
@@ -17,8 +19,8 @@ class JavaPredefinedConfigurations {
   private static final String MISC_TYPE = SSRBundle.message("misc.category");
   private static final String GENERICS_TYPE = SSRBundle.message("generics.category");
 
-  public static PredefinedConfiguration[] createPredefinedTemplates() {
-    return new PredefinedConfiguration[] {
+  public static Configuration[] createPredefinedTemplates() {
+    return new Configuration[] {
       // Expression patterns
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.method.calls"), "'_Instance?.'MethodCall('_Parameter*)", EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.new.expressions"), "new 'Constructor('_Argument*)", EXPRESSION_TYPE),

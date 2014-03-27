@@ -23,13 +23,14 @@ import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacerImpl;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacerUtil;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.structuralsearch.PredefinedConfiguration.createSearchTemplateInfo;
+import static com.intellij.structuralsearch.PredefinedConfigurationUtil.createSearchTemplateInfo;
 
 /**
  * @author Eugene.Kudelevsky
@@ -209,15 +210,15 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  PredefinedConfiguration[] getPredefinedTemplates() {
+  Configuration[] getPredefinedTemplates() {
     return XmlPredefinedConfigurations.createPredefinedTemplates();
   }
 
   private static class XmlPredefinedConfigurations {
     private static final String HTML_XML = SSRBundle.message("xml_html.category");
 
-    private static PredefinedConfiguration[] createPredefinedTemplates() {
-      return new PredefinedConfiguration[]{
+    private static Configuration[] createPredefinedTemplates() {
+      return new Configuration[]{
         createSearchTemplateInfo("xml tag", "<'a/>", HTML_XML, StdFileTypes.XML),
         createSearchTemplateInfo("xml attribute", "<'_tag 'attribute=\"'_value\"/>", HTML_XML, StdFileTypes.XML),
         createSearchTemplateInfo("xml attribute value", "<'_tag '_attribute=\"'value\"/>", HTML_XML, StdFileTypes.XML),

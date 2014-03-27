@@ -8,13 +8,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.structuralsearch.MatchOptions;
-import com.intellij.structuralsearch.PredefinedConfiguration;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -24,8 +23,8 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * Created by IntelliJ IDEA.
@@ -210,11 +209,7 @@ public class SelectTemplateDialog extends DialogWrapper {
     final Configuration configuration;
 
     // root could be without search template
-    if (userObject instanceof PredefinedConfiguration) {
-      final PredefinedConfiguration config = (PredefinedConfiguration)userObject;
-      configuration = config.getConfiguration();
-    }
-    else if (userObject instanceof Configuration) {
+    if (userObject instanceof Configuration) {
       configuration = (Configuration)userObject;
     }
     else {

@@ -13,8 +13,10 @@ import org.jetbrains.annotations.NonNls;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class Configuration implements JDOMExternalizable {
+  public static final Configuration[] EMPTY_ARRAY = {};
   @NonNls protected static final String NAME_ATTRIBUTE_NAME = "name";
   private String name = "";
+  private String category = null;
   private boolean predefined;
 
   private static ConfigurationCreator configurationCreator;
@@ -25,6 +27,14 @@ public abstract class Configuration implements JDOMExternalizable {
 
   public void setName(String value) {
     name = value;
+  }
+
+  public String getCategory() {
+    return category;
+  }
+
+  public void setCategory(String category) {
+    this.category = category;
   }
 
   public void readExternal(Element element) {

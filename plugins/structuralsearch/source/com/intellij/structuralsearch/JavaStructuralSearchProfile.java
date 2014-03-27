@@ -25,6 +25,7 @@ import com.intellij.structuralsearch.impl.matcher.filters.JavaLexicalNodesFilter
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,8 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import static com.intellij.structuralsearch.PredefinedConfiguration.createSearchTemplateInfo;
 
 /**
  * @author Eugene.Kudelevsky
@@ -362,7 +361,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  PredefinedConfiguration[] getPredefinedTemplates() {
+  Configuration[] getPredefinedTemplates() {
     return JavaPredefinedConfigurations.createPredefinedTemplates();
   }
 }

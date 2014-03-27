@@ -680,7 +680,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
             setDialogTitle(model.getConfig());
 
             if (model.getShadowConfig() == null ||
-                model.getShadowConfig() instanceof PredefinedConfiguration) {
+                model.getShadowConfig().isPredefined()) {
               existingTemplatesComponent.addConfigurationToUserTemplates(model.getConfig());
             }
             else {  // ???
@@ -866,7 +866,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     try {
       if (model.getShadowConfig() != null) {
-        if (model.getShadowConfig() instanceof PredefinedConfiguration) {
+        if (model.getShadowConfig().isPredefined()) {
           model.getConfig().setName(
             model.getShadowConfig().getName()
           );

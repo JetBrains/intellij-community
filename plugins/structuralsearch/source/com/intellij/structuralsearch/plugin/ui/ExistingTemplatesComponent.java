@@ -2,7 +2,6 @@ package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.structuralsearch.PredefinedConfiguration;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
@@ -51,8 +50,8 @@ public class ExistingTemplatesComponent {
     String lastCategory = null;
     LinkedList<Object> nodesToExpand = new LinkedList<Object>();
 
-    final List<PredefinedConfiguration> predefined = StructuralSearchUtil.getPredefinedTemplates();
-    for (final PredefinedConfiguration info : predefined) {
+    final List<Configuration> predefined = StructuralSearchUtil.getPredefinedTemplates();
+    for (final Configuration info : predefined) {
       final DefaultMutableTreeNode node = new DefaultMutableTreeNode(info);
 
       if (lastCategory == null || !lastCategory.equals(info.getCategory())) {
@@ -193,10 +192,7 @@ public class ExistingTemplatesComponent {
           DefaultMutableTreeNode node = (DefaultMutableTreeNode)object.getLastPathComponent();
           Object displayValue = node.getUserObject();
 
-          if (displayValue instanceof PredefinedConfiguration) {
-            displayValue = ((PredefinedConfiguration)displayValue).getConfiguration().getName();
-          }
-          else if (displayValue instanceof Configuration) {
+          if (displayValue instanceof Configuration) {
             displayValue = ((Configuration)displayValue).getName();
           }
           else {

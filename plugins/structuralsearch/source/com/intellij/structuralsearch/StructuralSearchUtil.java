@@ -5,9 +5,9 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.MatchUtils;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.tokenindex.LanguageTokenizer;
 import com.intellij.tokenindex.Tokenizer;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +21,7 @@ public class StructuralSearchUtil {
 
   public static boolean ourUseUniversalMatchingAlgorithm = false;
   private static StructuralSearchProfile[] ourNewStyleProfiles;
-  private static List<PredefinedConfiguration> ourPredefinedConfigurations = null;
+  private static List<Configuration> ourPredefinedConfigurations = null;
 
   private StructuralSearchUtil() {
   }
@@ -150,9 +150,9 @@ public class StructuralSearchUtil {
     return buf.toString();
   }
 
-  public static List<PredefinedConfiguration> getPredefinedTemplates() {
+  public static List<Configuration> getPredefinedTemplates() {
     if (ourPredefinedConfigurations == null) {
-      final List<PredefinedConfiguration> result = new ArrayList<PredefinedConfiguration>();
+      final List<Configuration> result = new ArrayList<Configuration>();
       for (StructuralSearchProfile profile : getProfiles()) {
         Collections.addAll(result, profile.getPredefinedTemplates());
       }
