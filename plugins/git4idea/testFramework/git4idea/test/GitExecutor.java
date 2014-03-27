@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,16 +32,20 @@ public class GitExecutor extends Executor {
 
   private static final int MAX_RETRIES = 3;
   private static boolean myVersionPrinted;
-  public static final String GIT_EXECUTABLE = findGitExecutable();
 
   private static String findGitExecutable() {
     return findExecutable("Git", "git", "git.exe", Arrays.asList(GIT_EXECUTABLE_ENV, TEAMCITY_GIT_EXECUTABLE_ENV));
   }
 
+  //using inner class to avoid extra work during class loading of unrelated tests
+  public static class PathHolder {
+    public static final String GIT_EXECUTABLE = findGitExecutable();
+  }
+
   public static String git(String command) {
     printVersionTheFirstTime();
     List<String> split = splitCommandInParameters(command);
-    split.add(0, GIT_EXECUTABLE);
+    split.add(0, PathHolder.GIT_EXECUTABLE);
     log("git " + command);
     for (int attempt = 0; attempt < 3; attempt++) {
       String stdout = run(split);
