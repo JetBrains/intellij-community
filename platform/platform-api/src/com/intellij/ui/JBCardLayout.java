@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,7 +104,9 @@ public class JBCardLayout extends CardLayout {
       public void actionPerformed(ActionEvent e) {
         long timePassed = System.currentTimeMillis() - startTime;
         if (timePassed >= mySwipeTime) {
+          Component currentFocusComponent = IdeFocusManager.getGlobalInstance().getFocusedDescendantFor(parent);
           show(parent, name);
+          if (currentFocusComponent != null) currentFocusComponent.requestFocusInWindow();
           return;
         }
         linearProgress[0] = Math.min(1, Math.max(0, (float)timePassed / mySwipeTime));
