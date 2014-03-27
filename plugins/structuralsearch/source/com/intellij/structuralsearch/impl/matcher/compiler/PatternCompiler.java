@@ -501,9 +501,10 @@ public class PatternCompiler {
     PsiElement[] matchStatements;
 
     try {
-      matchStatements = MatcherImplUtil.createTreeFromText(buf.toString(), PatternTreeContext.Block, options.getFileType(),
+      final String pattern = buf.toString();
+      matchStatements = MatcherImplUtil.createTreeFromText(pattern, PatternTreeContext.Block, options.getFileType(),
                                                            options.getDialect(), options.getPatternContext(), project, false);
-      if (matchStatements.length==0) throw new MalformedPatternException();
+      if (matchStatements.length==0) throw new MalformedPatternException(pattern);
     } catch (IncorrectOperationException e) {
       throw new MalformedPatternException(e.getMessage());
     }

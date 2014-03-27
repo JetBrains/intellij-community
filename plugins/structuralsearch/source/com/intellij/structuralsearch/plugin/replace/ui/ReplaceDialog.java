@@ -4,6 +4,7 @@ import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.ReplacementVariableDefinition;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.UnsupportedPatternException;
@@ -172,17 +173,19 @@ public class ReplaceDialog extends SearchDialog {
   protected boolean isValid() {
     if (!super.isValid()) return false;
 
-    boolean result = true;
-
     try {
       Replacer.checkSupportedReplacementPattern(searchContext.getProject(), ((ReplaceConfiguration)model.getConfig()).getOptions());
     }
     catch (UnsupportedPatternException ex) {
       reportMessage("unsupported.replacement.pattern.message", replaceCriteriaEdit, ex.getMessage());
-      result = false;
+      return false;
+    }
+    catch (MalformedPatternException ex) {
+      reportMessage("malformed.replacement.pattern.message", replaceCriteriaEdit, ex.getMessage());
+      return false;
     }
 
-    return result;
+    return true;
   }
 
   public void show() {
