@@ -31,10 +31,29 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author Kirill Likhodedov
- */
 public class Executor {
+
+  public static class ExecutionException extends RuntimeException {
+
+    private final int myExitCode;
+    @NotNull private final String myOutput;
+
+    ExecutionException(int exitCode, @NotNull String output) {
+      super("Failed with exit code " + exitCode);
+      myExitCode = exitCode;
+      myOutput = output;
+    }
+
+    public int getExitCode() {
+      return myExitCode;
+    }
+
+    @NotNull
+    public String getOutput() {
+      return myOutput;
+    }
+
+  }
 
   private static String ourCurrentDir;
 
@@ -134,7 +153,7 @@ public class Executor {
     }
   }
 
-  protected static String run(@NotNull List<String> params, boolean ignoreNonZeroExitCode) {
+  protected static String run(@NotNull List<String> params, boolean ignoreNonZeroExitCode) throws ExecutionException {
     final ProcessBuilder builder = new ProcessBuilder().command(params);
     builder.directory(ourCurrentDir());
     builder.redirectErrorStream(true);
@@ -159,7 +178,7 @@ public class Executor {
       }
       debug(stdout);
       if (!ignoreNonZeroExitCode) {
-        throw new IllegalStateException("Failed with exit code" + result.getExitCode());
+        throw new ExecutionException(result.getExitCode(), stdout);
       }
     }
     else {
