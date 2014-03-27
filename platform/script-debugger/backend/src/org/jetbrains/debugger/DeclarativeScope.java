@@ -52,4 +52,10 @@ public abstract class DeclarativeScope<VALUE_LOADER extends ValueManager> extend
   public final AsyncResult<List<? extends Variable>> getVariables() {
     return VARIABLES_LOADER.get(this);
   }
+
+  @Override
+  public void clearCaches() {
+    cacheStamp = -1;
+    VARIABLES_LOADER.reset(this);
+  }
 }

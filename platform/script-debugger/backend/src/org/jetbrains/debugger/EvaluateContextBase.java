@@ -13,7 +13,7 @@ public abstract class EvaluateContextBase implements EvaluateContext {
 
   @NotNull
   @Override
-  public EvaluateContext withLoader(@NotNull String objectGroup) {
+  public EvaluateContext withValueManager(@NotNull String objectGroup) {
     return this;
   }
 
