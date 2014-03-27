@@ -33,11 +33,11 @@ import com.intellij.vcs.log.data.VcsLogSorter;
 import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
+import git4idea.GitUserRegistry;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
-import git4idea.config.GitConfigUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.GitLogParser;
 import git4idea.repo.GitRepository;
@@ -54,12 +54,15 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull private final Project myProject;
   @NotNull private final GitRepositoryManager myRepositoryManager;
+  @NotNull private final GitUserRegistry myUserRegistry;
   @NotNull private final VcsLogRefManager myRefSorter;
   @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
 
-  public GitLogProvider(@NotNull Project project, @NotNull GitRepositoryManager repositoryManager, @NotNull VcsLogObjectsFactory factory) {
+  public GitLogProvider(@NotNull Project project, @NotNull GitRepositoryManager repositoryManager, @NotNull VcsLogObjectsFactory factory,
+                        @NotNull GitUserRegistry userRegistry) {
     myProject = project;
     myRepositoryManager = repositoryManager;
+    myUserRegistry = userRegistry;
     myRefSorter = new GitRefManager(myRepositoryManager);
     myVcsObjectsFactory = factory;
   }
@@ -324,9 +327,7 @@ public class GitLogProvider implements VcsLogProvider {
   @Nullable
   @Override
   public VcsUser getCurrentUser(@NotNull VirtualFile root) throws VcsException {
-    String userName = GitConfigUtil.getValue(myProject, root, GitConfigUtil.USER_NAME);
-    String userEmail = StringUtil.notNullize(GitConfigUtil.getValue(myProject, root, GitConfigUtil.USER_EMAIL));
-    return userName == null ? null : myVcsObjectsFactory.createUser(userName, userEmail);
+    return myUserRegistry.getOrReadUser(root);
   }
 
   @NotNull
