@@ -73,6 +73,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   public static final String HTTP_PROXY_PASSWORD = "http-proxy-password";
   private Project myProject;
   private File myConfigDirectory;
+  private ISVNAuthenticationProvider myRuntimeCacheProvider;
   private PersistentAuthenticationProviderProxy myPersistentAuthenticationProviderProxy;
   private SvnConfiguration myConfig;
   private static final ThreadLocal<Boolean> ourJustEntered = new ThreadLocal<Boolean>();
@@ -119,6 +120,19 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
 
       }
     });
+    // This is not the same instance as DefaultSVNAuthenticationManager.myProviders[1], but currently
+    // DefaultSVNAuthenticationManager.CacheAuthenticationProvider uses only its outer class state - so we utilize necessary logic with
+    // this new instance.
+    myRuntimeCacheProvider = createRuntimeAuthenticationProvider();
+  }
+
+  public SVNAuthentication requestFromCache(String kind,
+                                            SVNURL url,
+                                            String realm,
+                                            SVNErrorMessage errorMessage,
+                                            SVNAuthentication previousAuth,
+                                            boolean authMayBeStored) {
+    return myRuntimeCacheProvider.requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, authMayBeStored);
   }
 
   public String getDefaultUsername(String kind, SVNURL url) {
