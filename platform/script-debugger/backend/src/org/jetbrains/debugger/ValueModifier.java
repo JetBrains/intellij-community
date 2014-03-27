@@ -10,7 +10,7 @@ public interface ValueModifier {
 
   // we don't worry about performance in case of simple primitive values - boolean/string/numbers,
   // it works quickly and we don't want to complicate our code and debugger SDK
-  ActionCallback setValue(@NotNull Variable variable, String newValue, EvaluateContext evaluateContext);
+  ActionCallback setValue(@NotNull Variable variable, String newValue, @NotNull EvaluateContext evaluateContext);
 
-  ActionCallback setValue(@NotNull Variable variable, Value newValue);
+  ActionCallback setValue(@NotNull Variable variable, Value newValue, @NotNull EvaluateContext evaluateContext);
 }

@@ -44,12 +44,6 @@ public interface SuspendContext {
   List<Breakpoint> getBreakpointsHit();
 
   /**
-   * @return evaluate context for evaluating expressions in global scope
-   */
-  @Nullable
-  EvaluateContext getGlobalEvaluateContext();
-
-  /**
    * @return value mapping that all values have by default; typically unique for a particular {@link SuspendContext}
    */
   @NotNull
