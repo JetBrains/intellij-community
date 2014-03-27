@@ -284,8 +284,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
     else {
       child = new VirtualFileImpl(nameId, this, id, attributes);
-      //noinspection TestOnlyProblems
-      assertAccessInTests(child, delegate);
     }
 
     if (delegate.markNewFilesAsDirty()) {
@@ -296,10 +294,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
 
-  private static final boolean IS_UNDER_TEAMCITY = System.getProperty("bootstrap.testcases") != null;
   private static final boolean SHOULD_PERFORM_ACCESS_CHECK = System.getenv("NO_FS_ROOTS_ACCESS_CHECK") == null;
 
-  private static final Collection<String> ourAdditionalRoots = new THashSet<String>();
+  // we don't want test subclasses to accidentally remove allowed files, added by base classes   
+  private static final List<String> ourAdditionalRoots = new ArrayList<String>();
 
   @TestOnly
   public static void allowRootAccess(@NotNull String... roots) {
@@ -318,8 +316,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @TestOnly
   private static void assertAccessInTests(@NotNull VirtualFileSystemEntry child, @NotNull NewVirtualFileSystem delegate) {
     final Application application = ApplicationManager.getApplication();
-    if (IS_UNDER_TEAMCITY &&
-        SHOULD_PERFORM_ACCESS_CHECK &&
+    if (SHOULD_PERFORM_ACCESS_CHECK &&
         application.isUnitTestMode() &&
         application instanceof ApplicationImpl &&
         ((ApplicationImpl)application).isComponentsCreated()) {
@@ -706,6 +703,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     appended[i] = file;
     System.arraycopy(array, i, appended, i + 1, array.length - i);
     myChildren = appended;
+
+    // access check should only be called when child is actually added to the parent, otherwise it may break VirtualFilePointers validity 
+    //noinspection TestOnlyProblems
+    assertAccessInTests(file, myFS);
   }
 
   public synchronized void removeChild(@NotNull VirtualFile file) {
