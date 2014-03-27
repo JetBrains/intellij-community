@@ -129,7 +129,7 @@ public class VMOptions {
 
   private static void writeOption(String option, int value, Pattern pattern) {
     File file = getWriteFile();
-    if (file == null) return;
+    if (file == null || !file.canWrite()) return;
 
     try {
       String optionValue = option + value + "m";
