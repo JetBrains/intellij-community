@@ -382,6 +382,7 @@
             <action id="TabsPlacementBottom" text="Bottom" class="com.intellij.ide.actions.TabsPlacementAction$Bottom" />
             <action id="TabsPlacementLeft"   text="Left"   class="com.intellij.ide.actions.TabsPlacementAction$Left" />
             <action id="TabsPlacementRight"  text="Right"  class="com.intellij.ide.actions.TabsPlacementAction$Right" />
+            <action id="TabsPlacementNone"   text="None"   class="com.intellij.ide.actions.TabsPlacementAction$None" />
           </group>
           <action id="TabsAlphabeticalMode" class="com.intellij.ide.actions.TabsAlphabeticalModeSwitcher" text="Alphabetical Mode"/>
         </group>

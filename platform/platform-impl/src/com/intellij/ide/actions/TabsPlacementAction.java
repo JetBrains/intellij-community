@@ -44,4 +44,5 @@ public abstract class TabsPlacementAction extends ToggleAction {
   public static class Left   extends TabsPlacementAction {int getPlace() {return SwingConstants.LEFT;}}
   public static class Bottom extends TabsPlacementAction {int getPlace() {return SwingConstants.BOTTOM;}}
   public static class Right  extends TabsPlacementAction {int getPlace() {return SwingConstants.RIGHT;}}
+  public static class None   extends TabsPlacementAction {int getPlace() {return UISettings.TABS_NONE;}}
 }
