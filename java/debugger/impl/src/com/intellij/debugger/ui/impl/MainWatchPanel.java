@@ -80,10 +80,13 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
             ((event.getModifiers() & (InputEvent.SHIFT_MASK | InputEvent.ALT_MASK | InputEvent.CTRL_MASK | InputEvent.META_MASK)) !=0) ) {
           return false;
         }
+        boolean sameRow = false;
         Rectangle bounds = watchTree.getRowBounds(watchTree.getLeadSelectionRow());
-        bounds.width = watchTree.getWidth();
-        if (!bounds.contains(event.getPoint())) {
-          return false;
+        if (bounds != null) {
+          bounds.width = watchTree.getWidth();
+          if (bounds.contains(event.getPoint())) {
+            sameRow = true;
+          }
         }
         final AnAction editWatchAction = ActionManager.getInstance().getAction(DebuggerActions.EDIT_WATCH);
         Presentation presentation = editWatchAction.getTemplatePresentation().clone();
@@ -94,7 +97,7 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
             editWatchAction.actionPerformed(actionEvent);
           }
         };
-        if (editAlarm.isEmpty() && quitePeriod.isEmpty()) {
+        if (sameRow && editAlarm.isEmpty() && quitePeriod.isEmpty()) {
           editAlarm.addRequest(runnable, UIUtil.getMultiClickInterval());
         } else {
           editAlarm.cancelAllRequests();
