@@ -137,7 +137,9 @@ public class ClassWriter {
 		// lambda method
 		StructMethod mt = cl.getMethod(node.lambda_information.content_method_key);
 		MethodWrapper meth = wrapper.getMethodWrapper(mt.getName(), mt.getDescriptor());
-		MethodDescriptor md = MethodDescriptor.parseDescriptor(node.lambda_information.method_descriptor);
+		
+		MethodDescriptor md_content = MethodDescriptor.parseDescriptor(node.lambda_information.content_method_descriptor);
+		MethodDescriptor md_lambda = MethodDescriptor.parseDescriptor(node.lambda_information.method_descriptor);
 
 		if(!lambda_to_anonymous) { // lambda parameters '() ->'
 
@@ -146,18 +148,23 @@ public class ClassWriter {
 			boolean firstpar = true;
 			int index = 1;
 			
-			for(int i=0;i<md.params.length;i++) {
+			int start_index = md_content.params.length - md_lambda.params.length;
+			
+			for(int i=0;i<md_content.params.length;i++) {
 					
-				if(!firstpar) {
-					buff.append(", ");
+				if(i >= start_index) {
+
+					if(!firstpar) {
+						buff.append(", ");
+					}
+					
+					String parname = meth.varproc.getVarName(new VarVersionPaar(index, 0));
+					buff.append(parname==null ? "param"+index : parname); // null iff decompiled with errors
+					
+					firstpar = false;
 				}
 				
-				String parname = meth.varproc.getVarName(new VarVersionPaar(index, 0));
-				buff.append(parname==null ? "param"+index : parname); // null iff decompiled with errors
-				
-				firstpar = false;
-				
-				index+=md.params[i].stack_size;
+				index+=md_content.params[i].stack_size;
 			}
 			buff.append(") ->");
 			
@@ -588,7 +595,8 @@ public class ClassWriter {
 		String indstr = InterpreterUtil.getIndentString(indent);
 
 		String method_name = node_lambda.lambda_information.method_name;
-		MethodDescriptor md = MethodDescriptor.parseDescriptor(node_lambda.lambda_information.method_descriptor);
+		MethodDescriptor md_content = MethodDescriptor.parseDescriptor(node_lambda.lambda_information.content_method_descriptor);
+		MethodDescriptor md_lambda = MethodDescriptor.parseDescriptor(node_lambda.lambda_information.method_descriptor);
 		
 		StringWriter strwriter = new StringWriter();
 		BufferedWriter bufstrwriter = new BufferedWriter(strwriter); 
@@ -602,28 +610,33 @@ public class ClassWriter {
 			boolean firstpar = true;
 			int index = 1;
 			
-			for(int i=0;i<md.params.length;i++) {
+			int start_index = md_content.params.length - md_lambda.params.length;
+			
+			for(int i=0;i<md_content.params.length;i++) {
+				
+				if(i >= start_index) {
+				
+					if(!firstpar) {
+						bufstrwriter.write(", ");
+					}
 					
-				if(!firstpar) {
-					bufstrwriter.write(", ");
+					VarType partype = md_content.params[i].copy();
+					
+					String strpartype = ExprProcessor.getCastTypeName(partype);
+					if(ExprProcessor.UNDEFINED_TYPE_STRING.equals(strpartype) && DecompilerContext.getOption(IFernflowerPreferences.UNDEFINED_PARAM_TYPE_OBJECT)) {
+						strpartype = ExprProcessor.getCastTypeName(VarType.VARTYPE_OBJECT);
+					}
+		
+					bufstrwriter.write(strpartype);
+					bufstrwriter.write(" ");
+					
+					String parname = meth.varproc.getVarName(new VarVersionPaar(index, 0));
+					bufstrwriter.write(parname==null?"param"+index:parname); // null iff decompiled with errors
+					
+					firstpar = false;
 				}
 				
-				VarType partype = md.params[i].copy();
-				
-				String strpartype = ExprProcessor.getCastTypeName(partype);
-				if(ExprProcessor.UNDEFINED_TYPE_STRING.equals(strpartype) && DecompilerContext.getOption(IFernflowerPreferences.UNDEFINED_PARAM_TYPE_OBJECT)) {
-					strpartype = ExprProcessor.getCastTypeName(VarType.VARTYPE_OBJECT);
-				}
-	
-				bufstrwriter.write(strpartype);
-				bufstrwriter.write(" ");
-				
-				String parname = meth.varproc.getVarName(new VarVersionPaar(index, 0));
-				bufstrwriter.write(parname==null?"param"+index:parname); // null iff decompiled with errors
-				
-				firstpar = false;
-				
-				index+=md.params[i].stack_size;
+				index+=md_content.params[i].stack_size;
 			}
 			
 			bufstrwriter.write(")");

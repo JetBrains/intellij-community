@@ -120,18 +120,21 @@ public class NestedClassProcessor {
 		
 		final boolean is_static_lambda_content = child.lambda_information.is_content_method_static;
 		
-		if(!is_static_lambda_content) {  // this pointer
-			if(DecompilerContext.getOption(IFernflowerPreferences.LAMBDA_TO_ANONYMOUS_CLASS)) {
-				//meth.varproc.getThisvars().put(newvar, parent.classStruct.qualifiedName);
-			}
-		}
-
 		final String parent_class_name = parent.wrapper.getClassStruct().qualifiedName;
 		final String lambda_class_name = child.simpleName;
 		
 		final VarType lambda_class_type = new VarType(lambda_class_name, true);
-		
+
+		// this pointer
+		if(!is_static_lambda_content && DecompilerContext.getOption(IFernflowerPreferences.LAMBDA_TO_ANONYMOUS_CLASS)) {  
+			meth.varproc.getThisvars().put(new VarVersionPaar(0, 0), parent_class_name);
+			meth.varproc.setVarName(new VarVersionPaar(0, 0), parent.simpleName + ".this");
+		}
+
+		// local variables
 		DirectGraph graph = encmeth.getOrBuildGraph();
+		
+		final HashMap<VarVersionPaar, String> mapNewNames = new HashMap<VarVersionPaar, String>();
 		
 		graph.iterateExprents(new DirectGraph.ExprentIterator() {
 			public int processExprent(Exprent exprent) {
@@ -158,7 +161,8 @@ public class NestedClassProcessor {
 									VarVersionPaar enc_varpaar = new VarVersionPaar((VarExprent)param);
 									String enc_varname = encmeth.varproc.getVarName(enc_varpaar);
 									
-									meth.varproc.setVarName(new VarVersionPaar(varindex, 0), enc_varname);
+									//meth.varproc.setVarName(new VarVersionPaar(varindex, 0), enc_varname);
+									mapNewNames.put(new VarVersionPaar(varindex, 0), enc_varname);
 								}
 								
 								varindex+=md_content.params[i].stack_size;
@@ -171,6 +175,18 @@ public class NestedClassProcessor {
 				return 0;
 			}
 		});
+	
+		// update names of local variables
+		HashSet<String> setNewOuterNames = new HashSet<String>(mapNewNames.values());
+		setNewOuterNames.removeAll(meth.setOuterVarNames);
+		
+		meth.varproc.refreshVarNames(new VarNamesCollector(setNewOuterNames));
+		meth.setOuterVarNames.addAll(setNewOuterNames);
+		
+		for(Entry<VarVersionPaar, String> entr : mapNewNames.entrySet()) {
+			meth.varproc.setVarName(entr.getKey(), entr.getValue());
+		}
+		
 	}
 	
 	private void checkNotFoundClasses(ClassNode root, ClassNode node) {
