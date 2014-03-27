@@ -32,6 +32,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -126,8 +127,8 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
   }
 
   public void onProjectClosed(Project project) {
-    clearCache();
     myProject2Id.remove(project);
+    clearCache();
   }
 
   public void onProjectOpened(Project project) {
@@ -148,12 +149,22 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
   }
 
   protected void clearCache() {
-    myCachedFiles.clear();
+    clearInvalidFiles();
+  }
+
+  protected void clearInvalidFiles() {
+    for (Iterator<String> it = myCachedFiles.keySet().iterator(); it.hasNext(); ) {
+      String path = it.next();
+      T t = myCachedFiles.get(path);
+      if (t == null || !t.isValid()) {
+        it.remove();
+      }
+    }
   }
 
   @TestOnly
   public void cleanup() {
-    clearCache();
+    myCachedFiles.clear();
     myProject2Id.clear();
   }
 
