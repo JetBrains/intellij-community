@@ -478,12 +478,15 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
       VirtualFile root = entry.getKey();
       VcsLogProvider logProvider = entry.getValue();
 
-      StopWatch sw = StopWatch.start("readFirstBlock for " + root.getName());
-
-      List<? extends VcsCommitMetadata> firstBlockDetails = logProvider.readFirstBlock(root, new RequirementsImpl(commitsCount, ordered));
+      StopWatch sw = StopWatch.start("readAllRefs for" + root.getName());
+      Set<VcsRef> newRefs = ContainerUtil.newHashSet(logProvider.readAllRefs(root));
       sw.report();
-      sw = StopWatch.start("readAllRefs for" + root.getName());
-      Collection<VcsRef> newRefs = logProvider.readAllRefs(root);
+
+      sw = StopWatch.start("readFirstBlock for " + root.getName());
+      Set<VcsRef> previousRefs = myLogData == null ? Collections.<VcsRef>emptySet() :
+                                 ContainerUtil.newHashSet(myLogData.getRefs().get(root));
+      List<? extends VcsCommitMetadata> firstBlockDetails = logProvider.readFirstBlock(root, new RequirementsImpl(commitsCount, ordered,
+                                                                                                                  previousRefs, newRefs));
       sw.report();
       storeTopCommitsDetailsInCache(firstBlockDetails);
       storeUsers(firstBlockDetails);

@@ -105,7 +105,9 @@ public interface VcsLogProvider {
     int getCommitCount();
 
     /**
-     * If true, commits should be returned ordered.
+     * If true, commits should be returned ordered. <br/>
+     * This is needed only during the initialization procedure or during "simple" refreshes which happen before the full log is built. <br/>
+     * When the log is fully initialized, commits are requested unordered.
      */
     boolean isOrdered();
   }
