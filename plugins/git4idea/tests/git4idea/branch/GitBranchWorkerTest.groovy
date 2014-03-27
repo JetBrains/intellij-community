@@ -15,7 +15,6 @@
  */
 package git4idea.branch
 import com.intellij.dvcs.test.MockVirtualFile
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
@@ -26,7 +25,9 @@ import com.intellij.openapi.vcs.FilePathImpl
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CurrentContentRevision
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.Function
 import com.intellij.util.LineSeparator
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.CharArrayUtil
 import git4idea.GitCommit
 import git4idea.config.GitVersion
@@ -241,7 +242,7 @@ class GitBranchWorkerTest extends GitPlatformTest {
   }
 
   def check_operation_with_local_changes_overwritten_by_should_show_smart_checkout_dialog(String operation, int numFiles = 1) {
-    def localChanges = prepareLocalChangesOverwrittenBy(myUltimate, numFiles)
+    Collection<String> expectedChanges = prepareLocalChangesOverwrittenBy(myUltimate, numFiles)
 
     List<Change> changes = null;
     checkoutOrMerge(operation, "feature", [
@@ -253,11 +254,13 @@ class GitBranchWorkerTest extends GitPlatformTest {
 
     assertNotNull "Local changes were not shown in the dialog", changes
     if (newGitVersion()) {
-      assertSameElements "Incorrect set of local changes was shown in the dialog",
-                   localChanges,
-                   changes.collect({
-                     FileUtil.getRelativePath(myUltimate.root.path, it.afterRevision.file.path, '/'.toCharacter()) }
-                   ).sort()
+      Iterable<String> actualChanges = ContainerUtil.map(changes, new Function<Change, String>() {
+        @Override
+        public String fun(Change change) {
+          return FileUtil.getRelativePath(myUltimate.root.path, change.afterRevision.file.path, '/'.toCharacter());
+        }
+      })
+      assertSameElements "Incorrect set of local changes was shown in the dialog", actualChanges, expectedChanges;
     }
   }
 
@@ -313,9 +316,9 @@ class GitBranchWorkerTest extends GitPlatformTest {
   }
 
   Collection<String> prepareLocalChangesOverwrittenBy(GitRepository repository, int numFiles = 1) {
-    def localChanges = []
+    Collection<String> localChanges = ContainerUtil.newArrayList();
     for (int i = 0; i < numFiles; i++) {
-      localChanges.add("local${i}.txt")
+      localChanges.add(String.format("local%d.txt", i));
     }
     localChangesOverwrittenByWithoutConflict(repository, "feature", localChanges)
     updateChangeListManager()
@@ -325,26 +328,25 @@ class GitBranchWorkerTest extends GitPlatformTest {
         branchWithCommit(it, "feature")
       }
     }
-    localChanges
+    return localChanges;
   }
 
   public void "test deny to smart checkout in first repo should show nothing"() {
-    check_deny_to_smart_operation_in_first_repo_should_show_notification("checkout");
+    check_deny_to_smart_operation_in_first_repo_should_show_nothing("checkout");
   }
 
   public void "test deny to smart merge in first repo should show nothing"() {
-    check_deny_to_smart_operation_in_first_repo_should_show_notification("merge");
+    check_deny_to_smart_operation_in_first_repo_should_show_nothing("merge");
   }
 
-  public void check_deny_to_smart_operation_in_first_repo_should_show_notification(String operation) {
+  public void check_deny_to_smart_operation_in_first_repo_should_show_nothing(String operation) {
     prepareLocalChangesOverwrittenBy(myUltimate)
 
     checkoutOrMerge(operation, "feature", [
             showSmartOperationDialog : { Project p, List<Change> cs, String op, boolean f -> GitSmartOperationDialog.CANCEL_EXIT_CODE },
     ] as GitBranchUiHandler )
 
-    assertTrue "Error message was not shown",
-               myVcsNotifier.lastNotification && myVcsNotifier.lastNotification.type == NotificationType.ERROR
+    assertNull "Notification was unexpectedly shown:" + myVcsNotifier.lastNotification, myVcsNotifier.lastNotification
     assertCurrentBranch("master");
   }
 
