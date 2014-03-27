@@ -1,2 +1,2 @@
-<selection><caret>some</selection> <selection>t<caret>ext</selection>
+<caret>some t<caret>e<caret>xt
 <selection><caret>some</selection> <selection>other<caret> t</selection>ext
