@@ -64,7 +64,7 @@ public abstract class ObjectValueBase<VALUE_LOADER extends ValueManager> extends
   }
 
   @Override
-  public int getCacheState() {
+  public int getCacheStamp() {
     return cacheStamp;
   }
 

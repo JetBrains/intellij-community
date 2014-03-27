@@ -26,5 +26,5 @@ public interface ObjectValue extends Value {
   @NotNull
   ThreeState hasProperties();
 
-  int getCacheState();
+  int getCacheStamp();
 }
