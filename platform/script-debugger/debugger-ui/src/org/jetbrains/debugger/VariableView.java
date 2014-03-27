@@ -233,7 +233,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
         else {
           maxPropertiesToShow = XCompositeNode.MAX_CHILDREN_TO_SHOW;
           List<Variable> list = remainingChildren;
-          if (list != null && childrenModificationStamp == ((ObjectValue)value).getCacheState()) {
+          if (list != null && childrenModificationStamp == ((ObjectValue)value).getCacheStamp()) {
             int to = Math.min(remainingChildrenOffset + XCompositeNode.MAX_CHILDREN_TO_SHOW, list.size());
             boolean isLast = to == list.size();
             node.addChildren(Variables.createVariablesList(list, remainingChildrenOffset, to, VariableView.this), isLast);
@@ -248,7 +248,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
         remainingChildren = Variables.sortFilterAndAddValueList(variables, node, VariableView.this, maxPropertiesToShow, value.getType() != ValueType.FUNCTION);
         if (remainingChildren != null) {
           remainingChildrenOffset = maxPropertiesToShow;
-          childrenModificationStamp = ((ObjectValue)value).getCacheState();
+          childrenModificationStamp = ((ObjectValue)value).getCacheStamp();
         }
 
         if (value.getType() == ValueType.FUNCTION) {
