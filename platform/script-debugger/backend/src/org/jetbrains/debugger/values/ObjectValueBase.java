@@ -67,4 +67,10 @@ public abstract class ObjectValueBase<VALUE_LOADER extends ValueManager> extends
   public int getCacheState() {
     return cacheStamp;
   }
+
+  @Override
+  public void clearCaches() {
+    cacheStamp = -1;
+    PROPERTIES_LOADER.reset(this);
+  }
 }

@@ -27,7 +27,7 @@ public interface EvaluateContext {
    * optional to implement, some protocols, WIP for example, require you to release remote objects
    */
   @NotNull
-  EvaluateContext withLoader(@NotNull String objectGroup);
+  EvaluateContext withValueManager(@NotNull String objectGroup);
 
   /**
    * call only if withLoader was called before

@@ -7,6 +7,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public interface Scope {
+  void clearCaches();
+
   enum Type {
     GLOBAL,
     LOCAL,

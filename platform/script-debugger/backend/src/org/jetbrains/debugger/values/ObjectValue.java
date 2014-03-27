@@ -12,6 +12,8 @@ import java.util.List;
  * A compound value that has zero or more properties
  */
 public interface ObjectValue extends Value {
+  void clearCaches();
+
   @Nullable
   String getClassName();
 
