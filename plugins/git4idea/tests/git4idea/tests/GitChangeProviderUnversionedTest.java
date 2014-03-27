@@ -57,7 +57,7 @@ public class GitChangeProviderUnversionedTest extends GitChangeProviderTest {
     assertUnversioned(file);
   }
 
-  public void test_add_revert_makes_unversioned() throws Exception {
+  public void disabled_test_add_revert_makes_unversioned() throws Exception {
     VirtualFile file = create(myRootDir, "new.txt");
     final List<Change> changes = new ArrayList<Change>(getChanges(file).values());
     assertEquals(changes.size(), 1);
@@ -111,7 +111,7 @@ public class GitChangeProviderUnversionedTest extends GitChangeProviderTest {
     assertUnversioned(newFile);
   }
 
-  public void test_copy_unversioned_makes_destination_unversioned() throws Exception {
+  public void disabled_test_copy_unversioned_makes_destination_unversioned() throws Exception {
     prohibitAutoAdd();
     VirtualFile file = create(myRootDir, "new.txt");
     assertUnversioned(file);
@@ -126,7 +126,7 @@ public class GitChangeProviderUnversionedTest extends GitChangeProviderTest {
     assertUnversioned();
   }
 
-  public void test_move_unversioned_makes_destination_unversioned() throws Exception {
+  public void disabled_test_move_unversioned_makes_destination_unversioned() throws Exception {
     prohibitAutoAdd();
     VirtualFile file = create(myRootDir, "new.txt");
     assertUnversioned(file);

@@ -72,19 +72,19 @@ public class GitRebaserReorderCommitsTest extends GitSingleRepoTest {
     assertCommits(myFirstCommit, hash1, hash2);
   }
 
-  public void testReorderingOldestShouldDoNothing() throws Exception {
+  public void disabled_testReorderingOldestShouldDoNothing() throws Exception {
     String[] hashes = makeCommits(3);
     myRebaser.reoderCommitsIfNeeded(myProjectRoot, myFirstCommit, Arrays.asList(hashes[0], hashes[1]));
     assertCommits(myFirstCommit, hashes[0], hashes[1], hashes[2]);
   }
 
-  public void testReorderingOneCommit() throws Exception {
+  public void disabled_testReorderingOneCommit() throws Exception {
     String[] hashes = makeCommits(3);
     myRebaser.reoderCommitsIfNeeded(myProjectRoot, myFirstCommit, Collections.singletonList(hashes[2]));
     assertCommits(myFirstCommit, hashes[2], hashes[0], hashes[1]);
   }
 
-  public void testReorderingTwoCommits() throws Exception {
+  public void disabled_testReorderingTwoCommits() throws Exception {
     String[] hashes = makeCommits(3);
     myRebaser.reoderCommitsIfNeeded(myProjectRoot, myFirstCommit, Arrays.asList(hashes[2], hashes[1]));
     assertCommits(myFirstCommit, hashes[2], hashes[1], hashes[0]);
