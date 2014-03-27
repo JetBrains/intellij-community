@@ -19,36 +19,17 @@ import java.util.*;
 public class StructuralSearchUtil {
   private static LanguageFileType ourDefaultFileType = null;
 
-  public static boolean ourUseUniversalMatchingAlgorithm = false;
-  private static StructuralSearchProfile[] ourNewStyleProfiles;
   private static List<Configuration> ourPredefinedConfigurations = null;
 
-  private StructuralSearchUtil() {
-  }
+  private StructuralSearchUtil() {}
 
   @Nullable
   public static StructuralSearchProfile getProfileByPsiElement(@NotNull PsiElement element) {
     return getProfileByLanguage(element.getLanguage());
   }
 
-  private static StructuralSearchProfile[] getNewStyleProfiles() {
-    if (ourNewStyleProfiles == null) {
-      final List<StructuralSearchProfile> list = new ArrayList<StructuralSearchProfile>();
-
-      for (StructuralSearchProfile profile : StructuralSearchProfile.EP_NAME.getExtensions()) {
-        if (profile instanceof StructuralSearchProfileBase) {
-          list.add(profile);
-        }
-      }
-      ourNewStyleProfiles = list.toArray(new StructuralSearchProfile[list.size()]);
-    }
-    return ourNewStyleProfiles;
-  }
-
   private static StructuralSearchProfile[] getProfiles() {
-    return ourUseUniversalMatchingAlgorithm
-           ? getNewStyleProfiles()
-           :  StructuralSearchProfile.EP_NAME.getExtensions();
+    return StructuralSearchProfile.EP_NAME.getExtensions();
   }
 
   public static FileType getDefaultFileType() {

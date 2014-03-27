@@ -19,7 +19,6 @@ abstract class StructuralSearchTestCase extends LightIdeaTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    StructuralSearchUtil.ourUseUniversalMatchingAlgorithm = false;
     testMatcher = new Matcher(getProject());
     options = new MatchOptions();
     options.setLooseMatching(true);

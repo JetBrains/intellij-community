@@ -21,7 +21,6 @@ public class JSUniversalStructuralSearchTest extends StructuralSearchTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    StructuralSearchUtil.ourUseUniversalMatchingAlgorithm = true;
 
     // todo: test all with recursive search
     options.setRecursiveSearch(false);
