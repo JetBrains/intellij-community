@@ -704,9 +704,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     System.arraycopy(array, i, appended, i + 1, array.length - i);
     myChildren = appended;
 
-    // access check should only be called when child is actually added to the parent, otherwise it may break VirtualFilePointers validity 
-    //noinspection TestOnlyProblems
-    assertAccessInTests(file, myFS);
+    if (!file.isDirectory()) {
+      // access check should only be called when child is actually added to the parent, otherwise it may break VirtualFilePointers validity 
+      //noinspection TestOnlyProblems
+      assertAccessInTests(file, myFS);
+    }
   }
 
   public synchronized void removeChild(@NotNull VirtualFile file) {
