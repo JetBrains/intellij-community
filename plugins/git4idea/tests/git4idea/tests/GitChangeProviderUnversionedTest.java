@@ -107,7 +107,7 @@ public class GitChangeProviderUnversionedTest extends GitChangeProviderTest {
 
   public void test_copy_versioned_makes_destination_unversioned() throws Exception {
     prohibitAutoAdd();
-    VirtualFile newFile = copy(afile, mySubDir);
+    VirtualFile newFile = copy(atxt, mySubDir);
     assertUnversioned(newFile);
   }
 
@@ -122,7 +122,7 @@ public class GitChangeProviderUnversionedTest extends GitChangeProviderTest {
   public void test_move_versioned_makes_destination_versioned() throws Exception {
     prohibitAutoAdd();
     VirtualFile dir = myRootDir.findChild("dir");
-    move(afile, dir);
+    move(atxt, dir);
     assertUnversioned();
   }
 

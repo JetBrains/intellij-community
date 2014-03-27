@@ -44,7 +44,7 @@ public class GitCommitTest extends GitPlatformTest {
     cd(myProjectPath);
 
     final String PATH = "dir with spaces/file with spaces.txt";
-    GitTestUtil.createFileStructure(myProject, myProjectRoot, PATH);
+    GitTestUtil.createFileStructure(myProjectRoot, PATH);
     addCommit("created some file structure");
 
     git("branch feature");

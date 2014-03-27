@@ -33,7 +33,7 @@ public class GitChangeProviderConflictTest extends GitChangeProviderTest {
   @Test
   public void testConflictMM() throws Exception {
     modifyFileInBranches("a.txt", FileAction.MODIFY, FileAction.MODIFY);
-    assertChanges(afile, FileStatus.MERGED_WITH_CONFLICTS);
+    assertChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS);
   }
 
   /**
@@ -42,7 +42,7 @@ public class GitChangeProviderConflictTest extends GitChangeProviderTest {
   @Test
   public void testConflictMD() throws Exception {
     modifyFileInBranches("a.txt", FileAction.MODIFY, FileAction.DELETE);
-    assertChanges(afile, FileStatus.MERGED_WITH_CONFLICTS);
+    assertChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS);
   }
 
   /**
@@ -51,7 +51,7 @@ public class GitChangeProviderConflictTest extends GitChangeProviderTest {
   @Test
   public void testConflictDM() throws Exception {
     modifyFileInBranches("a.txt", FileAction.DELETE, FileAction.MODIFY);
-    assertChanges(afile, FileStatus.MERGED_WITH_CONFLICTS);
+    assertChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS);
   }
 
   /**

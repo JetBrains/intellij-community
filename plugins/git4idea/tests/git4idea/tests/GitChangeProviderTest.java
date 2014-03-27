@@ -32,6 +32,8 @@ import git4idea.GitVcs;
 import git4idea.status.GitChangeProvider;
 import git4idea.test.GitPlatformTest;
 import git4idea.test.GitTestUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Arrays;
@@ -53,11 +55,14 @@ public abstract class GitChangeProviderTest extends GitPlatformTest {
 
   protected GitChangeProvider myChangeProvider;
   protected VcsModifiableDirtyScope myDirtyScope;
-  protected Map<String, VirtualFile> myFiles;
-  protected VirtualFile afile;
   protected VirtualFile myRootDir;
   protected VirtualFile mySubDir;
   protected GitVcs myVcs;
+
+  protected VirtualFile atxt;
+  protected VirtualFile btxt;
+  protected VirtualFile dir_ctxt;
+  protected VirtualFile subdir_dtxt;
 
   @Override
   protected void setUp() throws Exception {
@@ -67,10 +72,14 @@ public abstract class GitChangeProviderTest extends GitPlatformTest {
     myChangeProvider = (GitChangeProvider) myVcs.getChangeProvider();
 
     GitTestUtil.createRepository(myProject, myProjectPath, false);
-    myFiles = GitTestUtil.createFileStructure(myProject, myProjectRoot, "a.txt", "b.txt", "dir/c.txt", "dir/subdir/d.txt");
+    GitTestUtil.createFileStructure(myProjectRoot, "a.txt", "b.txt", "dir/c.txt", "dir/subdir/d.txt");
     addCommit("initial");
 
-    afile = myFiles.get("a.txt"); // the file is commonly used, so save it in a field.
+    atxt = getVirtualFile("a.txt");
+    btxt = getVirtualFile("b.txt");
+    dir_ctxt = getVirtualFile("dir/c.txt");
+    subdir_dtxt = getVirtualFile("dir/subdir/d.txt");
+
     myRootDir = myProjectRoot;
     mySubDir = myRootDir.findChild("dir");
 
@@ -79,14 +88,20 @@ public abstract class GitChangeProviderTest extends GitPlatformTest {
     cd(myProjectPath);
   }
 
+  @Nullable
+  private VirtualFile getVirtualFile(@NotNull String relativePath) {
+    return VfsUtil.findFileByIoFile(new File(myProjectPath, relativePath), true);
+  }
+
   protected void modifyFileInBranches(String filename, FileAction masterAction, FileAction featureAction) throws Exception {
-    git("branch feature");
+    git("checkout -b feature");
     performActionOnFileAndRecordToIndex(filename, "feature", featureAction);
     commit("commit to feature");
     checkout("master");
+    refresh();
     performActionOnFileAndRecordToIndex(filename, "master", masterAction);
     commit("commit to master");
-    git("merge feature");
+    git("merge feature", true);
     refresh();
   }
 
@@ -96,7 +111,9 @@ public abstract class GitChangeProviderTest extends GitPlatformTest {
 
   private void performActionOnFileAndRecordToIndex(String filename, String branchName, FileAction action) throws Exception {
     VirtualFile file = myRootDir.findChild(filename);
-    assertNotNull("VirtualFile is null: " + filename, file);
+    if (action != FileAction.CREATE) { // file doesn't exist yet
+      assertNotNull("VirtualFile is null: " + filename, file);
+    }
     switch (action) {
       case CREATE:
         File f = touch(filename, "initial content in branch " + branchName);
@@ -105,6 +122,7 @@ public abstract class GitChangeProviderTest extends GitPlatformTest {
         add(filename);
         break;
       case MODIFY:
+        //noinspection ConstantConditions
         overwrite(VfsUtilCore.virtualToIoFile(file), "new content in branch " + branchName);
         dirty(file);
         add(filename);

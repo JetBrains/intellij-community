@@ -27,13 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.BuiltInServerManagerImpl;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 
-import static com.intellij.openapi.vcs.Executor.cd;
-import static com.intellij.openapi.vcs.Executor.touch;
-import static com.intellij.openapi.vcs.VcsTestUtil.createDir;
-import static com.intellij.openapi.vcs.VcsTestUtil.createFile;
+import static com.intellij.openapi.vcs.Executor.*;
 import static git4idea.test.GitExecutor.git;
 import static junit.framework.Assert.assertNotNull;
 
@@ -53,25 +48,17 @@ public class GitTestUtil {
    * <p>Note: use forward slash to denote directories, even if it is backslash that separates dirs in your system.</p>
    * <p>All files are populated with "initial content" string.</p>
    */
-  @NotNull
-  public static Map<String, VirtualFile> createFileStructure(@NotNull Project project, @NotNull VirtualFile rootDir, String... paths) {
-    Map<String, VirtualFile> result = new HashMap<String, VirtualFile>();
-
+  public static void createFileStructure(@NotNull VirtualFile rootDir, String... paths) {
     for (String path : paths) {
-      String[] pathElements = path.split("/");
-      boolean lastIsDir = path.endsWith("/");
-      VirtualFile currentParent = rootDir;
-      for (int i = 0; i < pathElements.length-1; i++) {
-        currentParent = createDir(project, currentParent, pathElements[i]);
+      cd(rootDir);
+      boolean dir = path.endsWith("/");
+      if (dir) {
+        mkdir(path);
       }
-
-      String lastElement = pathElements[pathElements.length-1];
-      currentParent = lastIsDir ?
-                      createDir(project, currentParent, lastElement) :
-                      createFile(project, currentParent, lastElement, "content" + Math.random());
-      result.put(path, currentParent);
+      else {
+        touch(path, "initial_content_" + Math.random());
+      }
     }
-    return result;
   }
 
   public static void initRepo(@NotNull String repoRoot, boolean makeInitialCommit) {
