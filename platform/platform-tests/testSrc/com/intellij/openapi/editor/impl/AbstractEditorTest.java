@@ -224,17 +224,22 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     EditorTestUtil.setEditorVisibleSize(myEditor, widthInChars, heightInChars);
   }
 
-  // for each caret its visual position and visual positions of selection start an and should be provided in the following order:
-  // caretLine, caretColumn, selectionStartLine, selectionStartColumn, selectionEndLine, selectionEndColumn
+  /**
+   * Verifies visual positions of carets and their selection ranges. It's assumed that for each caret its position and selection range
+   * are within the same visual line.
+   *
+   * For each caret its visual position and visual positions of selection start an and should be provided in the following order:
+   * line, caretColumn, selectionStartColumn, selectionEndColumn
+   */
   public static void verifyCaretsAndSelections(int... coordinates) {
-    int caretCount = coordinates.length / 6;
+    int caretCount = coordinates.length / 4;
     List<Caret> carets = myEditor.getCaretModel().getAllCarets();
     assertEquals("Unexpected caret count", caretCount, carets.size());
     for (int i = 0; i < caretCount; i++) {
       Caret caret = carets.get(i);
-      assertEquals("Unexpected position for caret " + (i + 1), new VisualPosition(coordinates[i * 6], coordinates[i * 6 + 1]), caret.getVisualPosition());
-      assertEquals("Unexpected selection start for caret " + (i + 1), new VisualPosition(coordinates[i * 6 + 2], coordinates[i * 6 + 3]), caret.getSelectionStartPosition());
-      assertEquals("Unexpected selection end for caret " + (i + 1), new VisualPosition(coordinates[i * 6 + 4], coordinates[i * 6 + 5]), caret.getSelectionEndPosition());
+      assertEquals("Unexpected position for caret " + (i + 1), new VisualPosition(coordinates[i * 4], coordinates[i * 4 + 1]), caret.getVisualPosition());
+      assertEquals("Unexpected selection start for caret " + (i + 1), new VisualPosition(coordinates[i * 4], coordinates[i * 4 + 2]), caret.getSelectionStartPosition());
+      assertEquals("Unexpected selection end for caret " + (i + 1), new VisualPosition(coordinates[i * 4], coordinates[i * 4 + 3]), caret.getSelectionEndPosition());
     }
   }
 }
