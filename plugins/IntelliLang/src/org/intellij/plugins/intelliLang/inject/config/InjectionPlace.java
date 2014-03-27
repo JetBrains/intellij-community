@@ -37,8 +37,8 @@ public class InjectionPlace {
     }
   };
 
-  private final ElementPattern<PsiElement> myElementPattern;
   private final boolean myEnabled;
+  private final ElementPattern<PsiElement> myElementPattern;
 
 
   public InjectionPlace(final ElementPattern<PsiElement> myElementPattern, final boolean enabled) {
@@ -77,5 +77,13 @@ public class InjectionPlace {
   @Override
   public int hashCode() {
     return myElementPattern.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return "InjectionPlace{" +
+           (myEnabled ? "+ " : "- ") +
+           myElementPattern +
+           '}';
   }
 }
