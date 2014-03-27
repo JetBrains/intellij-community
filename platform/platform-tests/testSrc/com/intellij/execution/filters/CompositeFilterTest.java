@@ -15,16 +15,12 @@
  */
 package com.intellij.execution.filters;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
+import com.intellij.mock.MockDumbService;
 import junit.framework.Assert;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.swing.*;
 import java.util.List;
 
 public class CompositeFilterTest {
@@ -33,34 +29,7 @@ public class CompositeFilterTest {
 
   @Before
   public void setUp() throws Exception {
-    myCompositeFilter = new CompositeFilter(new DumbService() {
-      @Override
-      public boolean isDumb() {
-        return false;
-      }
-
-      @Override
-      public void runWhenSmart(@NotNull Runnable runnable) {
-      }
-
-      @Override
-      public void waitForSmartMode() {
-      }
-
-      @Override
-      public JComponent wrapGently(@NotNull JComponent dumbUnawareContent, @NotNull Disposable parentDisposable) {
-        return null;
-      }
-
-      @Override
-      public void showDumbModeNotification(@NotNull String message) {
-      }
-
-      @Override
-      public Project getProject() {
-        return null;
-      }
-    });
+    myCompositeFilter = new CompositeFilter(new MockDumbService(null));
   }
 
   @Test
