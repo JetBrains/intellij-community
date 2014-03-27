@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.idea.svn.SvnAuthenticationManager;
@@ -36,7 +35,7 @@ import java.util.Set;
  * @author alex
  */
 public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.dialogs.SvnAuthenticationProvider");
+
   private final Project myProject;
   private final SvnAuthenticationNotifier myAuthenticationNotifier;
   private final ISVNAuthenticationProvider mySvnInteractiveAuthenticationProvider;
@@ -49,10 +48,6 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
     myProject = svnVcs.getProject();
     myAuthenticationNotifier = svnVcs.getAuthNotifier();
     mySvnInteractiveAuthenticationProvider = provider;
-  }
-
-  private void log(final String s) {
-    LOG.debug(s);
   }
 
   public SVNAuthentication requestClientAuthentication(final String kind,
