@@ -18,6 +18,7 @@ package com.intellij.ide.startupWizardV2;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.Nullable;
@@ -47,10 +48,18 @@ public class StartupWizard2 extends DialogWrapper implements ActionListener {
 
   public StartupWizard2() {
     super(null, true, true);
+    IconLoader.activate();
+    getPeer().setAppIcons();
     setResizable(false);
     setTitle("Customize" + ApplicationNamesInfo.getInstance().getProductName());
     init();
     showPage(0);
+  }
+
+  @Override
+  protected void dispose() {
+    super.dispose();
+    IconLoader.deactivate();
   }
 
   @Override
