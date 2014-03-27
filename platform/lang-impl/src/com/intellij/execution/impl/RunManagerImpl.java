@@ -63,7 +63,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
   private Map<String, Icon> myIdToIcon = new HashMap<String, Icon>();
   private Map<String, Long> myIconCheckTimes = new HashMap<String, Long>();
-  private Map<String, Long> myIconCalcTime = new HashMap<String, Long>();
+  private Map<String, Long> myIconCalcTime = Collections.synchronizedMap(new HashMap<String, Long>());
 
   @NonNls
   protected static final String CONFIGURATION = "configuration";
