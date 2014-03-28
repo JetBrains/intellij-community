@@ -21,6 +21,9 @@
       <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
       <loadForDefaultProject/>
     </component>
+    <component>
+      <implementation-class>com.intellij.internal.FD2048</implementation-class>
+    </component>
   </project-components>
 
   <xi:include href="/componentSets/Platform.xml" xpointer="xpointer(/components/*)"/>
