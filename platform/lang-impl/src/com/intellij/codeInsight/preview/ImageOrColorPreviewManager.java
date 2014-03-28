@@ -33,9 +33,9 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.WeakHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,10 +44,8 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotionListener {
@@ -57,8 +55,12 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
 
   private final Alarm alarm = new Alarm();
 
+  /**
+   * this collection should not keep strong references to the elements
+   * @link getPsiElementsAt()
+   */
   @Nullable
-  private WeakReference<Collection<PsiElement>> elementsRef;
+  private Collection<PsiElement> myElements;
 
   public ImageOrColorPreviewManager(EditorFactory editorFactory) {
     // we don't use multicaster because we don't want to serve all editors - only supported
@@ -148,7 +150,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
       return Collections.emptySet();
     }
 
-    final Set<PsiElement> elements = new HashSet<PsiElement>();
+    final Set<PsiElement> elements = Collections.newSetFromMap(new WeakHashMap<PsiElement, Boolean>());
     final int offset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(point));
     ContainerUtil.addIfNotNull(elements, InjectedLanguageUtil.findElementAtNoCommit(psiFile, offset));
     for (PsiFile file : psiFile.getViewProvider().getAllFiles()) {
@@ -161,7 +163,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
   @Override
   public void dispose() {
     alarm.cancelAllRequests();
-    elementsRef = null;
+    myElements = null;
   }
 
   @Override
@@ -173,13 +175,13 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
 
     alarm.cancelAllRequests();
     Point point = event.getMouseEvent().getPoint();
-    if (elementsRef == null && event.getMouseEvent().isShiftDown()) {
+    if (myElements == null && event.getMouseEvent().isShiftDown()) {
       alarm.addRequest(new PreviewRequest(point, editor, false), 100);
     }
     else {
-      Collection<PsiElement> elements = SoftReference.dereference(elementsRef);
+      Collection<PsiElement> elements = myElements;
       if (!getPsiElementsAt(point, editor).equals(elements)) {
-        elementsRef = null;
+        myElements = null;
         for (ElementPreviewProvider provider : Extensions.getExtensions(ElementPreviewProvider.EP_NAME)) {
           try {
             if (elements != null) {
@@ -217,7 +219,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
     @Override
     public void run() {
       Collection<PsiElement> elements = getPsiElementsAt(point, editor);
-      if (elements.equals(SoftReference.dereference(elementsRef))) return;
+      if (elements.equals(myElements)) return;
       for (PsiElement element : elements) {
         if (element == null || !element.isValid()) {
           return;
@@ -238,7 +240,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
           }
         }
       }
-      elementsRef = new WeakReference<Collection<PsiElement>>(elements);
+      myElements = elements;
     }
   }
 }
