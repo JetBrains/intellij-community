@@ -222,14 +222,16 @@ public class HgRegularUpdater implements HgUpdater {
     while (result.getExitValue() == 1) {    //if result == null isAbort will be true;
       resolvePossibleConflicts(updatedFiles);
       if (!HgConflictResolver.findConflicts(project, repoRoot).isEmpty()) {
-        return;
+        break;
       }
       result = rebaseCommand.continueRebase();
       if (HgErrorUtil.isAbort(result)) {
         new HgCommandResultNotifier(project).notifyError(result, "Hg Error", "Couldn't continue rebasing");
-        return;
+        break;
       }
     }
+    repository.update();
+    repoRoot.refresh(true, true);
   }
 
   private void abortOnLocalChanges() throws VcsException {
