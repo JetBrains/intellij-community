@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn16;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
@@ -135,8 +136,8 @@ public class SvnExternalTests extends Svn17TestCase {
     Assert.assertNotNull(vf1);
     Assert.assertNotNull(vf2);
 
-    editFileInCommand(myProject, vf1, "test externals 123" + System.currentTimeMillis());
-    editFileInCommand(myProject, vf2, "test externals 123" + System.currentTimeMillis());
+    VcsTestUtil.editFileInCommand(myProject, vf1, "test externals 123" + System.currentTimeMillis());
+    VcsTestUtil.editFileInCommand(myProject, vf2, "test externals 123" + System.currentTimeMillis());
 
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     clManager.ensureUpToDate(false);

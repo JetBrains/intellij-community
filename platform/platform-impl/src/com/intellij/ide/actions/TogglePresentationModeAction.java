@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.DesktopLayout;
@@ -52,14 +53,15 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
 
   @Override
   public void actionPerformed(AnActionEvent e){
-    UISettings settings = UISettings.getInstance();
-    Project project = e.getProject();
+    final UISettings settings = UISettings.getInstance();
+    final Project project = e.getProject();
 
     settings.PRESENTATION_MODE = !settings.PRESENTATION_MODE;
 
-    if (project != null) {
+    if (settings.PRESENTATION_MODE && project != null) {
       hideToolWindows(project);
     }
+
 
     settings.fireUISettingsChanged();
 
@@ -84,6 +86,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
       oldFonts.clear();
     }
 
+    ActionCallback callback = ActionCallback.DONE;
     if (project != null) {
       Window window = IdeFrameImpl.getActiveFrame();
       if (window instanceof IdeFrameImpl) {
@@ -91,27 +94,35 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
         final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
         if (settings.PRESENTATION_MODE) {
           propertiesComponent.setValue("full.screen.before.presentation.mode", String.valueOf(frame.isInFullScreen()));
-          frame.toggleFullScreen(true);
+          callback = frame.toggleFullScreen(true);
         } else {
           if (frame.isInFullScreen()) {
             final String value = propertiesComponent.getValue("full.screen.before.presentation.mode");
-            frame.toggleFullScreen("true".equalsIgnoreCase(value));
+            callback = frame.toggleFullScreen("true".equalsIgnoreCase(value));
           }
         }
       }
     }
+    callback.doWhenProcessed(new Runnable() {
+      @Override
+      public void run() {
+        int fontSize = settings.PRESENTATION_MODE
+                       ? settings.PRESENTATION_MODE_FONT_SIZE
+                       : EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
+        for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+          if (editor instanceof EditorEx) {
+            ((EditorEx)editor).setFontSize(fontSize);
+          }
+        }
+        UISettings.getInstance().fireUISettingsChanged();
+        LafManager.getInstance().updateUI();
+        EditorUtil.reinitSettings();
 
-    int fontSize = settings.PRESENTATION_MODE
-                   ? settings.PRESENTATION_MODE_FONT_SIZE
-                   : EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
-    for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
-      if (editor instanceof EditorEx) {
-        ((EditorEx)editor).setFontSize(fontSize);
+        if (!settings.PRESENTATION_MODE && project != null) {
+          hideToolWindows(project);
+        }
       }
-    }
-    UISettings.getInstance().fireUISettingsChanged();
-    LafManager.getInstance().updateUI();
-    EditorUtil.reinitSettings();
+    });
 
   }
 

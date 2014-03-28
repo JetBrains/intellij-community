@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -178,7 +178,7 @@ public class TaskBranchesTest extends PlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myTaskManager = (TaskManagerImpl)TaskManager.getManager(getProject());
-    GitVcsSettings.getInstance(myProject).getAppSettings().setPathToGit(GitExecutor.GIT_EXECUTABLE);
+    GitVcsSettings.getInstance(myProject).getAppSettings().setPathToGit(GitExecutor.PathHolder.GIT_EXECUTABLE);
 
     myChangeListManager = (ChangeListManagerImpl)ChangeListManager.getInstance(getProject());
     myChangeListManager.projectOpened();

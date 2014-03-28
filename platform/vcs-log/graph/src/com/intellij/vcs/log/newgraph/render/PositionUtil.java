@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-import static com.intellij.vcs.log.graph.render.PrintParameters.*;
+import static com.intellij.vcs.log.printer.idea.PrintParameters.*;
 
 public class PositionUtil {
   private static float distance(int x1, int y1, int x2, int y2) {

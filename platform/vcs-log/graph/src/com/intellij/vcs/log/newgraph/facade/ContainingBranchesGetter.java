@@ -18,7 +18,7 @@ package com.intellij.vcs.log.newgraph.facade;
 
 import com.intellij.vcs.log.newgraph.PermanentGraph;
 import com.intellij.vcs.log.newgraph.utils.DfsUtil;
-import com.intellij.vcs.log.newgraph.utils.Flags;
+import com.intellij.vcs.log.facade.utils.Flags;
 import com.intellij.vcs.log.newgraph.utils.MyUtils;
 import org.jetbrains.annotations.NotNull;
 

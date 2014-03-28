@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -1042,5 +1057,18 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     assertValidMarker(marker1, 2, 2);
     assertValidMarker(marker2, 2, 4);
+  }
+
+  public void testRangeHighlighterDisposeVsRemoveAllConflict() throws Exception {
+    Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
+
+    MarkupModel markupModel = DocumentMarkupModel.forDocument(document, ourProject, true);
+    RangeMarker m = markupModel.addRangeHighlighter(1, 6, 0, null, HighlighterTargetArea.EXACT_RANGE);
+    assertTrue(m.isValid());
+    markupModel.removeAllHighlighters();
+    assertFalse(m.isValid());
+    assertEmpty(markupModel.getAllHighlighters());
+    m.dispose();
+    assertFalse(m.isValid());
   }
 }

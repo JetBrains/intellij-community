@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn16;
 
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -63,9 +64,9 @@ public class SvnExternalCommitNoticedTest extends Svn17TestCase {
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();
 
-    editFileInCommand(myProject, tree.myS1File, "test1");
-    editFileInCommand(myProject, tree.myS2File, "test2");
-    editFileInCommand(myProject, tree.myTargetFiles.get(1), "target1");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "test1");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS2File, "test2");
+    VcsTestUtil.editFileInCommand(myProject, tree.myTargetFiles.get(1), "target1");
 
     myVcsDirtyScopeManager.markEverythingDirty();
     clManager.ensureUpToDate(false);
@@ -91,7 +92,7 @@ public class SvnExternalCommitNoticedTest extends Svn17TestCase {
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();
 
-    renameFileInCommand(myProject, tree.myTargetDir, "aabbcc");
+    VcsTestUtil.renameFileInCommand(myProject, tree.myTargetDir, "aabbcc");
 
     myVcsDirtyScopeManager.markEverythingDirty();
     clManager.ensureUpToDate(false);

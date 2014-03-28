@@ -99,13 +99,10 @@ public class PluginManager extends PluginManagerCore {
   }
 
   public static void processException(Throwable t) {
-    @SuppressWarnings("ThrowableResultOfMethodCallIgnored") StartupAbortedException se = findCause(t);
+    if (!IdeaApplication.isLoaded()) {
+      @SuppressWarnings("ThrowableResultOfMethodCallIgnored") StartupAbortedException se = findCause(t);
+      if (se == null) se = new StartupAbortedException(t);
 
-    if (se == null && !IdeaApplication.isLoaded()) {
-      se = new StartupAbortedException(t);
-    }
-
-    if (se != null) {
       if (se.logError()) {
         try {
           if (Logger.isInitialized() && !(t instanceof ProcessCanceledException)) {
@@ -119,8 +116,7 @@ public class PluginManager extends PluginManagerCore {
 
       System.exit(se.exitCode());
     }
-
-    if (!(t instanceof ProcessCanceledException)) {
+    else if (!(t instanceof ProcessCanceledException)) {
       getLogger().error(t);
     }
   }
@@ -193,7 +189,7 @@ public class PluginManager extends PluginManagerCore {
   }
 
   @Nullable
-  public static IdeaPluginDescriptor getPlugin(PluginId id) {
+  public static IdeaPluginDescriptor getPlugin(@Nullable PluginId id) {
     final IdeaPluginDescriptor[] plugins = getPlugins();
     for (final IdeaPluginDescriptor plugin : plugins) {
       if (Comparing.equal(id, plugin.getPluginId())) {

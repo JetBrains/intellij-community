@@ -19,6 +19,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -29,7 +30,6 @@ import java.awt.event.MouseEvent;
 public abstract class ClickListener {
 
   private static final int EPS = 4;
-  private static final long TIME_EPS = 500; // TODO: read system mouse sensitivity settings?
   private MouseAdapter myListener;
 
   public abstract boolean onClick(@NotNull MouseEvent event, int clickCount);
@@ -46,7 +46,7 @@ public abstract class ClickListener {
         final Point point = e.getPoint();
         SwingUtilities.convertPointToScreen(point, e.getComponent());
 
-        if (Math.abs(lastTimeClicked - e.getWhen()) > TIME_EPS || lastClickPoint != null && !isWithinEps(lastClickPoint, point)) {
+        if (Math.abs(lastTimeClicked - e.getWhen()) > UIUtil.getMultiClickInterval() || lastClickPoint != null && !isWithinEps(lastClickPoint, point)) {
           clickCount = 0;
           lastClickPoint = null;
         }

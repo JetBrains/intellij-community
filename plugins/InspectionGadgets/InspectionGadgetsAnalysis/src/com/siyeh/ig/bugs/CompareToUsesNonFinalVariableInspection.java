@@ -16,6 +16,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -25,8 +26,7 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CompareToUsesNonFinalVariableInspection
-  extends BaseInspection {
+public class CompareToUsesNonFinalVariableInspection extends BaseInspection {
 
   @Override
   @NotNull
@@ -54,35 +54,12 @@ public class CompareToUsesNonFinalVariableInspection
     return new CompareToUsesNonFinalVariableVisitor();
   }
 
-  private static class CompareToUsesNonFinalVariableVisitor
-    extends BaseInspectionVisitor {
-
+  private static class CompareToUsesNonFinalVariableVisitor extends NonFinalFieldsVisitor {
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      final boolean isCompareTo = MethodUtils.isCompareTo(method);
-      if (isCompareTo) {
-        method.accept(new JavaRecursiveElementVisitor() {
-
-          @Override
-          public void visitClass(PsiClass aClass) {
-            // Do not recurse into.
-          }
-
-          @Override
-          public void visitReferenceExpression(
-            @NotNull PsiReferenceExpression expression) {
-            super.visitReferenceExpression(expression);
-            final PsiElement element = expression.resolve();
-            if (!(element instanceof PsiField)) {
-              return;
-            }
-            final PsiField field = (PsiField)element;
-            if (field.hasModifierProperty(PsiModifier.FINAL)) {
-              return;
-            }
-            registerError(expression, field);
-          }
-        });
+      if (MethodUtils.isCompareTo(method) && 
+          InheritanceUtil.isInheritor(method.getContainingClass(), false, CommonClassNames.JAVA_LANG_COMPARABLE)) {
+        checkUsedNonFinalFields(method);
       }
     }
   }

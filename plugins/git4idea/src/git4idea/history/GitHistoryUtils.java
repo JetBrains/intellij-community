@@ -1127,6 +1127,7 @@ public class GitHistoryUtils {
     return logRecord.getAuthorTimeStamp();
   }
 
+  @Deprecated
   public static void hashesWithParents(Project project, FilePath path, final AsynchConsumer<CommitHashPlusParents> consumer,
                                        final Getter<Boolean> isCanceled,
                                        Collection<VirtualFile> paths, final String... parameters) throws VcsException {

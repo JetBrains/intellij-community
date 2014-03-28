@@ -86,11 +86,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public static final int CURRENT_FORMAT_VERSION = 4;
 
   private static final Key<List<ProjectManagerListener>> LISTENERS_IN_PROJECT_KEY = Key.create("LISTENERS_IN_PROJECT_KEY");
-  @NonNls private static final String ELEMENT_DEFAULT_PROJECT = "defaultProject";
+  private static final String ELEMENT_DEFAULT_PROJECT = "defaultProject";
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private ProjectImpl myDefaultProject; // Only used asynchronously in save and dispose, which itself are synchronized.
-
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private Element myDefaultProjectRootElement; // Only used asynchronously in save and dispose, which itself are synchronized.
 
@@ -107,8 +106,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private final Alarm myChangedFilesAlarm = new Alarm();
   private final List<Pair<VirtualFile, StateStorage>> myChangedApplicationFiles = new ArrayList<Pair<VirtualFile, StateStorage>>();
   private final AtomicInteger myReloadBlockCount = new AtomicInteger(0);
-  @SuppressWarnings("FieldCanBeLocal") private final Map<Project, String> myProjects = new WeakHashMap<Project, String>();
-  private static final int MAX_LEAKY_PROJECTS = 42;
   private final ProgressManager myProgressManager;
   private volatile boolean myDefaultProjectWasDisposed = false;
 
@@ -126,8 +123,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     myProgressManager = progressManager;
     Application app = ApplicationManager.getApplication();
     MessageBus messageBus = app.getMessageBus();
-    MessageBusConnection connection = messageBus.connect(app);
-    connection.subscribe(StateStorage.STORAGE_TOPIC, new StateStorage.Listener() {
+
+    messageBus.connect(app).subscribe(StateStorage.STORAGE_TOPIC, new StateStorage.Listener() {
       @Override
       public void storageFileChanged(@NotNull final VirtualFileEvent event, @NotNull final StateStorage storage) {
         VirtualFile file = event.getFile();
@@ -136,8 +133,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         }
       }
     });
-    final ProjectManagerListener busPublisher = messageBus.syncPublisher(TOPIC);
 
+    final ProjectManagerListener busPublisher = messageBus.syncPublisher(TOPIC);
     addProjectManagerListener(
       new ProjectManagerListener() {
         @Override
@@ -192,6 +189,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   @Override
+  public void initComponent() { }
+
+  @Override
   public void disposeComponent() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     Disposer.dispose(myChangedFilesAlarm);
@@ -203,11 +203,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
   }
 
-  @Override
-  public void initComponent() {
-  }
-
   private static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = false;
+  private static final int MAX_LEAKY_PROJECTS = 42;
+  @SuppressWarnings("FieldCanBeLocal") private final Map<Project, String> myProjects = new WeakHashMap<Project, String>();
 
   @Override
   @Nullable
@@ -238,11 +236,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       }
       return project;
     }
-    catch (final Exception e) {
-      LOG.info(e);
-      Messages.showErrorDialog(message(e), ProjectBundle.message("project.load.default.error"));
+    catch (Throwable t) {
+      LOG.info(t);
+      Messages.showErrorDialog(message(t), ProjectBundle.message("project.load.default.error"));
+      return null;
     }
-    return null;
   }
 
   @NonNls
@@ -262,7 +260,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   private void initProject(@NotNull ProjectImpl project, @Nullable ProjectImpl template) throws IOException {
-    final ProgressIndicator indicator = myProgressManager.getProgressIndicator();
+    ProgressIndicator indicator = myProgressManager.getProgressIndicator();
     if (indicator != null && !project.isDefault()) {
       indicator.setText(ProjectBundle.message("loading.components.for", project.getName()));
       indicator.setIndeterminate(true);
@@ -270,6 +268,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(project);
 
+    boolean succeed = false;
     try {
       if (template != null) {
         project.getStateStore().loadProjectFromTemplate(template);
@@ -279,14 +278,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       }
       project.loadProjectComponents();
       project.init();
+      succeed = true;
     }
-    catch (IOException e) {
-      scheduleDispose(project);
-      throw e;
-    }
-    catch (ProcessCanceledException e) {
-      scheduleDispose(project);
-      throw e;
+    finally {
+      if (!succeed) {
+        scheduleDispose(project);
+      }
     }
   }
 
@@ -326,8 +323,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       initProject(project, null);
       return project;
     }
-    catch (StateStorageException e) {
-      throw new IOException(e.getMessage());
+    catch (Throwable t) {
+      LOG.info(t);
+      throw new IOException(t);
     }
   }
 
@@ -353,21 +351,22 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public synchronized Project getDefaultProject() {
     LOG.assertTrue(!myDefaultProjectWasDisposed, "Default project has been already disposed!");
     if (myDefaultProject == null) {
-      try {
-        myDefaultProject = createProject(null, "", true, ApplicationManager.getApplication().isUnitTestMode());
-        initProject(myDefaultProject, null);
-        myDefaultProjectRootElement = null;
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-      catch (StateStorageException e) {
-        LOG.error(e);
-      }
+      ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            myDefaultProject = createProject(null, "", true, ApplicationManager.getApplication().isUnitTestMode());
+            initProject(myDefaultProject, null);
+            myDefaultProjectRootElement = null;
+          }
+          catch (Throwable t) {
+            LOG.error(t);
+          }
+        }
+      });
     }
     return myDefaultProject;
   }
-
 
   public Element getDefaultProjectRootElement() {
     return myDefaultProjectRootElement;
@@ -406,8 +405,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     if (isLight(project)) {
       throw new AssertionError("must not open light project");
     }
-    final Application application = ApplicationManager.getApplication();
 
+    final Application application = ApplicationManager.getApplication();
     if (!application.isUnitTestMode() && !((ProjectEx)project).getStateStore().checkVersion()) {
       return false;
     }
@@ -419,10 +418,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       myOpenProjects.add(project);
       cacheOpenProjects();
     }
+
     fireProjectOpened(project);
+    waitForFileWatcher(project);
 
     final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
-    waitForFileWatcher(project);
     boolean ok = myProgressManager.runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
@@ -538,8 +538,19 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       return null;
     }
 
-    final Project project = loadProjectWithProgress(filePath);
-    if (project == null) return null;
+    final Project project;
+    try {
+      project = loadProjectWithProgress(filePath);
+      if (project == null) return null;
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      throw e;
+    }
+    catch (Throwable t) {
+      LOG.info(t);
+      throw new IOException(t);
+    }
 
     if (!conversionResult.conversionNotNeeded()) {
       StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {

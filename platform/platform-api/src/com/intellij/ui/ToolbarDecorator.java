@@ -46,6 +46,7 @@ import java.util.List;
  */
 @SuppressWarnings("UnusedDeclaration")
 public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFactory {
+  protected Border myPanelBorder;
   protected Border myToolbarBorder;
   protected boolean myAddActionEnabled;
   protected boolean myEditActionEnabled;
@@ -151,6 +152,11 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
 
   public ToolbarDecorator disableDownAction() {
     myDownActionEnabled = false;
+    return this;
+  }
+
+  public ToolbarDecorator setPanelBorder(Border border) {
+    myPanelBorder = border;
     return this;
   }
 
@@ -338,11 +344,13 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     updateButtons();
     installDnD();
     panel.putClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY, myActionsPanel.getComponent(0));
+
+    Border mainBorder = myPanelBorder != null ? myPanelBorder : IdeBorderFactory.createBorder(SideBorder.ALL);  
     if (myAsUsualTopToolbar) {
-      scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.ALL));
+      scrollPane.setBorder(mainBorder);
     } else {
       myActionsPanel.setBorder(myActionsPanelBorder);
-      panel.setBorder(IdeBorderFactory.createBorder(SideBorder.ALL));
+      panel.setBorder(mainBorder);
     }
     return panel;
   }

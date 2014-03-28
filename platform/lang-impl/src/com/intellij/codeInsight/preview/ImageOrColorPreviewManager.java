@@ -35,6 +35,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,10 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.lang.ref.WeakReference;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotionListener {
   private static final Logger LOG = Logger.getInstance(ImageOrColorPreviewManager.class);
@@ -53,7 +58,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
   private final Alarm alarm = new Alarm();
 
   @Nullable
-  private WeakReference<PsiElement> elementRef;
+  private WeakReference<Collection<PsiElement>> elementsRef;
 
   public ImageOrColorPreviewManager(EditorFactory editorFactory) {
     // we don't use multicaster because we don't want to serve all editors - only supported
@@ -117,37 +122,46 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
   }
 
   private static boolean isSupportedFile(PsiFile psiFile) {
-    for (ElementPreviewProvider provider : Extensions.getExtensions(ElementPreviewProvider.EP_NAME)) {
-      if (provider.isSupportedFile(psiFile)) {
-        return true;
+    for (PsiFile file : psiFile.getViewProvider().getAllFiles()) {
+      for (ElementPreviewProvider provider : Extensions.getExtensions(ElementPreviewProvider.EP_NAME)) {
+        if (provider.isSupportedFile(file)) {
+          return true;
+        }
       }
     }
     return false;
   }
 
-  @Nullable
-  private static PsiElement getPsiElementAt(Point point, Editor editor) {
+  @NotNull
+  private static Collection<PsiElement> getPsiElementsAt(Point point, Editor editor) {
     if (editor.isDisposed()) {
-      return null;
+      return Collections.emptySet();
     }
 
     Project project = editor.getProject();
     if (project == null || project.isDisposed()) {
-      return null;
+      return Collections.emptySet();
     }
 
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (psiFile == null || psiFile instanceof PsiCompiledElement || !psiFile.isValid()) {
-      return null;
+      return Collections.emptySet();
     }
 
-    return InjectedLanguageUtil.findElementAtNoCommit(psiFile, editor.logicalPositionToOffset(editor.xyToLogicalPosition(point)));
+    final Set<PsiElement> elements = new HashSet<PsiElement>();
+    final int offset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(point));
+    ContainerUtil.addIfNotNull(elements, InjectedLanguageUtil.findElementAtNoCommit(psiFile, offset));
+    for (PsiFile file : psiFile.getViewProvider().getAllFiles()) {
+      ContainerUtil.addIfNotNull(elements, file.findElementAt(offset));
+    }
+
+    return elements;
   }
 
   @Override
   public void dispose() {
     alarm.cancelAllRequests();
-    elementRef = null;
+    elementsRef = null;
   }
 
   @Override
@@ -159,16 +173,22 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
 
     alarm.cancelAllRequests();
     Point point = event.getMouseEvent().getPoint();
-    if (elementRef == null && event.getMouseEvent().isShiftDown()) {
+    if (elementsRef == null && event.getMouseEvent().isShiftDown()) {
       alarm.addRequest(new PreviewRequest(point, editor, false), 100);
     }
     else {
-      PsiElement element = SoftReference.dereference(elementRef);
-      if (element != getPsiElementAt(point, editor)) {
-        elementRef = null;
+      Collection<PsiElement> elements = SoftReference.dereference(elementsRef);
+      if (!getPsiElementsAt(point, editor).equals(elements)) {
+        elementsRef = null;
         for (ElementPreviewProvider provider : Extensions.getExtensions(ElementPreviewProvider.EP_NAME)) {
           try {
-            provider.hide(element, editor);
+            if (elements != null) {
+              for (PsiElement element : elements) {
+                provider.hide(element, editor);
+              }
+            } else {
+              provider.hide(null, editor);
+            }
           }
           catch (Exception e) {
             LOG.error(e);
@@ -196,23 +216,29 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
 
     @Override
     public void run() {
-      PsiElement element = getPsiElementAt(point, editor);
-      if (element == null || !element.isValid() || SoftReference.dereference(elementRef) == element) {
-        return;
-      }
-      if (PsiDocumentManager.getInstance(element.getProject()).isUncommited(editor.getDocument()) || DumbService.getInstance(element.getProject()).isDumb()) {
-        return;
-      }
+      Collection<PsiElement> elements = getPsiElementsAt(point, editor);
+      if (elements.equals(SoftReference.dereference(elementsRef))) return;
+      for (PsiElement element : elements) {
+        if (element == null || !element.isValid()) {
+          return;
+        }
+        if (PsiDocumentManager.getInstance(element.getProject()).isUncommited(editor.getDocument()) ||
+            DumbService.getInstance(element.getProject()).isDumb()) {
+          return;
+        }
 
-      elementRef = new WeakReference<PsiElement>(element);
-      for (ElementPreviewProvider provider : ElementPreviewProvider.EP_NAME.getExtensions()) {
-        try {
-          provider.show(element, editor, point, keyTriggered);
-        }
-        catch (Exception e) {
-          LOG.error(e);
+        for (ElementPreviewProvider provider : ElementPreviewProvider.EP_NAME.getExtensions()) {
+          if (!provider.isSupportedFile(element.getContainingFile())) continue;
+
+          try {
+            provider.show(element, editor, point, keyTriggered);
+          }
+          catch (Exception e) {
+            LOG.error(e);
+          }
         }
       }
+      elementsRef = new WeakReference<Collection<PsiElement>>(elements);
     }
   }
 }

@@ -86,21 +86,21 @@ public class HgRegularUpdater implements HgUpdater {
       return false;
     }
 
-    if (shouldMerge()) {
+    List<HgRevisionNumber> parentsBeforeUpdate = new HgWorkingCopyRevisionsCommand(project).parents(repoRoot);
+    if (parentsBeforeUpdate.size() > 1) {
+      throw new VcsException(HgVcsMessages.message("hg4idea.update.error.uncommittedMerge", repoRoot.getPath()));
+    }
 
-      List<HgRevisionNumber> parentsBeforeUpdate = new HgWorkingCopyRevisionsCommand(project).parents(repoRoot);
-      if (parentsBeforeUpdate.size() > 1) {
-        throw new VcsException(HgVcsMessages.message("hg4idea.update.error.uncommittedMerge", repoRoot.getPath()));
-      }
+    indicator.setText2(HgVcsMessages.message("hg4idea.progress.countingHeads"));
 
-      indicator.setText2(HgVcsMessages.message("hg4idea.progress.countingHeads"));
+    List<HgRevisionNumber> branchHeadsAfterPull = new HgHeadsCommand(project, repoRoot).execute();
+    List<HgRevisionNumber> pulledBranchHeads = determinePulledBranchHeads(branchHeadsBeforePull, branchHeadsAfterPull);
+    List<HgRevisionNumber> remainingOriginalBranchHeads =
+      determingRemainingOriginalBranchHeads(branchHeadsBeforePull, branchHeadsAfterPull);
 
-      List<HgRevisionNumber> branchHeadsAfterPull = new HgHeadsCommand(project, repoRoot).execute();
-      List<HgRevisionNumber> pulledBranchHeads = determinePulledBranchHeads(branchHeadsBeforePull, branchHeadsAfterPull);
-      List<HgRevisionNumber> remainingOriginalBranchHeads =
-        determingRemainingOriginalBranchHeads(branchHeadsBeforePull, branchHeadsAfterPull);
-
-      if (branchHeadsAfterPull.size() > 1) {
+    if (branchHeadsAfterPull.size() > 1) {
+      // merge strategy
+      if (shouldMerge()) {
         abortOnLocalChanges();
         abortOnMultiplePulledHeads(pulledBranchHeads);
         abortOnMultipleLocalHeads(remainingOriginalBranchHeads);
@@ -111,16 +111,19 @@ public class HgRegularUpdater implements HgUpdater {
           commitOrWarnAboutConflicts(warnings, mergeResult);
         }
       }
+      //rebase strategy
       else {
-        //in case of multiple heads the update will report the appropriate error
-        update(repoRoot, indicator, updatedFiles, warnings);
+        processRebase(indicator, updatedFiles);  //resolve conflicts processed during rebase
+        return true;
       }
-      //any kind of update could have resulted in merges and merge conflicts, so run the resolver
-      resolvePossibleConflicts(updatedFiles);
     }
+    //if pull complete successfully and there are only one head, we need just update working directory to the head
     else {
-      processRebase(indicator, updatedFiles);
+      //in case of multiple heads the update will report the appropriate error
+      update(repoRoot, indicator, updatedFiles, warnings);
     }
+    //any kind of update could have resulted in merges and merge conflicts, so run the resolver
+    resolvePossibleConflicts(updatedFiles);
 
     return true;
   }

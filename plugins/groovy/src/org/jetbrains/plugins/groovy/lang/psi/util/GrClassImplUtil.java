@@ -61,6 +61,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.*;
+
 /**
  * @author Maxim.Medvedev
  */
@@ -349,7 +351,7 @@ public class GrClassImplUtil {
 
     final GrTypeDefinitionBody body = grType.getBody();
     if (body != null) {
-      if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.CLASS)) {
+      if (shouldProcessClasses(classHint)) {
         for (PsiClass innerClass : getInnerClassesForResolve(grType, lastParent, place)) {
           final String innerClassName = innerClass.getName();
           if (nameHint != null && !innerClassName.equals(nameHint.getName(state))) {
@@ -365,14 +367,6 @@ public class GrClassImplUtil {
 
 
     return true;
-  }
-
-  private static boolean shouldProcessMethods(ClassHint classHint) {
-    return classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.METHOD);
-  }
-
-  private static boolean shouldProcessProperties(ClassHint classHint) {
-    return classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.PROPERTY);
   }
 
   private static boolean processField(@NotNull GrTypeDefinition grType,

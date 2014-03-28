@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.ui.tabs.impl;
 
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
@@ -243,6 +245,17 @@ public class JBTabsImpl extends JComponent
         }
       }
     });
+
+    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
+      @Override
+      public void uiSettingsChanged(UISettings source) {
+        myImage = null;
+        for (Map.Entry<TabInfo, TabLabel> entry : myInfo2Label.entrySet()) {
+          entry.getKey().revalidate();
+          entry.getValue().setInactiveStateImage(null);
+        }
+      }
+    }, this);
 
     myAnimator = new Animator("JBTabs Attractions", 2, 500, true) {
       @Override

@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn16;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -95,7 +96,7 @@ public class SvnConcurrentChangeListManagerTest extends Svn16TestCase {
     changeListManager.ensureUpToDate(false);
     check.run();
 
-    editFileInCommand(myProject, tree.myS1File, "1234543534543 3543 ");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1234543534543 3543 ");
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     changeListManager.ensureUpToDate(false);
 

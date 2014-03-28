@@ -543,7 +543,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
 
   @Override
   public String toString() {
-    return result.toString();
+    return String.valueOf(result);
   }
 
   @NotNull

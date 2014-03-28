@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -83,7 +84,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     myNextButton = new JButton(IdeBundle.message("button.wizard.next"));
     myCancelButton = new JButton(CommonBundle.getCancelButtonText());
     myHelpButton = new JButton(CommonBundle.getHelpButtonText());
-    myContentPanel = new JPanel(new CardLayout());
+    myContentPanel = new JPanel(new JBCardLayout());
 
     myIcon = new TallImageComponent(null);
 
@@ -338,7 +339,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       myContentPanel.revalidate();
       myContentPanel.repaint();
     }
-    ((CardLayout)myContentPanel.getLayout()).show(myContentPanel, id);
+    ((JBCardLayout)myContentPanel.getLayout()).swipe(myContentPanel, id, JBCardLayout.SwipeDirection.AUTO);
   }
 
   protected void doPreviousAction() {
@@ -422,7 +423,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     if (mySteps.isEmpty()) {
       return;
     }
-
+    
     final Step step = mySteps.get(myCurrentStep);
     LOG.assertTrue(step != null);
     step._init();

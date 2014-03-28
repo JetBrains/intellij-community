@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,12 +163,13 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
         for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getExtensions()) {
           processor.refreshProjectFiles(projectDir);
         }
-        
+
         project = projectManager.convertAndLoadProject(baseDir.getPath());
         if (project == null) {
           WelcomeFrame.showIfNoProjectOpened();
           return null;
         }
+
         final Module[] modules = ModuleManager.getInstance(project).getModules();
         if (modules.length > 0) {
           runConfigurators = false;

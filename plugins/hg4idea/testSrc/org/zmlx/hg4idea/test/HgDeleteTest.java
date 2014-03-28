@@ -13,6 +13,7 @@
 package org.zmlx.hg4idea.test;
 
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -50,7 +51,7 @@ public class HgDeleteTest extends HgSingleUserTest {
   public void testDeleteModifiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
     runHgOnProjectRepo("commit", "-m", "added file");
-    editFileInCommand(myProject, file, "even newer content");
+    VcsTestUtil.editFileInCommand(myProject, file, "even newer content");
     verify(runHgOnProjectRepo("status"), HgTestOutputParser.modified("a.txt"));
     deleteFileInCommand(file);
     verify(runHgOnProjectRepo("status"), HgTestOutputParser.removed("a.txt"));
@@ -109,7 +110,7 @@ public class HgDeleteTest extends HgSingleUserTest {
         fail("No dialog should be invoked, because newly added file should be silently removed from the repository");
       }
     });
-    deleteFileInCommand(myProject, vf);
+    VcsTestUtil.deleteFileInCommand(myProject, vf);
   }
 
 }

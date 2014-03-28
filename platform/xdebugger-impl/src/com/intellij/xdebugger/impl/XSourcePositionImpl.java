@@ -108,4 +108,9 @@ public class XSourcePositionImpl implements XSourcePosition {
   public static OpenFileDescriptor createOpenFileDescriptor(@NotNull Project project, @NotNull XSourcePosition position) {
     return position.getOffset() != -1 ? new OpenFileDescriptor(project, position.getFile(), position.getOffset()) : new OpenFileDescriptor(project, position.getFile(), position.getLine(), 0);
   }
+
+  @Override
+  public String toString() {
+    return "XSourcePositionImpl[" + myFile + ":" + myLine + "(" + myOffset + ")]";
+  }
 }

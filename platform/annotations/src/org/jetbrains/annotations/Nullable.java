@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,21 @@ package org.jetbrains.annotations;
 import java.lang.annotation.*;
 
 /**
- * An element annotated with Nullable claims <code>null</code> value is perfectly <em>valid</em>
- * to return (for methods), pass to (parameters) and hold (local variables and fields).
+ * An element annotated with {@link Nullable} claims {@code null} value is perfectly <em>valid</em>
+ * to return (for methods), pass to (parameters) or hold in (local variables and fields).
  * Apart from documentation purposes this annotation is intended to be used by static analysis tools
- * to validate against probable runtime errors and element contract violations.
+ * to validate against probable runtime errors or element contract violations.
+ * <br>
+ * By convention, this annotation applied only when the value should <em>always</em> be checked against {@code null}
+ * because the developer could do nothing to prevent null from happening.
+ * Otherwise, too eager {@link Nullable} usage could lead to too many false positives from static analysis tools.
+ * <br>
+ * For example, {@link java.util.Map#get(Object key)} should <em>not</em> be annotated {@link Nullable} because
+ * someone may have put not-null value in the map by this key and is expecting to find this value there ever since.
+ * <br>
+ * On the other hand, the {@link java.lang.ref.Reference#get()} should be annotated {@link Nullable} because
+ * it returns {@code null} if object got collected which can happen at any time completely unexpectedly.
+ *
  * @author max
  */
 @Documented
