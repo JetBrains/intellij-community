@@ -101,7 +101,8 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
           final PsiAssignmentExpression assignment = (PsiAssignmentExpression)context;
           holder.registerProblem(assignment.getLExpression(),
                                  InspectionsBundle.message("inspection.unused.assignment.problem.descriptor3",
-                                                           assignment.getRExpression().getText(), "<code>#ref</code>" + " #loc"), ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+                                                           assignment.getRExpression().getText(), "<code>#ref</code>" + " #loc"), 
+                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, createRemoveAssignmentFix());
         }
         else {
           if (context instanceof PsiPrefixExpression && REPORT_PREFIX_EXPRESSIONS ||
@@ -150,6 +151,10 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
   }
 
   protected LocalQuickFix createRemoveInitializerFix() {
+    return null;
+  }
+
+  protected LocalQuickFix createRemoveAssignmentFix() {
     return null;
   }
 
