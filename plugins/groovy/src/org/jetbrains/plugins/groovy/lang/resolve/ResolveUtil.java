@@ -48,7 +48,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -235,6 +234,8 @@ public class ResolveUtil {
                                         ResolveState state,
                                         PsiElement lastParent,
                                         PsiElement place) {
+    if (!shouldProcessProperties(processor.getHint(ClassHint.KEY))) return true;
+
     PsiElement run = lastParent == null ? element.getLastChild() : lastParent.getPrevSibling();
     while (run != null) {
       if (!run.processDeclarations(processor, state, null, place)) return false;
@@ -363,7 +364,6 @@ public class ResolveUtil {
     else {
       key = TypeConversionUtil.erasure(base).getCanonicalText();
     }
-    if (key == null) key = "";
     Map<String, PsiType> result = cache.get(key);
     if (result == null) {
       result = new HashMap<String, PsiType>();
@@ -376,7 +376,6 @@ public class ResolveUtil {
   @NotNull
   private static String rawCanonicalText(@NotNull PsiType type) {
     final String result = type.getCanonicalText();
-    if (result == null) return "";
     final int i = result.indexOf('<');
     if (i > 0) return result.substring(0, i);
     return result;
@@ -778,7 +777,9 @@ public class ResolveUtil {
       final GroovyResolveResult[] candidates = getterResolver.getCandidates(); //can be only one candidate
       final List<GroovyResolveResult> applicable = new ArrayList<GroovyResolveResult>();
       for (GroovyResolveResult candidate : candidates) {
-        final PsiType type = getSmartReturnType((PsiMethod)candidate.getElement());
+        PsiMethod method = (PsiMethod)candidate.getElement();
+        assert method != null;
+        final PsiType type = getSmartReturnType(method);
         if (isApplicableClosureType(type, argumentTypes, place)) {
           applicable.add(candidate);
         }
@@ -798,8 +799,9 @@ public class ResolveUtil {
     return GroovyResolveResult.EMPTY_ARRAY;
   }
 
-  private static boolean isApplicableClosureType(@Nullable PsiType type, @NotNull PsiType[] argTypes, @NotNull PsiElement place) {
+  private static boolean isApplicableClosureType(@Nullable PsiType type, @Nullable PsiType[] argTypes, @NotNull PsiElement place) {
     if (!(type instanceof GrClosureType)) return false;
+    if (argTypes == null) return true;
 
     final GrSignature signature = ((GrClosureType)type).getSignature();
     return GrClosureSignatureUtil.isSignatureApplicable(signature, argTypes, place);
@@ -937,11 +939,6 @@ public class ResolveUtil {
       }
     }
     return expectedParams;
-  }
-
-  @NotNull
-  public static List<Pair<PsiParameter, PsiType>> collectExpectedParamsByArg(@NotNull GrCall call, @NotNull GrExpression arg) {
-    return collectExpectedParamsByArg(arg, call.getCallVariants(arg), call.getNamedArguments(), call.getExpressionArguments(), call.getClosureArguments(), arg);
   }
 
   public static boolean shouldProcessClasses(ClassHint classHint) {
