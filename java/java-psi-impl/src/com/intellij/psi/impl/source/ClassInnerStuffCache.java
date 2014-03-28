@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.source;
 
-import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.psi.ExternallyDefinedPsiElement;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -38,7 +38,7 @@ import java.util.Map;
 
 public class ClassInnerStuffCache {
   private final PsiExtensibleClass myClass;
-  private final MyModificationTracker myTreeChangeTracker;
+  private final SimpleModificationTracker myTreeChangeTracker;
 
   private CachedValue<PsiMethod[]> myConstructorsCache;
   private CachedValue<PsiField[]> myFieldsCache;
@@ -50,7 +50,7 @@ public class ClassInnerStuffCache {
 
   public ClassInnerStuffCache(final PsiExtensibleClass aClass) {
     myClass = aClass;
-    myTreeChangeTracker = new MyModificationTracker();
+    myTreeChangeTracker = new SimpleModificationTracker();
   }
 
   @NotNull
@@ -261,14 +261,7 @@ public class ClassInnerStuffCache {
   }
 
   public void dropCaches() {
-    myTreeChangeTracker.myCount++;
+    myTreeChangeTracker.incModificationCount();
   }
 
-  private static class MyModificationTracker implements ModificationTracker {
-    private long myCount = 0;
-    @Override
-    public long getModificationCount() {
-      return myCount;
-    }
-  }
 }
