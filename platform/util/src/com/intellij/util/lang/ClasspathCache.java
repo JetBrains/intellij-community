@@ -128,7 +128,7 @@ public class ClasspathCache {
   }
 
   public boolean loaderHasName(String name, Loader loader) {
-    if (StringUtil.isEmptyOrSpaces(name)) return true;
+    if (StringUtil.isEmpty(name)) return true;
     
     String origName = name;
     name = transformName(name);
