@@ -495,7 +495,7 @@ public class ExpectedTypesProvider {
         PsiExpression rExpr = assignment.getRExpression();
         if (rExpr != null) {
           PsiType type = rExpr.getType();
-          if (type != null) {
+          if (type != null && type != PsiType.NULL) {
             if (type instanceof PsiClassType) {
               final PsiClass resolved = ((PsiClassType)type).resolve();
               if (resolved instanceof PsiAnonymousClass) {
