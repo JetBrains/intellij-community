@@ -12,7 +12,7 @@ public abstract class AsyncValueLoaderManager<HOST, VALUE> {
     this.fieldUpdater = fieldUpdater;
   }
 
-  public boolean checkFreshness(@NotNull HOST host, @NotNull VALUE value) {
+  public boolean isUpToDate(@NotNull HOST host, @NotNull VALUE value) {
     return true;
   }
 
@@ -57,7 +57,7 @@ public abstract class AsyncValueLoaderManager<HOST, VALUE> {
       return asyncResult;
     }
     else if (asyncResult.isDone()) {
-      if (!checkFreshness || checkFreshness(host, asyncResult.getResult())) {
+      if (!checkFreshness || isUpToDate(host, asyncResult.getResult())) {
         return asyncResult;
       }
 
