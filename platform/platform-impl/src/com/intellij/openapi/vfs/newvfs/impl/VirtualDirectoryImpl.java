@@ -371,7 +371,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
     catch (URISyntaxException ignored) { }
 
-    allowed.add(FileUtil.toSystemIndependentName(SystemProperties.getJavaHome()));
+    String javaHome = SystemProperties.getJavaHome();
+    allowed.add(FileUtil.toSystemIndependentName(javaHome));
+    if (SystemInfo.isMac && SystemInfo.isAppleJvm) {
+      // Apple SDK has jars in the folder _next_ to the java.home 
+      allowed.add(FileUtil.toSystemIndependentName(new File(new File(javaHome).getParent(), "Classes").getPath()));
+    }
     allowed.add(FileUtil.toSystemIndependentName(new File(FileUtil.getTempDirectory()).getParent()));
     allowed.add(FileUtil.toSystemIndependentName(System.getProperty("java.io.tmpdir")));
     allowed.add(FileUtil.toSystemIndependentName(SystemProperties.getUserHome()));
