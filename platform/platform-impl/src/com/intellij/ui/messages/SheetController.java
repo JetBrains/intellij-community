@@ -195,13 +195,17 @@ public class SheetController {
     return mySheetPanel;
   }
 
+  private static float getSheetAlpha() {
+    return ((UIUtil.isUnderDarcula())) ? .95f : .85f;
+  }
+
   private JPanel createSheetPanel(String title, String message, JButton[] buttons) {
     JPanel sheetPanel = new JPanel() {
       @Override
       protected void paintComponent(Graphics g2d) {
         final Graphics2D g = (Graphics2D) g2d.create();
         super.paintComponent(g);
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .85f));
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, getSheetAlpha()));
 
         g.setColor(new JBColor(Gray._225, UIUtil.getPanelBackground()));
         Rectangle2D dialog  = new Rectangle2D.Double(SHADOW_BORDER, 0, SHEET_WIDTH, SHEET_HEIGHT);
@@ -327,8 +331,13 @@ public class SheetController {
     g2d.clearRect(SHADOW_BORDER, 0, SHEET_WIDTH, SHEET_HEIGHT);
   }
 
+
+  private static float getShadowAlpha() {
+    return ((UIUtil.isUnderDarcula())) ? .85f : .35f;
+  }
+
   private void paintShadowFromParent(Graphics2D g2d) {
-    g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .35f));
+    g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, getShadowAlpha()));
     g2d.drawImage(myShadowImage, 0, - SHEET_HEIGHT, null);
   }
 
