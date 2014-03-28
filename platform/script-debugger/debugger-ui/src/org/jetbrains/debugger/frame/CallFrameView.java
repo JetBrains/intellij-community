@@ -17,10 +17,13 @@ public final class CallFrameView extends StackFrameImplBase implements VariableC
   private final Script script;
 
   public CallFrameView(@NotNull CallFrame callFrame, @NotNull DebuggerViewSupport debugProcess, @Nullable Script script) {
-    this(debugProcess.getSourceInfo(script, callFrame), callFrame, debugProcess, script);
+    this(callFrame, debugProcess.getSourceInfo(script, callFrame), debugProcess, script);
   }
 
-  public CallFrameView(@Nullable SourceInfo sourceInfo, @NotNull CallFrame callFrame, @NotNull DebuggerViewSupport debugProcess, @Nullable Script script) {
+  public CallFrameView(@NotNull CallFrame callFrame,
+                       @Nullable SourceInfo sourceInfo,
+                       @NotNull DebuggerViewSupport debugProcess,
+                       @Nullable Script script) {
     super(sourceInfo);
 
     this.debugProcess = debugProcess;

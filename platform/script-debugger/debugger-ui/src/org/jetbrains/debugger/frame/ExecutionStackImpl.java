@@ -11,20 +11,27 @@ import java.util.Collections;
 import java.util.List;
 
 public class ExecutionStackImpl extends XExecutionStack {
-  private final CallFrameView topFrame;
+  private final SuspendContext suspendContext;
+  private final Script topFrameScript;
+  private CallFrameView topCallFrameView;
   private final DebuggerViewSupport debugProcess;
 
-  public ExecutionStackImpl(@NotNull SuspendContext suspendContext, @NotNull DebuggerViewSupport debugProcess, @Nullable Script script) {
+  public ExecutionStackImpl(@NotNull SuspendContext suspendContext, @NotNull DebuggerViewSupport debugProcess, @Nullable Script topFrameScript) {
     super("");
 
     this.debugProcess = debugProcess;
-    topFrame = suspendContext.getTopFrame() == null ? null : new CallFrameView(suspendContext.getTopFrame(), debugProcess, script);
+    this.suspendContext = suspendContext;
+    this.topFrameScript = topFrameScript;
   }
 
   @Override
   @Nullable
   public CallFrameView getTopFrame() {
-    return topFrame;
+    CallFrame topCallFrame = suspendContext.getTopFrame();
+    if (topCallFrameView.getCallFrame() != topCallFrame) {
+      topCallFrameView = topCallFrame == null ? null : new CallFrameView(topCallFrame, debugProcess, topFrameScript);
+    }
+    return topCallFrameView;
   }
 
   @Override
