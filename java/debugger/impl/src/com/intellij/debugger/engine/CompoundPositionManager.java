@@ -60,18 +60,24 @@ public class CompoundPositionManager extends PositionManagerEx {
       }
       catch (NoDataException ignored) {
       }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
     return null;
   }
 
   @Override
   @NotNull
-  public List<ReferenceType> getAllClasses(SourcePosition classPosition) {
+  public List<ReferenceType> getAllClasses(@NotNull SourcePosition classPosition) {
     for (PositionManager positionManager : myPositionManagers) {
       try {
         return positionManager.getAllClasses(classPosition);
       }
       catch (NoDataException ignored) {
+      }
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
     return Collections.emptyList();
@@ -79,24 +85,30 @@ public class CompoundPositionManager extends PositionManagerEx {
 
   @Override
   @NotNull
-  public List<Location> locationsOfLine(ReferenceType type, SourcePosition position) {
+  public List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) {
     for (PositionManager positionManager : myPositionManagers) {
       try {
         return positionManager.locationsOfLine(type, position);
       }
       catch (NoDataException ignored) {
       }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
     return Collections.emptyList();
   }
 
   @Override
-  public ClassPrepareRequest createPrepareRequest(ClassPrepareRequestor requestor, SourcePosition position) {
+  public ClassPrepareRequest createPrepareRequest(@NotNull ClassPrepareRequestor requestor, @NotNull SourcePosition position) {
     for (PositionManager positionManager : myPositionManagers) {
       try {
         return positionManager.createPrepareRequest(requestor, position);
       }
       catch (NoDataException ignored) {
+      }
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
 
