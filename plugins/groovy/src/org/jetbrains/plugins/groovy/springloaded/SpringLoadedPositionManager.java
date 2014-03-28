@@ -52,7 +52,7 @@ public class SpringLoadedPositionManager implements PositionManager {
 
   @NotNull
   @Override
-  public List<ReferenceType> getAllClasses(final SourcePosition classPosition) throws NoDataException {
+  public List<ReferenceType> getAllClasses(@NotNull final SourcePosition classPosition) throws NoDataException {
     int line;
     String className;
 
@@ -85,7 +85,7 @@ public class SpringLoadedPositionManager implements PositionManager {
 
   @NotNull
   @Override
-  public List<Location> locationsOfLine(ReferenceType type, SourcePosition position) throws NoDataException {
+  public List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
     throw new NoDataException();
   }
 
@@ -146,7 +146,7 @@ public class SpringLoadedPositionManager implements PositionManager {
   }
 
   @Override
-  public ClassPrepareRequest createPrepareRequest(ClassPrepareRequestor requestor, SourcePosition position) throws NoDataException {
+  public ClassPrepareRequest createPrepareRequest(@NotNull ClassPrepareRequestor requestor, @NotNull SourcePosition position) throws NoDataException {
     String className = getOuterClassName(position);
     if (className == null) {
       throw new NoDataException();
