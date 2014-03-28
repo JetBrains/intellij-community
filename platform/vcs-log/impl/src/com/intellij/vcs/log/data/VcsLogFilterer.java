@@ -142,13 +142,13 @@ public class VcsLogFilterer {
   }
 
   @NotNull
-  private static Collection<Integer> getMatchingHeads(@NotNull DataPack dataPack, @NotNull VcsLogBranchFilter branchFilter) {
+  private Collection<Integer> getMatchingHeads(@NotNull DataPack dataPack, @NotNull VcsLogBranchFilter branchFilter) {
     final Collection<String> branchNames = new HashSet<String>(branchFilter.getBranchNames());
     return ContainerUtil.mapNotNull(dataPack.getRefsModel().getAllRefs(), new Function<VcsRef, Integer>() {
       @Override
       public Integer fun(VcsRef ref) {
         if (branchNames.contains(ref.getName())) {
-          return ref.getCommitIndex();
+          return myLogDataHolder.getCommitIndex(ref.getCommitHash());
         }
         return null;
       }

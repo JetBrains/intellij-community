@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.NotNullFunction;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import org.jetbrains.annotations.NotNull;
@@ -88,18 +87,7 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
   @NotNull
   @Override
   public VcsRef createRef(@NotNull Hash commitHash, @NotNull String name, @NotNull VcsRefType type, @NotNull VirtualFile root) {
-    return new VcsRefImpl(new NotNullFunction<Hash, Integer>() {
-      @NotNull
-      @Override
-      public Integer fun(Hash hash) {
-        VcsLogDataHolder dataHolder = myLogManager.getDataHolder();
-        if (dataHolder == null) {
-          LOG.error("The log data holder should have been initialized at this point");
-          return -1;
-        }
-        return dataHolder.getCommitIndex(hash);
-      }
-    }, commitHash, name, type, root);
+    return new VcsRefImpl(commitHash, name, type, root);
   }
 
 }
