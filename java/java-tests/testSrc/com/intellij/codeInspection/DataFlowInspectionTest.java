@@ -274,6 +274,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testContractWithNullable() { doTest(); }
   public void testContractPreservesUnknownNullability() { doTest(); }
   public void testContractSeveralClauses() { doTest(); }
+  public void testContractVarargs() { doTest(); }
 
   public void testBoxingImpliesNotNull() { doTest(); }
   public void testLargeIntegersAreNotEqualWhenBoxed() { doTest(); }
