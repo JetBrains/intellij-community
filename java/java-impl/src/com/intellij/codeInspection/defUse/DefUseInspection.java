@@ -55,7 +55,7 @@ public class DefUseInspection extends DefUseInspectionBase {
     return new RemoveAssignmentFix();
   }
   
-  private static class RemoveAssignmentFix extends RemoveInitializerFix {
+  public static class RemoveAssignmentFix extends RemoveInitializerFix {
     @NotNull
     @Override
     public String getName() {

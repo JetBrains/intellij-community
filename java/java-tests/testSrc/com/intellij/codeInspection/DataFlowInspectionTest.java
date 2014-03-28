@@ -323,6 +323,12 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
     
     doTest(); 
   }
+
+  public void testTrueOrEqualsSomething() {
+    doTest();
+    myFixture.launchAction(myFixture.findSingleIntention("Remove redundant assignment"));
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
   
   public void _testNullCheckBeforeInstanceof() { doTest(); } // http://youtrack.jetbrains.com/issue/IDEA-113220
 }
