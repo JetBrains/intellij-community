@@ -503,7 +503,9 @@ public class MatcherImpl {
     private void clearSchedule() {
       if (tasks != null) {
         taskQueueEndAction.run();
-        PsiManager.getInstance(project).finishBatchFilesProcessingMode();
+        if (!project.isDisposed()) {
+          PsiManager.getInstance(project).finishBatchFilesProcessingMode();
+        }
         tasks = null;
       }
     }

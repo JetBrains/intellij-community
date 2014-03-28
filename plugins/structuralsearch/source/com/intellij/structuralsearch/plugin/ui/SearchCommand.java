@@ -117,7 +117,9 @@ public class SearchCommand {
   }
 
   protected void findEnded() {
-    StructuralSearchPlugin.getInstance(project).setSearchInProgress(false);
+    if (!project.isDisposed()) {
+      StructuralSearchPlugin.getInstance(project).setSearchInProgress(false);
+    }
   }
 
   protected void foundUsage(MatchResult result, Usage usage) {
