@@ -793,7 +793,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
   public String showSaveTemplateAsDialog() {
     return ConfigurationManager.showSaveTemplateAsDialog(
-      model.getShadowConfig() != null ? model.getShadowConfig().getName() : "",
+      model.getShadowConfig() != null ? model.getShadowConfig().getName() : SSRBundle.message("user.defined.category"),
       searchContext.getProject()
     );
   }

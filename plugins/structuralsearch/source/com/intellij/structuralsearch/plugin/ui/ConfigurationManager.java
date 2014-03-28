@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.plugin.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import org.jdom.Element;
@@ -42,7 +43,7 @@ public class ConfigurationManager {
   }
 
   public void addConfiguration(Configuration configuration) {
-    if (configurations == null) configurations = new LinkedList<Configuration>();
+    if (configurations == null) configurations = new ArrayList<Configuration>();
 
     if (configurations.indexOf(configuration) == -1) {
       configurations.add(configuration);
@@ -172,7 +173,7 @@ public class ConfigurationManager {
       SSRBundle.message("save.template.description.button"),
       AllIcons.General.QuestionDialog,
       initial,
-      null
+      new NonEmptyInputValidator()
     );
   }
 }
