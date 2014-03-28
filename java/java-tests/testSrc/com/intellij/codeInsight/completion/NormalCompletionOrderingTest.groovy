@@ -628,8 +628,4 @@ interface TxANotAnno {}
     assertPreferredItems 0, 'newLinkedSet1', 'newLinkedSet0', 'newLinkedSet2'
   }
 
-  public void testLocalReassignment() {
-    checkPreferredItems 0, 'localVar', 'localMethod'
-  }
-
 }

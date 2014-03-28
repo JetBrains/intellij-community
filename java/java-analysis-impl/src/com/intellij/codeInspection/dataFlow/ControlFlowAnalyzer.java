@@ -1414,11 +1414,22 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       return false;
     }
 
+    PsiMethod method = expression.resolveMethod();
+    if (method == null) {
+      return false;
+    }
+
+    final int paramCount = method.getParameterList().getParametersCount();
+    boolean varArgs = method.isVarArgs();
     final PsiExpression[] args = expression.getArgumentList().getExpressions();
+    if (varArgs && args.length < paramCount - 1 || !varArgs && args.length != paramCount) {
+      return false;
+    }
+    
     List<MethodContract> contracts = ContainerUtil.findAll(_contracts, new Condition<MethodContract>() {
       @Override
       public boolean value(MethodContract contract) {
-        return args.length == contract.arguments.length;
+        return paramCount == contract.arguments.length;
       }
     });
     if (contracts.isEmpty()) {
@@ -1427,6 +1438,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     for (PsiExpression arg : args) {
       arg.accept(this);
+    }
+    if (varArgs) {
+      for (int i = 0; i < args.length - paramCount + 1; i++) {
+        addInstruction(new PopInstruction());
+      }
+      pushUnknown();
     }
 
     if (contracts.size() > 1) {

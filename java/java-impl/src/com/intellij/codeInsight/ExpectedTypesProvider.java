@@ -529,7 +529,7 @@ public class ExpectedTypesProvider {
       PsiResolveHelper helper = JavaPsiFacade.getInstance(list.getProject()).getResolveHelper();
       if (list.getParent() instanceof PsiMethodCallExpression) {
         PsiMethodCallExpression methodCall = (PsiMethodCallExpression)list.getParent();
-        CandidateInfo[] candidates = helper.getReferencedMethodCandidates(methodCall, false);
+        CandidateInfo[] candidates = helper.getReferencedMethodCandidates(methodCall, false, true);
         Collections.addAll(myResult, getExpectedArgumentTypesForMethodCall(candidates, list, myExpr, myForCompletion));
       }
       else if (list.getParent() instanceof PsiEnumConstant) {

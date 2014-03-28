@@ -24,7 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 
 import java.net.URL;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -44,7 +44,7 @@ public abstract class IdeResourcesTestCase extends PlatformTestCase {
     Set<String> ids = registry.getFeatureIds();
     assertNotEmpty(ids);
 
-    List<String> errors = ContainerUtil.newArrayList();
+    Collection<String> errors = ContainerUtil.newTreeSet();
     for (String id : ids) {
       FeatureDescriptor descriptor = registry.getFeatureDescriptor(id);
       TipAndTrickBean tip = TipAndTrickBean.findByFileName(descriptor.getTipFileName());
@@ -56,7 +56,7 @@ public abstract class IdeResourcesTestCase extends PlatformTestCase {
   }
 
   public void testTipFilesPresent() {
-    List<String> errors = ContainerUtil.newArrayList();
+    Collection<String> errors = ContainerUtil.newTreeSet();
     TipAndTrickBean[] tips = TipAndTrickBean.EP_NAME.getExtensions();
     assertNotEmpty(Arrays.asList(tips));
     for (TipAndTrickBean tip : tips) {
@@ -69,7 +69,7 @@ public abstract class IdeResourcesTestCase extends PlatformTestCase {
   }
 
   public void testTipFilesDuplicates() {
-    List<String> errors = ContainerUtil.newArrayList();
+    Collection<String> errors = ContainerUtil.newTreeSet();
     TipAndTrickBean[] tips = TipAndTrickBean.EP_NAME.getExtensions();
     assertNotEmpty(Arrays.asList(tips));
     Set<String> visited = ContainerUtil.newLinkedHashSet();
