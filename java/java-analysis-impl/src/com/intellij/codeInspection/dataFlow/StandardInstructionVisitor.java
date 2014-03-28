@@ -31,6 +31,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.psi.JavaTokenType.*;
+import static com.intellij.psi.JavaTokenType.EQEQ;
+import static com.intellij.psi.JavaTokenType.NE;
+
 /**
  * @author peter
  */
@@ -184,7 +188,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaValue dfaExpr = factory.createValue(instruction.getCasted());
     if (dfaExpr != null) {
       DfaTypeValue dfaType = (DfaTypeValue)factory.createTypeValue(instruction.getCastTo(), Nullness.UNKNOWN);
-      DfaRelationValue dfaInstanceof = factory.getRelationFactory().createRelation(dfaExpr, dfaType, JavaTokenType.INSTANCEOF_KEYWORD, false);
+      DfaRelationValue dfaInstanceof = factory.getRelationFactory().createRelation(dfaExpr, dfaType, INSTANCEOF_KEYWORD, false);
       if (dfaInstanceof != null && !memState.applyInstanceofOrNull(dfaInstanceof)) {
         onInstructionProducesCCE(instruction);
       }
@@ -289,7 +293,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   protected boolean checkNotNullable(DfaMemoryState state,
                                      DfaValue value, NullabilityProblem problem,
                                      PsiElement anchor) {
-    return state.checkNotNullable(value);
+    boolean notNullable = state.checkNotNullable(value);
+    if (notNullable && problem != NullabilityProblem.passingNullableArgumentToNonAnnotatedParameter) {
+      DfaValueFactory factory = ((DfaMemoryStateImpl)state).getFactory();
+      state.applyCondition(factory.getRelationFactory().createRelation(value, factory.getConstFactory().getNull(), NE, false));
+    }
+    return notNullable;
   }
 
   @Override
@@ -309,7 +318,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         return states;
       }
 
-      if (JavaTokenType.PLUS == opSign) {
+      if (PLUS == opSign) {
         memState.push(instruction.getNonNullStringValue(runner.getFactory()));
       }
       else {
@@ -415,12 +424,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                                 DfaValue dfaRight,
                                                                 DfaValue dfaLeft) {
     final IElementType opSign = instruction.getOperationSign();
-    if (JavaTokenType.EQEQ != opSign && JavaTokenType.NE != opSign ||
+    if (EQEQ != opSign && NE != opSign ||
         !(dfaLeft instanceof DfaConstValue) || !(dfaRight instanceof DfaConstValue)) {
       return null;
     }
 
-    boolean negated = (JavaTokenType.NE == opSign) ^ (DfaMemoryStateImpl.isNaN(dfaLeft) || DfaMemoryStateImpl.isNaN(dfaRight));
+    boolean negated = (NE == opSign) ^ (DfaMemoryStateImpl.isNaN(dfaLeft) || DfaMemoryStateImpl.isNaN(dfaRight));
     if (dfaLeft == dfaRight ^ negated) {
       memState.push(runner.getFactory().getConstFactory().getTrue());
       instruction.setTrueReachable();
