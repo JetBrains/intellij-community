@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Consumer;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -70,7 +71,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
       throw new IndexOutOfBoundsException("lineNumber:" + lineNumber + ". Must be in [0, " + (getDocument().getLineCount() - 1) + "]");
     }
 
-    int offset = getFirstNonSpaceCharOffset(getDocument(), lineNumber);
+    int offset = DocumentUtil.getFirstNonSpaceCharOffset(getDocument(), lineNumber);
     return addRangeHighlighter(offset, offset, layer, textAttributes, HighlighterTargetArea.LINES_IN_RANGE);
   }
 
@@ -81,33 +82,12 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
       return null;
     }
 
-    int offset = getFirstNonSpaceCharOffset(getDocument(), lineNumber);
+    int offset = DocumentUtil.getFirstNonSpaceCharOffset(getDocument(), lineNumber);
     return addRangeHighlighter(PersistentRangeHighlighterImpl.create(this, offset, layer, HighlighterTargetArea.LINES_IN_RANGE, textAttributes, false), null);
   }
 
   private boolean isNotValidLine(int lineNumber) {
     return lineNumber >= getDocument().getLineCount() || lineNumber < 0;
-  }
-
-  // The rationale why we don't bind to the line start offset here is that following: suppose particular breakpoint is hit
-  // during debugging. We may want to type <enter> at the active line indent and highlighted string will be moved one line
-  // down as well then.
-  // IDEA-46403
-  public static int getFirstNonSpaceCharOffset(@NotNull Document document, int line) {
-    int startOffset = document.getLineStartOffset(line);
-    int endOffset = document.getLineEndOffset(line);
-    return getFirstNonSpaceCharOffset(document, startOffset, endOffset);
-  }
-
-  public static int getFirstNonSpaceCharOffset(@NotNull Document document, int startOffset, int endOffset) {
-    CharSequence text = document.getImmutableCharSequence();
-    for (int i = startOffset; i < endOffset; i++) {
-      char c = text.charAt(i);
-      if (c != ' ' && c != '\t') {
-        return i;
-      }
-    }
-    return startOffset;
   }
 
   // NB: Can return invalid highlighters
