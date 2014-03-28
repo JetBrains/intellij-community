@@ -49,24 +49,8 @@ public class VMOptions {
   @NonNls private static final Pattern PERM_GEN_PATTERN = Pattern.compile(PERM_GEN_OPTION + MEM_SIZE_EXPR);
   @NonNls private static final Pattern CODE_CACHE_PATTERN = Pattern.compile(CODE_CACHE_OPTION + MEM_SIZE_EXPR);
 
-  private static String ourTestPath;
-
-  @TestOnly
-  static void setTestFile(String path) {
-    ourTestPath = path;
-  }
-
-  @TestOnly
-  static void clearTestFile() {
-    ourTestPath = null;
-  }
-
   public static int readXmx() {
     return readOption(XMX_PATTERN);
-  }
-
-  public static void writeXmx(int value) {
-    writeOption(XMX_OPTION, value, XMX_PATTERN);
   }
 
   public static int readMaxPermGen() {
@@ -75,6 +59,10 @@ public class VMOptions {
 
   public static int readCodeCache() {
     return readOption(CODE_CACHE_PATTERN);
+  }
+
+  public static void writeXmx(int value) {
+    writeOption(XMX_OPTION, value, XMX_PATTERN);
   }
 
   public static void writeMaxPermGen(int value) {
@@ -243,5 +231,17 @@ public class VMOptions {
     final String platformSuffix = SystemInfo.is64Bit ? "64" : "";
     final String osSuffix = SystemInfo.isWindows ? ".exe" : "";
     return PathManager.getBinPath() + File.separatorChar + productName + platformSuffix + osSuffix + ".vmoptions";
+  }
+
+  private static String ourTestPath;
+
+  @TestOnly
+  static void setTestFile(String path) {
+    ourTestPath = path;
+  }
+
+  @TestOnly
+  static void clearTestFile() {
+    ourTestPath = null;
   }
 }
