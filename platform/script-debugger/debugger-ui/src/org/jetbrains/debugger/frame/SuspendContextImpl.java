@@ -3,6 +3,7 @@ package org.jetbrains.debugger.frame;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
+import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,11 +16,10 @@ import org.jetbrains.debugger.values.Value;
 
 public class SuspendContextImpl extends XSuspendContext {
   private final ExecutionStackImpl executionStack;
-
   private final SuspendContext suspendContext;
 
-  protected SuspendContextImpl(@NotNull SuspendContext suspendContext, @NotNull DebuggerViewSupport debugProcess, @Nullable Script script) {
-    executionStack = new ExecutionStackImpl(suspendContext, debugProcess, script);
+  protected SuspendContextImpl(@NotNull SuspendContext suspendContext, @NotNull DebuggerViewSupport debugProcess, @Nullable Script topFrameScript) {
+    executionStack = new ExecutionStackImpl(suspendContext, debugProcess, topFrameScript);
     this.suspendContext = suspendContext;
   }
 
@@ -30,7 +30,7 @@ public class SuspendContextImpl extends XSuspendContext {
 
   @Override
   @NotNull
-  public ExecutionStackImpl getActiveExecutionStack() {
+  public XExecutionStack getActiveExecutionStack() {
     return executionStack;
   }
 
