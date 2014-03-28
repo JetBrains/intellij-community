@@ -110,4 +110,10 @@ public class PersistentFsTest extends PlatformLangTestCase {
       assertFalse("fs=" + fs, fs instanceof TempFileSystem);
     }
   }
+
+  public void testInvalidJarRootsIgnored() throws Exception {
+    File file = IoTestUtil.createTestFile("file.txt");
+    String url = "jar://" + FileUtil.toSystemIndependentName(file.getPath()) + "!/";
+    assertNull(VirtualFileManager.getInstance().findFileByUrl(url));
+  }
 }
