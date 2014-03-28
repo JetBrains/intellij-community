@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,18 +49,25 @@ public class UsageTrigger implements PersistentStateComponent<UsageTrigger.State
     getInstance().doTrigger(feature);
   }
 
+  public static void trigger(@NotNull String feature, int num) {
+    getInstance().doTrigger(feature, num);
+  }
+
   private static UsageTrigger getInstance() {
     return ServiceManager.getService(UsageTrigger.class);
   }
 
   private void doTrigger(String feature) {
+    doTrigger(feature, 1);
+  }
+
+  private void doTrigger(String feature, int num) {
     ConvertUsagesUtil.assertDescriptorName(feature);
     final Integer count = myState.myValues.get(feature);
     if (count == null) {
-      myState.myValues.put(feature, 1);
-    }
-    else {
-      myState.myValues.put(feature, count + 1);
+      myState.myValues.put(feature, num);
+    } else {
+      myState.myValues.put(feature, count + num);
     }
   }
 
