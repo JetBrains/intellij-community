@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +74,7 @@ class PersistentRangeHighlighterImpl extends RangeHighlighterImpl implements Ran
       }
     }
     if (isValid() && getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE) {
-      setIntervalStart(MarkupModelImpl.getFirstNonSpaceCharOffset(getDocument(), getLine()));
+      setIntervalStart(DocumentUtil.getFirstNonSpaceCharOffset(getDocument(), getLine()));
       setIntervalEnd(getDocument().getLineEndOffset(getLine()));
     }
   }

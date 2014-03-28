@@ -28,6 +28,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.DocumentUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import org.jetbrains.annotations.NotNull;
@@ -212,7 +213,7 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
     int caretOffset = context.editor.getCaretModel().getOffset();
     String newIndentString = new IndentInfo(0, newIndent, 0).generateNewWhiteSpace(context.getIndentOptions());
     int start = context.document.getLineStartOffset(context.targetLine);
-    int end = getFirstNonWsSymbolOffset(context.document, context.targetLine);
+    int end = DocumentUtil.getFirstNonSpaceCharOffset(context.document, context.targetLine);
     context.editor.getDocument().replaceString(start, end, newIndentString);
     if (caretOffset > start && caretOffset < end) {
       context.editor.getCaretModel().moveToOffset(start + newIndentString.length());
@@ -306,19 +307,6 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
       }
     }
     return result;
-  }
-  
-  private static int getFirstNonWsSymbolOffset(@NotNull Document document, int line) {
-    int start = document.getLineStartOffset(line);
-    int end = document.getLineEndOffset(line);
-    CharSequence text = document.getCharsSequence();
-    for (int i = start; i < end; i++) {
-      char c = text.charAt(i);
-      if (c != ' ' && c != '\t') {
-        return i;
-      }
-    }
-    return end;
   }
   
   private static class LineInfo {
