@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="asm4" level="project" />
+    <orderEntry type="library" name="asm5" level="project" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="core-api" />
     <orderEntry type="module" module-name="platform-api" />
