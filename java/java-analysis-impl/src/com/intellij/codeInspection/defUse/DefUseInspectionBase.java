@@ -90,11 +90,13 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
           }
           else {
             if (REPORT_REDUNDANT_INITIALIZER) {
+              List<LocalQuickFix> fixes = ContainerUtil.createMaybeSingletonList(isOnTheFly ? createRemoveInitializerFix() : null);
               holder.registerProblem(psiVariable.getInitializer(),
                                      InspectionsBundle.message("inspection.unused.assignment.problem.descriptor2",
                                                                "<code>" + psiVariable.getName() + "</code>", "<code>#ref</code> #loc"),
                                      ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                                     createRemoveInitializerFix());
+                                     fixes.toArray(new LocalQuickFix[fixes.size()])
+              );
             }
           }
         }
