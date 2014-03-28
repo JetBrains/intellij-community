@@ -18,7 +18,6 @@ package com.intellij.vcs.log.data;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.vcs.log.VcsUser;
-import com.intellij.vcs.log.impl.VcsUserImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -32,11 +31,6 @@ public class VcsUserRegistry {
 
   private final Interner<VcsUser> myUserMap = new Interner<VcsUser>();
   private final ReadWriteLock myLock = new ReentrantReadWriteLock();
-
-  @NotNull
-  public VcsUser createUser(@NotNull String name, @NotNull String email) {
-    return addUser(new VcsUserImpl(name, email));
-  }
 
   @NotNull
   public VcsUser addUser(@NotNull VcsUser user) {
