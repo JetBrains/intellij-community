@@ -397,11 +397,8 @@ public class VfsUtilTest extends PlatformLangTestCase {
   }
 
   public void testFindRootWithDenormalizedPath() throws IOException {
-    File tempDir = createTempDirectory();
-    assertTrue(new File(tempDir, "x.jar").createNewFile());
-    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
-    assertNotNull(vDir);
-    VirtualFile jar = vDir.findChild("x.jar");
+    File tempJar = IoTestUtil.createTestJar();
+    VirtualFile jar = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempJar);
     assertNotNull(jar);
 
     JarFileSystem fs = JarFileSystem.getInstance();
@@ -412,11 +409,8 @@ public class VfsUtilTest extends PlatformLangTestCase {
   }
 
   public void testFindRootPerformance() throws IOException {
-    File tempDir = createTempDirectory();
-    assertTrue(new File(tempDir, "x.jar").createNewFile());
-    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
-    assertNotNull(vDir);
-    final VirtualFile jar = vDir.findChild("x.jar");
+    File tempJar = IoTestUtil.createTestJar();
+    final VirtualFile jar = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempJar);
     assertNotNull(jar);
 
     final JarFileSystem fs = JarFileSystem.getInstance();
