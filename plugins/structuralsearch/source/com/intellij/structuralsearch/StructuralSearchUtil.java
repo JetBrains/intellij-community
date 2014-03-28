@@ -137,6 +137,7 @@ public class StructuralSearchUtil {
       for (StructuralSearchProfile profile : getProfiles()) {
         Collections.addAll(result, profile.getPredefinedTemplates());
       }
+      Collections.sort(result);
       ourPredefinedConfigurations = Collections.unmodifiableList(result);
     }
     return ourPredefinedConfigurations;

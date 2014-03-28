@@ -1,6 +1,7 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchOptions;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.NonNls;
  * Time: 5:29:37 PM
  * To change this template use File | Settings | File Templates.
  */
-public abstract class Configuration implements JDOMExternalizable {
+public abstract class Configuration implements JDOMExternalizable, Comparable<Configuration> {
   public static final Configuration[] EMPTY_ARRAY = {};
   @NonNls protected static final String NAME_ATTRIBUTE_NAME = "name";
   private String name = "";
@@ -55,12 +56,19 @@ public abstract class Configuration implements JDOMExternalizable {
 
   public abstract MatchOptions getMatchOptions();
 
+  @Override
+  public int compareTo(Configuration other) {
+    int result = StringUtil.naturalCompare(getCategory(), other.getCategory());
+    return result != 0 ? result : StringUtil.naturalCompare(getName(), other.getName());
+  }
+
   public boolean equals(Object configuration) {
     if (!(configuration instanceof Configuration)) return false;
     Configuration other = (Configuration)configuration;
-    if (!getMatchOptions().equals(other.getMatchOptions())) return false;
-    if (!getName().equals(other.getName())) return false;
-    return true;
+    if (category != null ? !category.equals(other.category) : other.category != null) {
+      return false;
+    }
+    return name.equals(other.name);
   }
 
   public int hashCode() {
