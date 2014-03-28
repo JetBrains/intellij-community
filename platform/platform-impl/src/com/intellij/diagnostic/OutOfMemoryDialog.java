@@ -63,7 +63,7 @@ public class OutOfMemoryDialog extends DialogWrapper {
         ApplicationNamesInfo.getInstance().getProductName()));
 
     File file = VMOptions.getWriteFile();
-    if (file != null && file.canWrite()) {
+    if (file != null) {
       mySettingsFileHintLabel.setText(DiagnosticBundle.message("diagnostic.out.of.memory.willBeSavedTo", file.getPath()));
     }
     else {
