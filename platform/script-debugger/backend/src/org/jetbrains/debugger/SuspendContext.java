@@ -29,8 +29,7 @@ public interface SuspendContext {
   CallFrame getTopFrame();
 
   /**
-   * @return a list of call frames for the current suspended state (from the
-   * innermost (top) frame to the main (bottom) frame)
+   * Call frames for the current suspended state (from the innermost (top) frame to the main (bottom) frame)
    */
   @NotNull
   AsyncResult<CallFrame[]> getCallFrames();

@@ -16,7 +16,7 @@ public abstract class ObjectValueBase<VALUE_LOADER extends ValueManager> extends
     new AsyncValueLoaderManager<ObjectValueBase, List<? extends Variable>>(
       ((AtomicReferenceFieldUpdater)AtomicReferenceFieldUpdater.newUpdater(ObjectValueBase.class, AsyncResult.class, "properties"))) {
       @Override
-      public boolean checkFreshness(@NotNull ObjectValueBase host, @NotNull List<? extends Variable> data) {
+      public boolean isUpToDate(@NotNull ObjectValueBase host, @NotNull List<? extends Variable> data) {
         return host.valueManager.getCacheStamp() == host.cacheStamp;
       }
 

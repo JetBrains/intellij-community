@@ -15,7 +15,7 @@ public abstract class DeclarativeScope<VALUE_LOADER extends ValueManager> extend
     new AsyncValueLoaderManager<DeclarativeScope, List<? extends Variable>>(
       ((AtomicReferenceFieldUpdater)AtomicReferenceFieldUpdater.newUpdater(DeclarativeScope.class, AsyncResult.class, "variables"))) {
       @Override
-      public boolean checkFreshness(@NotNull DeclarativeScope host, @NotNull List<? extends Variable> data) {
+      public boolean isUpToDate(@NotNull DeclarativeScope host, @NotNull List<? extends Variable> data) {
         return host.valueManager.getCacheStamp() == host.cacheStamp;
       }
 
