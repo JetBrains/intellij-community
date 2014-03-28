@@ -944,6 +944,22 @@ public class ResolveUtil {
     return collectExpectedParamsByArg(arg, call.getCallVariants(arg), call.getNamedArguments(), call.getExpressionArguments(), call.getClosureArguments(), arg);
   }
 
+  public static boolean shouldProcessClasses(ClassHint classHint) {
+    return classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.CLASS);
+  }
+
+  public static boolean shouldProcessMethods(ClassHint classHint) {
+    return classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.METHOD);
+  }
+
+  public static boolean shouldProcessProperties(ClassHint classHint) {
+    return classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.PROPERTY);
+  }
+
+  public static boolean shouldProcessPackages(ClassHint classHint) {
+    return classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.PACKAGE);
+  }
+
   private static class DuplicateVariablesProcessor extends PropertyResolverProcessor {
     private boolean myBorderPassed;
     private final boolean myHasVisibilityModifier;

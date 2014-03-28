@@ -45,7 +45,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil.shouldProcessMethods;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.shouldProcessClasses;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.shouldProcessMethods;
 
 /**
  * @author ilyas
@@ -181,6 +182,8 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
   }
 
   private boolean processSingleClassImport(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state) {
+    if (!shouldProcessClasses(processor.getHint(ClassHint.KEY))) return true;
+
     GrCodeReferenceElement ref = getImportReference();
     if (ref == null) return true;
 
@@ -227,12 +230,14 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
       }
     }
     else {
-      String qName = PsiUtil.getQualifiedReferenceText(ref);
-      if (qName != null) {
-        PsiPackage aPackage = JavaPsiFacade.getInstance(getProject()).findPackage(qName);
-        if (aPackage != null && !((GroovyFile)getContainingFile()).getPackageName().equals(aPackage.getQualifiedName())) {
-          state = state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
-          if (!aPackage.processDeclarations(processor, state, lastParent, place)) return false;
+      if (shouldProcessClasses(processor.getHint(ClassHint.KEY))) {
+        String qName = PsiUtil.getQualifiedReferenceText(ref);
+        if (qName != null) {
+          PsiPackage aPackage = JavaPsiFacade.getInstance(getProject()).findPackage(qName);
+          if (aPackage != null && !((GroovyFile)getContainingFile()).getPackageName().equals(aPackage.getQualifiedName())) {
+            state = state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
+            if (!aPackage.processDeclarations(processor, state, lastParent, place)) return false;
+          }
         }
       }
     }
