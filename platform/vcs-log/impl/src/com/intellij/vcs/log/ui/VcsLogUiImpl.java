@@ -214,7 +214,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
       jumpToRow(row);
     }
     else if (actionRequest instanceof ChangeCursorActionRequest) {
-      myMainFrame.setCursor(((ChangeCursorActionRequest)actionRequest).getCursor());
+      myMainFrame.getGraphTable().setCursor(((ChangeCursorActionRequest)actionRequest).getCursor());
     }
   }
 
