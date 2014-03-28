@@ -39,6 +39,8 @@ public class Interface8MethodsHighlightingTest extends LightDaemonAnalyzerTestCa
     doTest(false, false);
   }
 
+  public void testIDEA120498() { doTest(false, false); }
+
   private void doTest() {
     doTest(false, false);
   }
