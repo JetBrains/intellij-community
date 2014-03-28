@@ -21,8 +21,14 @@ To run the test suite, use the built-in JUnit test runner and run all tests in t
 
 ## Building from the Command Line
 
-To build the distribution archive of PyCharm Community Edition, execute build.xml Ant build script in this directory. The results of the
-build execution can be found at out/artifacts.
+To build the distribution archive of PyCharm Community Edition, execute build.xml Ant build script in this directory. 
+The results of the build execution can be found at out/artifacts.
+
+Note: if a subfolder `help` does not exist in  this directory, you need to create one before executing the Ant build script. You might also need to specify tools.jar e.g.:
+
+    export JAVA_HOME=/usr/lib/jvm/java-6-oracle
+    ant -lib /usr/lib/jvm/java-6-oracle/lib/tools.jar build
+
 
 ## Building the Python Plugin
 
