@@ -28,7 +28,7 @@ public class AutoCloseableResourceInspectionTest extends LightInspectionTestCase
            "class X {" +
            "    public void m() throws IOException {" +
            "        FileInputStream str;" +
-           "        str = /*'FileInputStream' used without 'try'-with-resources statement*/new FileInputStream(\"bar\")/**/;" +
+           "        str = new /*'FileInputStream' used without 'try'-with-resources statement*/FileInputStream/**/(\"bar\");" +
            "        try {" +
            "        } finally {" +
            "            str.close();" +
@@ -54,7 +54,7 @@ public class AutoCloseableResourceInspectionTest extends LightInspectionTestCase
     doTest("import java.sql.*;" +
            "class X {" +
            "  void m(Driver driver) throws SQLException {" +
-           "    /*'Connection' used without 'try'-with-resources statement*/driver.connect(\"jdbc\", null)/**/;" +
+           "    driver./*'Connection' used without 'try'-with-resources statement*/connect/**/(\"jdbc\", null);" +
            "  }" +
            "}");
   }

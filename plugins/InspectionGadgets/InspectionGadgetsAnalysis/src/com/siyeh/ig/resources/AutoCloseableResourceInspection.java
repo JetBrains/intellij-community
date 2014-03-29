@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,10 @@ public class AutoCloseableResourceInspection extends BaseInspection {
     @Override
     public void visitNewExpression(PsiNewExpression expression) {
       super.visitNewExpression(expression);
-      checkExpression(expression);
+      if (!isNotSafelyClosedResource(expression)) {
+        return;
+      }
+      registerNewExpressionError(expression, expression);
     }
 
     @Override
@@ -85,21 +88,18 @@ public class AutoCloseableResourceInspection extends BaseInspection {
       if (ignoreFromMethodCall) {
         return;
       }
-      checkExpression(expression);
+      if (!isNotSafelyClosedResource(expression)) {
+        return;
+      }
+      registerMethodCallError(expression, expression);
     }
 
-    private void checkExpression(PsiExpression expression) {
+    private boolean isNotSafelyClosedResource(PsiExpression expression) {
       if (!PsiUtil.isLanguageLevel7OrHigher(expression) || !TypeUtils.expressionHasTypeOrSubtype(expression, "java.lang.AutoCloseable")) {
-        return;
+        return false;
       }
       final PsiVariable variable = ResourceInspection.getVariable(expression);
-      if (variable instanceof PsiResourceVariable) {
-        return;
-      }
-      if (ResourceInspection.isResourceEscapingFromMethod(variable, expression)) {
-        return;
-      }
-      registerError(expression, expression);
+      return !(variable instanceof PsiResourceVariable) && !ResourceInspection.isResourceEscapingFromMethod(variable, expression);
     }
   }
 }
