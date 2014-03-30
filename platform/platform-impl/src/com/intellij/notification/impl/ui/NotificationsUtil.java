@@ -18,6 +18,7 @@ package com.intellij.notification.impl.ui;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,16 @@ public class NotificationsUtil {
   }
 
   public static String buildHtml(@NotNull final Notification notification, @Nullable String style) {
-    return buildHtml(notification.getTitle(), notification.getContent(), style);
+    String result = "";
+    if (style != null) {
+      result += "<div style=\"" + style + "\">";
+    }
+    result += "<b color=\"#"+ ColorUtil.toHex(getMessageType(notification).getTitleForeground())+"\">" + notification.getTitle() + "</b>" +
+              "<p>" + notification.getContent() + "</p>";
+    if (style != null) {
+      result += "</div>";
+    }
+    return XmlStringUtil.wrapInHtml(result);
   }
 
   public static String buildHtml(@NotNull final String title, @NotNull final String content, @Nullable String style) {
