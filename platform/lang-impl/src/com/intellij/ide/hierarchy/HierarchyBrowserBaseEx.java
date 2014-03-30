@@ -227,19 +227,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
     if (dndAware) {
       tree = new DnDAwareTree(new DefaultTreeModel(new DefaultMutableTreeNode(""))) {
-        @Override
-        public void addNotify() {
-          super.addNotify();
-          if (ScreenUtil.isStandardAddRemoveNotify(this))
-            myRefreshAction.registerShortcutOn(this);
-        }
-
-        @Override
-        public void removeNotify() {
-          super.removeNotify();
-          if (ScreenUtil.isStandardAddRemoveNotify(this))
-            myRefreshAction.unregisterCustomShortcutSet(this);
-        }
 
         @Override
         public boolean isFileColorsEnabled() {
@@ -296,19 +283,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
     else {
       tree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode(""))) {
-        @Override
-        public void addNotify() {
-          super.addNotify();
-          if (ScreenUtil.isStandardAddRemoveNotify(this))
-            myRefreshAction.registerShortcutOn(this);
-        }
-
-        @Override
-        public void removeNotify() {
-          super.removeNotify();
-          if (ScreenUtil.isStandardAddRemoveNotify(this))
-            myRefreshAction.unregisterCustomShortcutSet(this);
-        }
 
         @Override
         public boolean isFileColorsEnabled() {
@@ -323,6 +297,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
     configureTree(tree);
     EditSourceOnDoubleClickHandler.install(tree);
+    myRefreshAction.registerShortcutOn(tree);
 
     return tree;
   }
