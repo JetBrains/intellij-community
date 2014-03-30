@@ -433,6 +433,9 @@ public class AllIcons {
     public static final Icon Mouse = IconLoader.getIcon("/general/mouse.png"); // 32x32
     public static final Icon MouseShortcut = IconLoader.getIcon("/general/mouseShortcut.png"); // 13x13
     public static final Icon NoAnalysis = IconLoader.getIcon("/general/noAnalysis.png"); // 12x12
+    public static final Icon NotificationError = IconLoader.getIcon("/general/notificationError.png"); // 24x24
+    public static final Icon NotificationInfo = IconLoader.getIcon("/general/notificationInfo.png"); // 24x24
+    public static final Icon NotificationWarning = IconLoader.getIcon("/general/notificationWarning.png"); // 24x24
     public static final Icon OpenProject = IconLoader.getIcon("/general/openProject.png"); // 32x32
     public static final Icon OverridenMethod = IconLoader.getIcon("/general/overridenMethod.png"); // 10x14
     public static final Icon OverridingMethod = IconLoader.getIcon("/general/overridingMethod.png"); // 10x14
