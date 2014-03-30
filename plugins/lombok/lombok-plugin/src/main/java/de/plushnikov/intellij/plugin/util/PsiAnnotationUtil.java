@@ -20,7 +20,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -239,18 +238,5 @@ public class PsiAnnotationUtil {
       }
     }
     return annotationsToCopy;
-  }
-
-  @NotNull
-  public static String buildAnnotationsString(@NotNull Collection<String> annotationsToCopy) {
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      for (String annotationName : annotationsToCopy) {
-        builder.append('@').append(annotationName).append(' ');
-      }
-      return builder.toString();
-    } finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
   }
 }

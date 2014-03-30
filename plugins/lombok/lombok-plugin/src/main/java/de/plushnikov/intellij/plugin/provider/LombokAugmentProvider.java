@@ -138,9 +138,10 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
             return true;
           }
         }
+        return false;
       }
     }
-    return false;
+    return true;
   }
 
   private boolean verifyLombokPresent(@NotNull PsiClass psiClass) {
