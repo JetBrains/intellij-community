@@ -1,7 +1,6 @@
 <html>
 <body>
-Reports any JDBC resource which is not opened in front of a <b>try</b>
-block and closed in the corresponding <b>finally</b> block. Such resources may
+Reports any JDBC resource which is not safely closed in a <b>finally</b> block. Such resources may
 be inadvertently leaked if an exception is thrown before the resource is closed. JDBC resources reported
 by this inspection include <b>java.sql.Connection</b>,
 <b>java.sql.Statement</b>,
