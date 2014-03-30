@@ -16,7 +16,12 @@
       <entry name="?*.ftl" />
       <entry name="META-INF/services/*" />
     </wildcardResourcePatterns>
-    <annotationProcessing enabled="false" useClasspath="true" />
+    <annotationProcessing>
+      <profile default="true" name="Default" enabled="false">
+        <processorPath useClasspath="true" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel target="1.6" />
   </component>
 </project>
 
